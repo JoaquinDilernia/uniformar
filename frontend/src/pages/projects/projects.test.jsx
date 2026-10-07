@@ -92,6 +92,30 @@ describe('proyectos', () => {
     expect(await screen.findByRole('checkbox', { name: /Bauti/ })).toBeInTheDocument();
   });
 
+
+  it('borrador recuperado: abre editando con el texto guardado y lo guarda', async () => {
+    localStorage.setItem('uf:draft:p-p1-doing', JSON.stringify({ text: 'borrador largo\nsegunda línea' }));
+    renderAt('/proyectos/p1');
+    const box = await screen.findByRole('textbox', { name: 'Qué se está haciendo' });
+    expect(box).toHaveValue('borrador largo\nsegunda línea');
+    expect(screen.getByText('Recuperamos lo que estabas escribiendo.')).toBeInTheDocument();
+    await userEvent.click(within(screen.getByRole('region', { name: 'Qué se está haciendo' })).getByRole('button', { name: 'Guardar' }));
+    const patch = fetch.mock.calls.find(([u, o]) => u === '/api/projects/p1' && o?.method === 'PATCH');
+    expect(JSON.parse(patch[1].body)).toEqual({ doing_text: 'borrador largo\nsegunda línea' });
+  });
+
+  it('dos campos guardados seguidos terminan los dos', async () => {
+    renderAt('/proyectos/p1');
+    await screen.findByText('Qué se está haciendo');
+    for (const label of ['Qué se está haciendo', 'Cómo se va a hacer']) {
+      const sec = screen.getByRole('region', { name: label });
+      await userEvent.click(within(sec).getByRole('button', { name: /Editar/ }));
+      await userEvent.type(within(sec).getByRole('textbox'), 'x');
+      await userEvent.click(within(sec).getByRole('button', { name: 'Guardar' }));
+    }
+    await screen.findAllByRole('button', { name: /Editar/ });
+    expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument();
+  });
   it('borrar proyecto: no vuelve a pedir el detalle borrado', async () => {
     const base = global.fetch;
     global.fetch = vi.fn((url, opts = {}) => {

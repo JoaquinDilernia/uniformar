@@ -62,7 +62,7 @@ export function TaskList({ project, canEdit }) {
             </button>
             {canEdit && user?.can_delete && (
               <IconButton icon={Trash2} label="Borrar tarea" size="sm"
-                onClick={async () => (await confirm({ title: '¿Borrar esta tarea?', confirmLabel: 'Borrar', danger: true })) && remove.mutate(t.id)} />
+                disabled={remove.isPending} onClick={async () => !remove.isPending && (await confirm({ title: '¿Borrar esta tarea?', confirmLabel: 'Borrar', danger: true })) && remove.mutate(t.id)} />
             )}
           </li>
         ))}

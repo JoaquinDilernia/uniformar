@@ -45,7 +45,7 @@ export function UpdatesFeed({ project, canEdit }) {
             </div>
             {canEdit && (u.author_id === user?.id || user?.can_delete) && (
               <IconButton icon={Trash2} label="Borrar novedad" size="sm"
-                onClick={async () => (await confirm({ title: '¿Borrar esta novedad?', confirmLabel: 'Borrar', danger: true })) && remove.mutate(u.id)} />
+                disabled={remove.isPending} onClick={async () => !remove.isPending && (await confirm({ title: '¿Borrar esta novedad?', confirmLabel: 'Borrar', danger: true })) && remove.mutate(u.id)} />
             )}
           </li>
         ))}

@@ -39,7 +39,6 @@ export function ProjectDetail() {
   const { user } = useAuth();
   const canEdit = useCan()('projects', 'edit');
   const { data: project, isPending, isError } = useProject(id);
-  const updateText = useUpdateProject(id); // textos largos (cada InlineText controla su propio guardado)
   const updateData = useUpdateProject(id); // hoja "Datos": su botón refleja esta instancia
   const del = useDeleteProject();
   const confirm = useConfirm();
@@ -48,7 +47,6 @@ export function ProjectDetail() {
   if (isPending) return <div className={p.center}><Spinner size={28} /></div>;
   if (isError) return <div className={p.center}><h2>No encontramos este proyecto</h2></div>;
 
-  const saveText = (field) => (text, opts) => updateText.mutate({ [field]: text }, opts);
   const done = project.tasks.filter((t) => t.done).length;
 
   function saveData(body, onError) {
@@ -75,9 +73,9 @@ export function ProjectDetail() {
         </div>
         <div className={s.columns}>
           <div className={s.col}>
-            <InlineText draftKey={`p-${id}-goal`} label="Qué queremos hacer" value={project.goal_text} onSave={saveText('goal_text')} canEdit={canEdit} placeholder="Contá el objetivo del proyecto." />
-            <InlineText draftKey={`p-${id}-doing`} label="Qué se está haciendo" value={project.doing_text} onSave={saveText('doing_text')} canEdit={canEdit} placeholder="¿En qué está ahora?" />
-            <InlineText draftKey={`p-${id}-how`} label="Cómo se va a hacer" value={project.how_text} onSave={saveText('how_text')} canEdit={canEdit} placeholder="Pasos, responsables, herramientas." />
+            <InlineText draftKey={`p-${id}-goal`} label="Qué queremos hacer" value={project.goal_text} projectId={id} field="goal_text" canEdit={canEdit} placeholder="Contá el objetivo del proyecto." />
+            <InlineText draftKey={`p-${id}-doing`} label="Qué se está haciendo" value={project.doing_text} projectId={id} field="doing_text" canEdit={canEdit} placeholder="¿En qué está ahora?" />
+            <InlineText draftKey={`p-${id}-how`} label="Cómo se va a hacer" value={project.how_text} projectId={id} field="how_text" canEdit={canEdit} placeholder="Pasos, responsables, herramientas." />
             <section className={s.block} aria-label="Fotos">
               <div className={s.blockHead}><h2>Fotos</h2></div>
               <ImageUploader ownerType="project_photo" ownerId={id} files={project.photos} invalidate={[projectKeys.one(id)]} canEdit={canEdit} canDelete={user?.can_delete} max={50} />
