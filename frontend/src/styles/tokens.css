@@ -14,6 +14,7 @@
   --c-accent-soft: #f0e9eb;
   --c-accent-text: #5e4750;
   --c-on-accent: #ffffff;
+  --c-on-danger: #ffffff;
   --c-success: #2d7a57;
   --c-success-soft: #e2f1e9;
   --c-warn: #9a640f;
@@ -69,6 +70,7 @@
     --c-accent-soft: #34292d;
     --c-accent-text: #d8bfc8;
     --c-on-accent: #1d1a1b;
+    --c-on-danger: #1d1a1b;
     --c-success: #6cc79b;
     --c-success-soft: #1d3329;
     --c-warn: #e2b05a;

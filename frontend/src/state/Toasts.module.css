@@ -11,7 +11,7 @@
   background: var(--c-text); color: var(--c-surface); box-shadow: var(--shadow-2);
   animation: in var(--dur) var(--ease);
 }
-.error { background: var(--c-danger); color: #fff; }
+.error { background: var(--c-danger); color: var(--c-on-danger); }
 .icon { flex: none; margin-top: 2px; }
 .success .icon { color: var(--c-success-soft); }
 .msg { flex: 1; font-size: var(--fs-m); line-height: 1.4; }

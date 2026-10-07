@@ -1,0 +1,16 @@
+.page {
+  min-height: 100dvh; display: grid; place-items: center; padding: var(--sp-4);
+  background: radial-gradient(120% 80% at 50% 0%, var(--c-accent-soft), var(--c-bg) 60%);
+}
+.card {
+  width: min(400px, 100%); display: flex; flex-direction: column; gap: var(--sp-4);
+  padding: var(--sp-6) var(--sp-5); background: var(--c-surface); border-radius: var(--radius-l); box-shadow: var(--shadow-2);
+}
+.logo { width: 120px; margin: 0 auto var(--sp-2); }
+@media (prefers-color-scheme: dark) { .logo { content: url('/logo-blanco.png'); } }
+.title { font-size: var(--fs-xl); text-align: center; }
+.pwWrap { position: relative; }
+.pwWrap input { padding-right: 48px; }
+.eye { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: transparent; color: var(--c-text-3); cursor: pointer; border-radius: var(--radius-s); }
+.error { padding: var(--sp-3); border-radius: var(--radius-m); background: var(--c-danger-soft); color: var(--c-danger); font-size: var(--fs-s); font-weight: 500; }
+.help { text-align: center; font-size: var(--fs-s); color: var(--c-text-3); }

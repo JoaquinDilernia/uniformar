@@ -4,7 +4,7 @@
   background: color-mix(in srgb, var(--c-bg) 88%, transparent); backdrop-filter: blur(10px);
 }
 @media (min-width: 900px) { .header { padding: var(--sp-5) var(--sp-6) var(--sp-4); } }
-.back { display: grid; place-items: center; width: 40px; height: 40px; margin-left: -8px; border: 0; border-radius: 50%; background: transparent; color: var(--c-text); cursor: pointer; }
+.back { display: grid; place-items: center; width: 44px; height: 44px; margin-left: -8px; border: 0; border-radius: 50%; background: transparent; color: var(--c-text); cursor: pointer; }
 .back:hover { background: var(--c-surface-2); }
 .titles { flex: 1; min-width: 0; }
 .title { font-size: var(--fs-xl); }

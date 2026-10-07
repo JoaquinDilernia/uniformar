@@ -16,6 +16,7 @@
 .ghost { background: transparent; color: var(--c-text-2); }
 .ghost:hover:not(:disabled) { background: var(--c-surface-2); color: var(--c-text); }
 .danger { background: var(--c-danger-soft); color: var(--c-danger); }
-.danger:hover:not(:disabled) { background: var(--c-danger); color: #fff; }
+.danger:hover:not(:disabled) { background: var(--c-danger); color: var(--c-on-danger); }
 .iconOnly { padding: 0; width: var(--tap); }
 .iconOnly.sm { width: 36px; }
+@media (pointer: coarse) { .sm { min-height: var(--tap); } .iconOnly.sm { width: var(--tap); } }
