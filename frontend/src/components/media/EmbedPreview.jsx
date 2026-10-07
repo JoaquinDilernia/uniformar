@@ -6,7 +6,7 @@ const NAMES = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', dr
 
 export function EmbedPreview({ url }) {
   const e = parseEmbed(url);
-  if (!e) return <a href={url} target="_blank" rel="noreferrer">{url}</a>;
+  if (!e) return <span className="prewrap">{String(url)}</span>;
   const name = NAMES[e.provider] ?? e.host;
   return (
     <div className={s.embed}>

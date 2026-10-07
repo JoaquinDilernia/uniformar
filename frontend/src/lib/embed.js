@@ -22,7 +22,7 @@ export function parseEmbed(url) {
   }
   if (host === 'youtube.com' || host === 'youtu.be') {
     const id = host === 'youtu.be' ? u.pathname.slice(1) : u.searchParams.get('v') ?? u.pathname.match(/^\/shorts\/([\w-]+)/)?.[1];
-    if (id) return { provider: 'youtube', host, openUrl, embedUrl: `https://www.youtube.com/embed/${id}`, aspect: u.pathname.startsWith('/shorts') ? 'vertical' : 'wide' };
+    if (id && /^[\w-]{6,}$/.test(id)) return { provider: 'youtube', host, openUrl, embedUrl: `https://www.youtube.com/embed/${id}`, aspect: u.pathname.startsWith('/shorts') ? 'vertical' : 'wide' };
   }
   if (host === 'drive.google.com') return { provider: 'drive', host, openUrl };
   return { provider: 'link', host, openUrl };

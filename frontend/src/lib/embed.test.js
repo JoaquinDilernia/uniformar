@@ -16,6 +16,9 @@ describe('embeds', () => {
     expect(parseEmbed('https://youtu.be/dQw4w9WgXcQ').embedUrl).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ');
     expect(parseEmbed('https://youtube.com/shorts/abcDEF12345').embedUrl).toBe('https://www.youtube.com/embed/abcDEF12345');
   });
+  it('YouTube con id inválido cae a link', () => {
+    expect(parseEmbed('https://youtu.be/a/b')).toMatchObject({ provider: 'link' });
+  });
   it('Drive y otros', () => {
     expect(parseEmbed('https://drive.google.com/file/d/1abc/view')).toMatchObject({ provider: 'drive', host: 'drive.google.com' });
     expect(parseEmbed('https://pinterest.com/pin/1')).toMatchObject({ provider: 'link', host: 'pinterest.com' });
