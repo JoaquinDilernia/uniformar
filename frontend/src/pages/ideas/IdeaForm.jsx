@@ -26,7 +26,7 @@ function toBody(f, isNew) {
 }
 
 // Formulario de alta y edición. formId permite que el botón de guardar viva en el pie de la hoja.
-export function IdeaForm({ formId, initial, onSaved }) {
+export function IdeaForm({ formId, initial, onSaved, onPendingChange }) {
   const isNew = !initial;
   const navigate = useNavigate();
   const { data: clients = [] } = useClients();
@@ -35,6 +35,8 @@ export function IdeaForm({ formId, initial, onSaved }) {
   const [errors, setErrors] = useState({});
   const create = useCreateIdea();
   const update = useUpdateIdea(initial?.id, { success: 'Cambios guardados ✓' });
+  const pending = create.isPending || update.isPending;
+  useEffect(() => { onPendingChange?.(pending); }, [pending]); // eslint-disable-line react-hooks/exhaustive-deps
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v?.target ? v.target.value : v }));
 
   // Por defecto las ideas nuevas son para Santi (el que graba)
@@ -47,6 +49,7 @@ export function IdeaForm({ formId, initial, onSaved }) {
 
   function onSubmit(e) {
     e.preventDefault();
+    if (pending) return;
     if (!form.text.trim()) return setErrors({ text: 'Escribí la idea' });
     setErrors({});
     const body = toBody(form, isNew);

@@ -70,6 +70,13 @@ export function useDeleteIdea() {
   return useMutation({
     mutationFn: (id) => api.del(`/ideas/${id}`),
     meta: { success: 'Idea borrada' },
-    onSuccess: () => invalidateIdeas(qc),
+    onSuccess: (_data, id) => {
+      qc.removeQueries({ queryKey: ideaKeys.one(id) });
+      qc.removeQueries({ queryKey: ideaKeys.activity(id) });
+      return Promise.all([
+        qc.invalidateQueries({ queryKey: ideaKeys.all, exact: true }),
+        ...[['home'], ['calendar'], ['clients']].map((k) => qc.invalidateQueries({ queryKey: k })),
+      ]);
+    },
   });
 }

@@ -39,7 +39,8 @@ describe('IdeasPage', () => {
       if (url === '/api/auth/me') return json({ user: me });
       if (url === '/api/ideas') return json({ ideas });
       if (url === '/api/ideas/a' && (!opts.method || opts.method === 'GET')) return json({ idea: detail });
-      if (url === '/api/ideas/a/complete') return json({ error: { code: 'X', message: 'no debería llamarse' } }, 500);
+      if (url === '/api/ideas/c' && (!opts.method || opts.method === 'GET')) return json({ idea: { ...detail, id: 'c', decision: 'yes', status: 'por_hacer', note_sofi: null } });
+      if (url === '/api/ideas/c/complete') return json({ error: { code: 'X', message: 'no debería llamarse' } }, 500);
       if (url === '/api/users/directory') return json({ users: [] });
       if (url === '/api/clients') return json({ clients: [] });
       return json({});
@@ -70,5 +71,13 @@ describe('IdeasPage', () => {
     // getByDisplayValue colapsa los saltos de línea al comparar: se busca normalizado y se verifica el valor real completo
     const note = screen.getByDisplayValue('Grabar con luz natural fondo blanco');
     expect(note.value).toBe('Grabar con luz natural\nfondo blanco');
+  });
+
+  it('"Marcar realizada" sin link muestra el error del campo y no llama a /complete', async () => {
+    renderAt('/ideas/c');
+    await userEvent.click(await screen.findByRole('button', { name: 'Ya la hice' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Marcar realizada' }));
+    expect(await screen.findByText(/Pegá el link del resultado/)).toBeInTheDocument();
+    expect(global.fetch.mock.calls.some(([u]) => u === '/api/ideas/c/complete')).toBe(false);
   });
 });

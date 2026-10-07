@@ -12,7 +12,7 @@ import { Spinner } from '../../components/ui/Spinner.jsx';
 import { Sheet } from '../../components/ui/Sheet.jsx';
 import { Fab } from '../../components/shell/Fab.jsx';
 import { FORMAT_FILTERS, TYPE_FILTERS, STATUS_FILTERS, filterIdeas, groupIdeas, countByStatus } from '../../lib/groupIdeas.js';
-import { useIdeas, useCreateIdea } from './api.js';
+import { useIdeas } from './api.js';
 import { IdeaRow } from './IdeaRow.jsx';
 import { IdeaSheet } from './IdeaSheet.jsx';
 import { IdeaForm } from './IdeaForm.jsx';
@@ -22,11 +22,11 @@ import p from '../pages.module.css';
 const DEFAULT_FILTERS = { format: 'all', category: 'all', status: 'all' };
 
 function NewIdeaSheet({ onClose }) {
-  const create = useCreateIdea();
+  const [saving, setSaving] = useState(false);
   return (
     <Sheet open onClose={onClose} title="Nueva idea" size="lg"
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form="idea-new" loading={create.isPending}>Guardar idea</Button></>}>
-      <IdeaForm formId="idea-new" />
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form="idea-new" loading={saving}>Guardar idea</Button></>}>
+      <IdeaForm formId="idea-new" onPendingChange={setSaving} />
     </Sheet>
   );
 }

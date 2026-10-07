@@ -33,6 +33,10 @@ describe('agrupado de ideas', () => {
     expect(filterIdeas(ideas, { q: 'wonder' })).toHaveLength(1);
   });
 
+  it('la búsqueda no matchea "null" en ideas sin cliente ni notas', () => {
+    expect(filterIdeas(ideas, { q: 'null' })).toHaveLength(0);
+  });
+
   it('summarize omite estados en cero', () => {
     expect(summarize([idea({ status: 'realizada' })])).toBe('1 realizada');
     expect(summarize([idea({ status: 'no_se_hace' }), idea({ status: 'no_se_hace' })])).toBe('2 no se hacen');

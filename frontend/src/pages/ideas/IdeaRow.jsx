@@ -7,7 +7,7 @@ const firstLine = (text) => text.split('\n')[0];
 
 export function IdeaRow({ idea, onOpen }) {
   const Icon = idea.format === 'video' ? Clapperboard : Camera;
-  const overdue = idea.due_date && idea.due_date < todayART() && idea.status !== 'realizada';
+  const overdue = idea.due_date && idea.due_date < todayART() && idea.status !== 'realizada' && idea.status !== 'no_se_hace';
   return (
     <button type="button" className={s.row} onClick={onOpen}>
       <span className={`${s.formatIcon} ${s[idea.format]}`} title={idea.format === 'video' ? 'Video' : 'Foto'}><Icon size={18} aria-hidden /></span>

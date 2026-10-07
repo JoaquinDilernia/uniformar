@@ -22,7 +22,7 @@ export function filterIdeas(ideas, { format = 'all', category = 'all', status = 
   return ideas.filter((i) => (format === 'all' || i.format === format)
     && (category === 'all' || i.category === category)
     && (status === 'all' || i.status === status)
-    && (!needle || norm(`${i.text} ${i.client_name} ${i.note_santi} ${i.note_sofi}`).includes(needle)));
+    && (!needle || norm([i.text, i.client_name, i.note_santi, i.note_sofi].filter(Boolean).join(' ')).includes(needle)));
 }
 
 export function countByStatus(ideas) {

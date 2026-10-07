@@ -66,6 +66,7 @@ export function IdeaSheet({ id, onClose }) {
   const { user } = useAuth();
   const canEdit = can('ideas', 'edit');
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [resultUrl, setResultUrl] = useState('');
   const [resultError, setResultError] = useState(null);
@@ -91,6 +92,11 @@ export function IdeaSheet({ id, onClose }) {
     action.mutate({ action: 'complete', body: { result_url: resultUrl.trim() } }, { onSuccess: () => setCompleting(false) });
   }
 
+  function cancelEdit() {
+    try { localStorage.removeItem(`uf:draft:idea-${id}`); } catch { /* sin storage */ }
+    setEditing(false);
+  }
+
   let footer = null;
   if (canEdit && !editing) {
     if (completing) {
@@ -106,7 +112,7 @@ export function IdeaSheet({ id, onClose }) {
     }
   }
   if (editing) {
-    footer = <><Button variant="secondary" onClick={() => setEditing(false)}>Cancelar</Button><Button type="submit" form="idea-edit">Guardar cambios</Button></>;
+    footer = <><Button variant="secondary" onClick={cancelEdit}>Cancelar</Button><Button type="submit" form="idea-edit" loading={saving}>Guardar cambios</Button></>;
   }
 
   async function onDelete() {
@@ -119,7 +125,7 @@ export function IdeaSheet({ id, onClose }) {
   return (
     <Sheet open onClose={onClose} title={idea.kind === 'must' ? '📌 Sí o sí' : '💡 Idea'} size="lg" footer={footer}>
       {editing ? (
-        <IdeaForm formId="idea-edit" initial={idea} onSaved={() => setEditing(false)} />
+        <IdeaForm formId="idea-edit" initial={idea} onSaved={() => setEditing(false)} onPendingChange={setSaving} />
       ) : (
         <div className={s.detail}>
           <div className={s.badges}>
