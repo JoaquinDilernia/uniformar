@@ -1,13 +1,21 @@
 import path from 'node:path';
 import express from 'express';
-import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import { errorHandler, notFound } from './lib/errors.js';
 
-export function createApp({ apiRouter, staticDir, health } = {}) {
+export function createApp({ apiRouter, staticDir, health, corsOrigin } = {}) {
   const app = express();
   app.disable('x-powered-by');
-  app.set('trust proxy', 1); // Railway está detrás de un proxy: req.ip y cookies Secure
-  app.use(cookieParser());
+  app.set('trust proxy', 1); // Railway está detrás de un proxy: req.ip
+  const origins = String(corsOrigin ?? '').split(',').map((o) => o.trim()).filter(Boolean);
+  if (origins.length) {
+    app.use(cors({
+      origin: origins,
+      exposedHeaders: ['X-Session-Token'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
+    }));
+  }
   app.use(express.json({ limit: '1mb' }));
   app.get('/health', async (_req, res) => {
     if (!health) return res.json({ ok: true });

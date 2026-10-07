@@ -18,7 +18,7 @@ import { createCalendarRouter } from './routes/calendar.js';
 import { createProjectsRouter } from './routes/projects.js';
 import { createHomeRouter } from './routes/home.js';
 
-export function buildApp({ db, jwtSecret, storage, secureCookies = false, staticDir, loginLimit = 10 }) {
+export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginLimit = 10 }) {
   if (!jwtSecret) throw new Error('Falta jwtSecret');
   if (!storage) throw new Error('Falta storage');
 
@@ -29,10 +29,10 @@ export function buildApp({ db, jwtSecret, storage, secureCookies = false, static
   const calendarRepo = createCalendarRepo(db);
   const projectsRepo = createProjectsRepo(db);
   const files = createFilesService({ db, storage });
-  const authenticate = createAuthenticate({ usersRepo, secret: jwtSecret, secureCookies });
+  const authenticate = createAuthenticate({ usersRepo, secret: jwtSecret });
 
   const api = Router();
-  api.use('/auth', createAuthRouter({ usersRepo, secret: jwtSecret, secureCookies, authenticate, loginLimit }));
+  api.use('/auth', createAuthRouter({ usersRepo, secret: jwtSecret, authenticate, loginLimit }));
   // Todo lo que sigue requiere sesión y contraseña ya cambiada
   api.use(authenticate, requirePasswordChanged);
   api.use('/users', createUsersRouter({ usersRepo }));
@@ -46,6 +46,7 @@ export function buildApp({ db, jwtSecret, storage, secureCookies = false, static
   const app = createApp({
     apiRouter: api,
     staticDir,
+    corsOrigin,
     health: async () => {
       await db.query('SELECT 1');
       return { db: true };

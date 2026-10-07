@@ -1,3 +1,4 @@
+import { fileUrl } from '../../api/client.js';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Clapperboard, Camera, Megaphone, Globe, ExternalLink } from 'lucide-react';
@@ -148,7 +149,7 @@ export function HomePage() {
           <div className={s.done}>
             {data.recently_done.map((d) => (
               <a key={d.id} href={d.result_url} target="_blank" rel="noreferrer" className={s.doneCard}>
-                {d.thumb_url ? <img src={d.thumb_url} alt="" /> : <span className={s.doneIcon}><FormatIcon format={d.format} /></span>}
+                {d.thumb_url ? <img src={fileUrl(d.thumb_url)} alt="" /> : <span className={s.doneIcon}><FormatIcon format={d.format} /></span>}
                 <span className={s.doneText}>{d.text.split('\n')[0]}</span>
                 <ExternalLink size={14} aria-hidden className="muted" />
               </a>

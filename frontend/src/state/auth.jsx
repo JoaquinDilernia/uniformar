@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, setUnauthenticatedHandler } from '../api/client.js';
+import { api, setToken, clearToken, setUnauthenticatedHandler } from '../api/client.js';
 import { toastBus } from './toastBus.js';
 import { can } from '../lib/permissions.js';
 
@@ -33,7 +33,8 @@ export function AuthProvider({ children }) {
   }, [qc]);
 
   const login = useCallback(async (email, password) => {
-    const { user } = await api.post('/auth/login', { email, password });
+    const { user, token } = await api.post('/auth/login', { email, password });
+    setToken(token);
     qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'me' });
     qc.setQueryData(['me'], user);
     return user;
@@ -41,6 +42,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     await api.post('/auth/logout').catch(() => {});
+    clearToken();
     qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'me' });
     qc.setQueryData(['me'], null);
   }, [qc]);

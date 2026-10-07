@@ -21,6 +21,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const jwtSecret = env('JWT_SECRET');
 if (isProd && jwtSecret.length < 32) throw new Error('JWT_SECRET tiene que tener al menos 32 caracteres');
 
+if (isProd) env('FRONTEND_URL');
+
 const db = createPgDb(env('DATABASE_URL'));
 const applied = await migrate(db);
 if (applied.length) console.log('[db] migraciones aplicadas:', applied.join(', '));
@@ -48,7 +50,7 @@ const app = buildApp({
   db,
   jwtSecret,
   storage,
-  secureCookies: isProd,
+  corsOrigin: process.env.FRONTEND_URL,
   staticDir: fs.existsSync(path.join(distDir, 'index.html')) ? distDir : undefined,
 });
 

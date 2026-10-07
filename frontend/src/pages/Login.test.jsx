@@ -27,6 +27,17 @@ describe('Login', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Email o contraseña incorrectos');
   });
 
+  it('login correcto guarda el token', async () => {
+    global.fetch = vi.fn((url) => (url === '/api/auth/me'
+      ? json(401, { error: { code: 'UNAUTHENTICATED', message: 'x' } })
+      : json(200, { user: { id: 1, name: 'Sofi', permissions: {} }, token: 'tok-123' })));
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Email'), 'sofi@uniform.ar');
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'password123');
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+    await vi.waitFor(() => expect(localStorage.getItem('uf_token')).toBe('tok-123'));
+  });
+
   it('no deja enviar vacío', async () => {
     renderLogin();
     await userEvent.click(screen.getByRole('button', { name: 'Entrar' }));

@@ -4,7 +4,7 @@ import { rateLimit } from 'express-rate-limit';
 import { parse } from '../lib/validate.js';
 import { AppError, badRequest } from '../lib/errors.js';
 import { toPublicUser } from '../repo/users.js';
-import { COOKIE, verifyPassword, hashPassword, signSession, cookieOptions } from '../services/auth.js';
+import { verifyPassword, hashPassword, signSession } from '../services/auth.js';
 
 const loginSchema = z.object({
   email: z.string().trim().email(),
@@ -17,9 +17,8 @@ const changeSchema = z.object({
 export const colorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Color inválido');
 const meSchema = z.object({ name: z.string().trim().min(1).max(60).optional(), avatar_color: colorSchema.optional() });
 
-export function createAuthRouter({ usersRepo, secret, secureCookies, authenticate, loginLimit }) {
+export function createAuthRouter({ usersRepo, secret, authenticate, loginLimit }) {
   const r = Router();
-  const setSession = (res, user) => res.cookie(COOKIE, signSession(user, secret), cookieOptions(secureCookies));
 
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -37,14 +36,12 @@ export function createAuthRouter({ usersRepo, secret, secureCookies, authenticat
     const ok = user && user.is_active && (await verifyPassword(password, user.password_hash));
     if (!ok) throw new AppError(401, 'INVALID_CREDENTIALS', 'Email o contraseña incorrectos');
     await usersRepo.touchLogin(user.id);
-    setSession(res, user);
-    res.json({ user: toPublicUser(await usersRepo.findById(user.id)) });
+    const fresh = await usersRepo.findById(user.id);
+    res.json({ user: toPublicUser(fresh), token: signSession(fresh, secret) });
   });
 
-  r.post('/logout', (_req, res) => {
-    res.clearCookie(COOKIE, { path: '/' });
-    res.json({ ok: true });
-  });
+  // Sesión sin estado: el cliente descarta el token
+  r.post('/logout', (_req, res) => res.json({ ok: true }));
 
   r.get('/me', authenticate, (req, res) => res.json({ user: toPublicUser(req.user) }));
 
@@ -63,8 +60,8 @@ export function createAuthRouter({ usersRepo, secret, secureCookies, authenticat
     }
     await usersRepo.setPassword(req.user.id, await hashPassword(newPassword), { mustChange: false });
     const user = await usersRepo.findById(req.user.id);
-    setSession(res, user); // nuevo token_version: esta sesión sigue, las demás se cierran
-    res.json({ user: toPublicUser(user) });
+    // nuevo token_version: este token nuevo sirve, los anteriores se cierran
+    res.json({ user: toPublicUser(user), token: signSession(user, secret) });
   });
 
   return r;

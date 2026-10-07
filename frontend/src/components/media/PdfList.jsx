@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, Upload, Trash2, ExternalLink } from 'lucide-react';
-import { api } from '../../api/client.js';
+import { api, fileUrl } from '../../api/client.js';
 import { uploadFile } from '../../lib/upload.js';
 import { useConfirm } from '../ui/ConfirmDialog.jsx';
 import { Sheet } from '../ui/Sheet.jsx';
@@ -52,10 +52,10 @@ export function PdfList({ ownerType, ownerId, files, invalidate = [], canEdit, c
         </>
       )}
       <Sheet open={Boolean(viewing)} onClose={() => setViewing(null)} title={viewing?.original_name ?? 'PDF'} size="lg"
-        footer={viewing && <Button variant="secondary" icon={ExternalLink} onClick={() => window.open(viewing.url, '_blank', 'noopener')}>Abrir en otra pestaña</Button>}>
+        footer={viewing && <Button variant="secondary" icon={ExternalLink} onClick={() => window.open(fileUrl(viewing.url), '_blank', 'noopener')}>Abrir en otra pestaña</Button>}>
         {viewing && (isIOS()
           ? <p className="muted">En iPhone el PDF se ve mejor fuera del sistema. Tocá “Abrir en otra pestaña”.</p>
-          : <iframe title={`PDF ${viewing.original_name}`} src={viewing.url} className={s.pdfFrame} />)}
+          : <iframe title={`PDF ${viewing.original_name}`} src={fileUrl(viewing.url)} className={s.pdfFrame} />)}
       </Sheet>
     </div>
   );

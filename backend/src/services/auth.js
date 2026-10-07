@@ -2,7 +2,6 @@ import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-export const COOKIE = 'uf_session';
 const DAY = 24 * 60 * 60 * 1000;
 export const SESSION_MS = 30 * DAY;
 export const RENEW_BELOW_MS = 15 * DAY;
@@ -21,10 +20,6 @@ export function verifySession(token, secret) {
   } catch {
     return null;
   }
-}
-
-export function cookieOptions(secure) {
-  return { httpOnly: true, secure, sameSite: 'lax', maxAge: SESSION_MS, path: '/' };
 }
 
 // Sin caracteres ambiguos (0/O, 1/l/I) para dictarla por WhatsApp

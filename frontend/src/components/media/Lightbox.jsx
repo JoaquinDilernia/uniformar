@@ -1,3 +1,4 @@
+import { fileUrl } from '../../api/client.js';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X, ExternalLink } from 'lucide-react';
@@ -25,10 +26,10 @@ export function Lightbox({ files, index, onClose }) {
   const file = files[idx];
   return createPortal(
     <div className={s.lightbox} role="dialog" aria-modal="true" aria-label="Foto ampliada" onClick={onClose}>
-      <img src={file.url} alt={file.original_name} className={s.lightboxImg} onClick={(e) => e.stopPropagation()} />
+      <img src={fileUrl(file.url)} alt={file.original_name} className={s.lightboxImg} onClick={(e) => e.stopPropagation()} />
       <div className={s.lightboxBar} onClick={(e) => e.stopPropagation()}>
         <span>{idx + 1} /{files.length}</span>
-        <a href={file.url} target="_blank" rel="noreferrer" className={s.lbBtn} aria-label="Abrir original"><ExternalLink size={20} /></a>
+        <a href={fileUrl(file.url)} target="_blank" rel="noreferrer" className={s.lbBtn} aria-label="Abrir original"><ExternalLink size={20} /></a>
         <button type="button" className={s.lbBtn} onClick={onClose} aria-label="Cerrar"><X size={22} /></button>
       </div>
       {files.length > 1 && (

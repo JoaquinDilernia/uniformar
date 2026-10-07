@@ -1,3 +1,4 @@
+import { fileUrl } from '../../api/client.js';
 import { presetForChannels } from '../../lib/sizes.js';
 import s from './calendar.module.css';
 
@@ -11,7 +12,7 @@ export function PreviewMockup({ files, channels, copy }) {
         <strong>uniform.ar</strong>
       </div>
       <div className={s.mockMedia}>
-        {files.map((f) => <img key={f.id} src={f.url} alt="" />)}
+        {files.map((f) => <img key={f.id} src={fileUrl(f.url)} alt="" />)}
       </div>
       {files.length > 1 && <div className={s.mockDots} aria-hidden>{files.map((f) => <span key={f.id} />)}</div>}
       {!vertical && copy && <p className={`${s.mockCopy} prewrap`}><strong>uniform.ar</strong> {copy}</p>}

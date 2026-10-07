@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { api } from '../api/client.js';
+import { api, setToken } from '../api/client.js';
 import { useAuth } from '../state/auth.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Field, Input } from '../components/ui/Field.jsx';
@@ -13,7 +13,8 @@ export function ChangePasswordForm({ onDone }) {
   const mutation = useMutation({
     mutationFn: (body) => api.post('/auth/change-password', body),
     meta: { success: 'Contraseña actualizada ✓' },
-    onSuccess: ({ user }) => {
+    onSuccess: ({ user, token }) => {
+      setToken(token); // el token anterior queda invalidado por el cambio
       setUser(user);
       onDone?.();
     },
