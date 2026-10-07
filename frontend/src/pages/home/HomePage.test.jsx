@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from '../../api/queryClient.js';
@@ -38,5 +39,19 @@ describe('Inicio', () => {
     expect(screen.getByText('Agente de pauta')).toBeInTheDocument();
     expect(screen.queryByText('Admin web')).not.toBeInTheDocument(); // sin permiso de web
     expect(screen.getByRole('button', { name: /¿Cómo se usa\?/ })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('si falla la carga inicial muestra un mensaje con Reintentar en vez de un spinner', async () => {
+    let calls = 0;
+    global.fetch = vi.fn((url) => {
+      if (url === '/api/auth/me') return json({ user: me });
+      calls += 1;
+      if (calls === 1) return Promise.resolve(new Response(JSON.stringify({ error: { code: 'x', message: 'Falló' } }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+      return json(home);
+    });
+    render(<QueryClientProvider client={createQueryClient()}><MemoryRouter><AuthProvider><HomePage /></AuthProvider></MemoryRouter></QueryClientProvider>);
+    expect(await screen.findByText('No pudimos cargar el inicio.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByRole('heading', { name: /Santi/ })).toBeInTheDocument();
   });
 });

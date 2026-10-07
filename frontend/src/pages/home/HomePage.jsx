@@ -6,7 +6,7 @@ import { StatusBadge } from '../../components/ui/StatusBadge.jsx';
 import { Progress } from '../../components/ui/Progress.jsx';
 import { Avatar } from '../../components/ui/Avatar.jsx';
 import { Collapsible } from '../../components/ui/Collapsible.jsx';
-import { IconButton } from '../../components/ui/Button.jsx';
+import { Button, IconButton } from '../../components/ui/Button.jsx';
 import { Spinner } from '../../components/ui/Spinner.jsx';
 import { WEEKDAY_SHORT, addDays, formatLong, formatShort, todayART, weekdayOf } from '../../lib/dates.js';
 import { useHome } from './api.js';
@@ -64,7 +64,15 @@ export function HomePage() {
   const { user } = useAuth();
   const can = useCan();
   const [week, setWeek] = useState(null);
-  const { data, isPending } = useHome(week);
+  const { data, isPending, isError, refetch } = useHome(week);
+  if (isError && !data) {
+    return (
+      <div className={p.center}>
+        <p>No pudimos cargar el inicio.</p>
+        <Button onClick={() => refetch()}>Reintentar</Button>
+      </div>
+    );
+  }
   if (isPending || !data || !user) return <div className={p.center}><Spinner size={28} label="Cargando" /></div>;
 
   const { counters, mine } = data;

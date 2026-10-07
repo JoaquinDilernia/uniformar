@@ -17,11 +17,11 @@ import { CalendarPage } from './pages/calendar/CalendarPage.jsx';
 import { ProjectsPage } from './pages/projects/ProjectsPage.jsx';
 import { ProjectDetail } from './pages/projects/ProjectDetail.jsx';
 import { HomePage } from './pages/home/HomePage.jsx';
+import { UsersPage } from './pages/users/UsersPage.jsx';
 import s from './pages/pages.module.css';
 
 // Las pantallas reales reemplazan a estos placeholders en las Tasks 18–23
 
-const UsersPage = () => <Placeholder title="Usuarios" />;
 const SettingsPage = () => <Placeholder title="Ajustes" />;
 const AccountPage = () => <Placeholder title="Mi cuenta" />;
 
