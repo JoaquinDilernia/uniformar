@@ -13,12 +13,12 @@ import { MorePage } from './pages/More.jsx';
 import { ComingSoon } from './pages/ComingSoon.jsx';
 import { Placeholder } from './pages/Placeholder.jsx';
 import { IdeasPage } from './pages/ideas/IdeasPage.jsx';
+import { CalendarPage } from './pages/calendar/CalendarPage.jsx';
 import s from './pages/pages.module.css';
 
 // Las pantallas reales reemplazan a estos placeholders en las Tasks 18–23
 const HomePage = () => <Placeholder title="Inicio" />;
 
-const CalendarPage = () => <Placeholder title="Calendario" />;
 const ProjectsPage = () => <Placeholder title="Proyectos" />;
 const ProjectDetail = () => <Placeholder title="Proyecto" />;
 const UsersPage = () => <Placeholder title="Usuarios" />;
