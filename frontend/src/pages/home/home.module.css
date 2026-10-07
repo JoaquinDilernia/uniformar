@@ -1,0 +1,38 @@
+.hello { padding: calc(var(--sp-5) + env(safe-area-inset-top)) 0 var(--sp-4); }
+.hello h1 { font-size: var(--fs-2xl); }
+.hello p::first-letter { text-transform: uppercase; }
+.counters { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); margin-bottom: var(--sp-4); }
+@media (min-width: 700px) { .counters { grid-template-columns: repeat(4, 1fr); } }
+.counter { display: flex; flex-direction: column; padding: var(--sp-3) var(--sp-4); background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-l); }
+.counter strong { font-family: var(--font-display); font-size: var(--fs-2xl); line-height: 1.1; }
+.counter span { font-size: var(--fs-s); color: var(--c-text-2); }
+.block { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-4); margin-bottom: var(--sp-3); background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-l); }
+.blockHead { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.blockHead h2 { font-size: var(--fs-l); }
+.more { font-size: var(--fs-s); font-weight: 600; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.link { display: flex; align-items: center; gap: var(--sp-3); min-height: 48px; color: var(--c-text); text-decoration: none; border-bottom: 1px solid var(--c-border); }
+.list li:last-child .link { border-bottom: 0; }
+.linkText { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weekNav { display: flex; align-items: center; gap: 4px; font-size: var(--fs-s); }
+.week { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(132px, 1fr); gap: var(--sp-2); overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 4px; }
+.day { scroll-snap-align: start; display: flex; flex-direction: column; gap: 4px; min-height: 120px; padding: var(--sp-3); border: 1px solid var(--c-border); border-radius: var(--radius-m); background: var(--c-bg); color: var(--c-text); text-decoration: none; }
+.ruled { background: var(--c-surface); box-shadow: inset 0 3px 0 var(--c-accent); }
+.today { border-color: var(--c-accent); }
+.dayName { font-size: var(--fs-s); color: var(--c-text-2); }
+.dayName strong { color: var(--c-text); }
+.dayTheme { font-weight: 600; font-size: var(--fs-s); }
+.dayItem { font-size: var(--fs-xs); color: var(--c-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.columns { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, 1fr); gap: var(--sp-3); overflow-x: auto; }
+.column { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); border-radius: var(--radius-m); background: var(--c-bg); }
+.colHead { display: flex; align-items: center; gap: var(--sp-2); font-weight: 600; }
+.done { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-2); }
+.doneCard { display: flex; flex-direction: column; gap: 6px; padding: var(--sp-2); border: 1px solid var(--c-border); border-radius: var(--radius-m); color: var(--c-text); text-decoration: none; }
+.doneCard img, .doneIcon { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-s); background: var(--c-surface-2); display: grid; place-items: center; color: var(--c-text-3); }
+.doneText { font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.projectRow { display: grid; grid-template-columns: 1fr 2fr auto; align-items: center; gap: var(--sp-3); min-height: 48px; color: var(--c-text); text-decoration: none; }
+.proposals { font-size: var(--fs-s); color: var(--c-text-2); }
+.soon { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.soonCard { display: flex; gap: var(--sp-3); align-items: flex-start; padding: var(--sp-4); border: 1px dashed var(--c-border-strong); border-radius: var(--radius-l); color: var(--c-text); text-decoration: none; font-size: var(--fs-s); }
+.soonCard svg { color: var(--c-accent); flex: none; }
+.howto { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-4); font-size: var(--fs-s); color: var(--c-text-2); }

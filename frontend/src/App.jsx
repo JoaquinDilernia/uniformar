@@ -16,10 +16,10 @@ import { IdeasPage } from './pages/ideas/IdeasPage.jsx';
 import { CalendarPage } from './pages/calendar/CalendarPage.jsx';
 import { ProjectsPage } from './pages/projects/ProjectsPage.jsx';
 import { ProjectDetail } from './pages/projects/ProjectDetail.jsx';
+import { HomePage } from './pages/home/HomePage.jsx';
 import s from './pages/pages.module.css';
 
 // Las pantallas reales reemplazan a estos placeholders en las Tasks 18–23
-const HomePage = () => <Placeholder title="Inicio" />;
 
 const UsersPage = () => <Placeholder title="Usuarios" />;
 const SettingsPage = () => <Placeholder title="Ajustes" />;
