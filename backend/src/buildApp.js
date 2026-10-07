@@ -15,6 +15,8 @@ import { createCalendarRepo } from './repo/calendar.js';
 import { createCalendarRouter } from './routes/calendar.js';
 import { createProjectsRepo } from './repo/projects.js';
 import { createProjectsRouter } from './routes/projects.js';
+import { createHomeRepo } from './repo/home.js';
+import { createHomeRouter } from './routes/home.js';
 
 export function buildApp({ db, jwtSecret, storage, secureCookies = false, staticDir, loginLimit = 10 }) {
   if (!jwtSecret) throw new Error('Falta jwtSecret');
@@ -39,6 +41,7 @@ export function buildApp({ db, jwtSecret, storage, secureCookies = false, static
   api.use(createIdeasRouter({ db, ideasRepo, clientsRepo, activityRepo, files }));
   api.use(createCalendarRouter({ db, calendarRepo, files }));
   api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
+  api.use(createHomeRouter({ homeRepo: createHomeRepo(db), storage }));
   // (las tasks siguientes montan sus routers acá)
 
   const app = createApp({
