@@ -7,9 +7,13 @@ import { createUsersRouter } from './routes/users.js';
 import { createClientsRepo } from './repo/clients.js';
 import { createActivityRepo } from './repo/activity.js';
 import { createSettingsRouter } from './routes/settings.js';
+import { createFilesService } from './services/files.js';
+import { createFilesRouter } from './routes/files.js';
 
 export function buildApp({ db, jwtSecret, storage, secureCookies = false, staticDir, loginLimit = 10 }) {
   if (!jwtSecret) throw new Error('Falta jwtSecret');
+  if (!storage) throw new Error('Falta storage');
+  const files = createFilesService({ db, storage });
   const usersRepo = createUsersRepo(db);
   const clientsRepo = createClientsRepo(db);
   // eslint-disable-next-line no-unused-vars
@@ -22,9 +26,10 @@ export function buildApp({ db, jwtSecret, storage, secureCookies = false, static
   api.use(authenticate, requirePasswordChanged);
   api.use('/users', createUsersRouter({ usersRepo }));
   api.use(createSettingsRouter({ db, clientsRepo }));
+  api.use(createFilesRouter({ files }));
   // (las tasks siguientes montan sus routers acá)
 
-  return createApp({
+  const app = createApp({
     apiRouter: api,
     staticDir,
     health: async () => {
@@ -32,4 +37,6 @@ export function buildApp({ db, jwtSecret, storage, secureCookies = false, static
       return { db: true };
     },
   });
+  app.locals.files = files;
+  return app;
 }
