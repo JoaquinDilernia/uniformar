@@ -1,0 +1,88 @@
+:root {
+  color-scheme: light;
+  --c-bg: #f6f4f3;
+  --c-surface: #ffffff;
+  --c-surface-2: #f1eeed;
+  --c-surface-3: #e9e5e4;
+  --c-border: #e3dedc;
+  --c-border-strong: #cfc8c6;
+  --c-text: #1d1a1b;
+  --c-text-2: #5d5658;
+  --c-text-3: #8a8285;
+  --c-accent: #775d66;
+  --c-accent-hover: #654e57;
+  --c-accent-soft: #f0e9eb;
+  --c-accent-text: #5e4750;
+  --c-on-accent: #ffffff;
+  --c-success: #2d7a57;
+  --c-success-soft: #e2f1e9;
+  --c-warn: #9a640f;
+  --c-warn-soft: #faefd9;
+  --c-info: #366497;
+  --c-info-soft: #e4edf7;
+  --c-danger: #b23a3c;
+  --c-danger-soft: #fbe7e7;
+  --c-overlay: rgb(29 26 27 / 0.42);
+  --shadow-1: 0 1px 2px rgb(29 26 27 / 0.05), 0 1px 3px rgb(29 26 27 / 0.07);
+  --shadow-2: 0 10px 30px rgb(29 26 27 / 0.14), 0 2px 6px rgb(29 26 27 / 0.06);
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 18px;
+  --radius-pill: 999px;
+  --font-ui: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Outfit Variable', var(--font-ui);
+  --fs-xs: 0.75rem;
+  --fs-s: 0.8125rem;
+  --fs-m: 0.9375rem;
+  --fs-l: 1.0625rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --tap: 44px;
+  --nav-h: 64px;
+  --sidebar-w: 248px;
+  --content-max: 1120px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur: 180ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --c-bg: #151314;
+    --c-surface: #1e1b1c;
+    --c-surface-2: #262223;
+    --c-surface-3: #2f2a2c;
+    --c-border: #342f31;
+    --c-border-strong: #4a4346;
+    --c-text: #f3eff0;
+    --c-text-2: #bfb6b9;
+    --c-text-3: #8f8689;
+    --c-accent: #b997a3;
+    --c-accent-hover: #c9aab5;
+    --c-accent-soft: #34292d;
+    --c-accent-text: #d8bfc8;
+    --c-on-accent: #1d1a1b;
+    --c-success: #6cc79b;
+    --c-success-soft: #1d3329;
+    --c-warn: #e2b05a;
+    --c-warn-soft: #3a2f1b;
+    --c-info: #84b0e3;
+    --c-info-soft: #1f2c3b;
+    --c-danger: #ef8a8b;
+    --c-danger-soft: #3d2223;
+    --c-overlay: rgb(0 0 0 / 0.6);
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-2: 0 12px 32px rgb(0 0 0 / 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur: 0ms; }
+}

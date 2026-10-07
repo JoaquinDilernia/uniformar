@@ -1,0 +1,13 @@
+.header {
+  position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: var(--sp-2);
+  padding: calc(var(--sp-3) + env(safe-area-inset-top)) var(--sp-4) var(--sp-3);
+  background: color-mix(in srgb, var(--c-bg) 88%, transparent); backdrop-filter: blur(10px);
+}
+@media (min-width: 900px) { .header { padding: var(--sp-5) var(--sp-6) var(--sp-4); } }
+.back { display: grid; place-items: center; width: 40px; height: 40px; margin-left: -8px; border: 0; border-radius: 50%; background: transparent; color: var(--c-text); cursor: pointer; }
+.back:hover { background: var(--c-surface-2); }
+.titles { flex: 1; min-width: 0; }
+.title { font-size: var(--fs-xl); }
+@media (min-width: 900px) { .title { font-size: var(--fs-2xl); } }
+.subtitle { color: var(--c-text-2); font-size: var(--fs-s); margin-top: 2px; }
+.actions { display: flex; gap: var(--sp-2); flex: none; }

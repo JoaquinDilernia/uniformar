@@ -1,0 +1,19 @@
+.viewport {
+  position: fixed; z-index: 100; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-3));
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  width: min(440px, calc(100vw - 2 * var(--sp-4))); pointer-events: none;
+}
+@media (min-width: 900px) { .viewport { bottom: var(--sp-5); left: auto; right: var(--sp-5); transform: none; } }
+.toast {
+  pointer-events: auto; display: flex; align-items: flex-start; gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4); border-radius: var(--radius-m);
+  background: var(--c-text); color: var(--c-surface); box-shadow: var(--shadow-2);
+  animation: in var(--dur) var(--ease);
+}
+.error { background: var(--c-danger); color: #fff; }
+.icon { flex: none; margin-top: 2px; }
+.success .icon { color: var(--c-success-soft); }
+.msg { flex: 1; font-size: var(--fs-m); line-height: 1.4; }
+.close { flex: none; border: 0; background: transparent; color: inherit; opacity: 0.8; padding: 2px; cursor: pointer; border-radius: var(--radius-s); }
+@keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
