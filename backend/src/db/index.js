@@ -9,7 +9,19 @@ export function createPgDb(connectionString) {
   const pool = new pg.Pool({ connectionString, max: 5, ssl });
   return {
     query: (text, params) => pool.query(text, params),
-    exec: (sql) => pool.query(sql),
+    // Cliente dedicado: si el SQL (p. ej. una migración con BEGIN/COMMIT) falla a mitad de camino,
+    // se hace ROLLBACK en esa misma conexión antes de devolverla al pool.
+    async exec(sql) {
+      const client = await pool.connect();
+      try {
+        return await client.query(sql);
+      } catch (err) {
+        try { await client.query('ROLLBACK'); } catch { /* ignorar */ }
+        throw err;
+      } finally {
+        client.release();
+      }
+    },
     async tx(fn) {
       const client = await pool.connect();
       try {

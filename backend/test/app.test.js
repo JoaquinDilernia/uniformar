@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import { Router } from 'express';
 import { z } from 'zod';
@@ -17,6 +17,14 @@ describe('app base', () => {
     const res = await request(createApp({ health: async () => ({ db: true }) })).get('/health');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true, db: true });
+  });
+
+  it('/health con fallo → 503 genérico sin filtrar detalles', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await request(createApp({ health: async () => { throw new Error('postgres://user:pass@host'); } })).get('/health');
+    spy.mockRestore();
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({ ok: false, error: 'db no disponible' });
   });
 
   it('ruta /api inexistente → 404 con formato de error', async () => {
@@ -52,8 +60,10 @@ describe('app base', () => {
   });
 
   it('error desconocido → 500 INTERNAL sin filtrar detalles', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const app = appWith((r) => r.get('/x', async () => { throw new Error('secreto interno'); }));
     const res = await request(app).get('/api/x');
+    spy.mockRestore();
     expect(res.status).toBe(500);
     expect(res.body.error.code).toBe('INTERNAL');
     expect(res.body.error.message).not.toContain('secreto');

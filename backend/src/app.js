@@ -14,7 +14,8 @@ export function createApp({ apiRouter, staticDir, health } = {}) {
     try {
       res.json({ ok: true, ...(await health()) });
     } catch (err) {
-      res.status(503).json({ ok: false, error: err.message });
+      console.error('[health]', err);
+      res.status(503).json({ ok: false, error: 'db no disponible' });
     }
   });
   if (apiRouter) app.use('/api', apiRouter);
