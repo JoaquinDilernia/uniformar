@@ -340,3 +340,26 @@ requiere `manage_users`; `home` requiere `view` en `home` y cada bloque se filtr
 - Cuenta de Cloudflare R2 (o se usa un bucket de TechDI) y sus claves.
 - Mails definitivos de Santi y Bauti.
 - Para el Subproyecto 3: crear la app de Meta (ads_management) y pedir el developer token de Google Ads.
+
+---
+
+## 12. Cambio de despliegue (decisión del 2026-10-07, reemplaza lo dicho en §3, §4 y §11 donde contradiga)
+
+El usuario definió que **el frontend se publica aparte** en `uniformar.techdi.com.ar` (hosting estático de techdi, build
+subido a mano como en los bots) y **el backend queda en Railway con la URL que genera Railway** (`*.up.railway.app`).
+Como son sitios distintos, la cookie de sesión sería de terceros (Safari/iPhone la bloquea), así que:
+
+- **Sesión por token en header**, igual que los otros proyectos de TechDI: login y change-password devuelven
+  `{ user, token }`; el front guarda el token en `localStorage` (`uf_token`) y lo manda como
+  `Authorization: Bearer <token>`. Mismo JWT (30 días, `token_version`, renovación si quedan < 15 días): cuando se
+  renueva, el backend devuelve el nuevo token en el header `X-Session-Token` y el front lo reemplaza. Logout borra el
+  token local. Ya no se usa cookie.
+- **CORS** en el backend: solo el origen `FRONTEND_URL` (lista separada por comas; en dev `http://localhost:5173`),
+  exponiendo `X-Session-Token`.
+- **Frontend**: base de la API desde `VITE_API_URL` (vacío en dev → usa el proxy `/api` de Vite). Las URLs de archivos
+  del driver local (`/api/files/:id/raw`) necesitan el token, así que el front las pide con `?token=` **solo** para ese
+  endpoint; con R2 (producción) las URLs firmadas no lo necesitan.
+- **Backend** deja de servir el build del front en producción (sigue pudiendo hacerlo en dev si existe `frontend/dist`).
+  `railway.json` construye y arranca solo el backend.
+- Deploy del front: `cd frontend && VITE_API_URL=https://<app>.up.railway.app npm run build` y subir `dist/` (zip) al
+  subdominio.
