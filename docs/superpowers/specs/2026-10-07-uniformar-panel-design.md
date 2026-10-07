@@ -116,31 +116,32 @@ uniformar/
 ## 5. Modelo de datos
 
 ```
-users              id uuid PK, email citext UNIQUE, name, password_hash, avatar_color,
+users              id uuid PK, email text (UNIQUE sobre lower(email)), name, password_hash, avatar_color,
                    is_active bool, must_change_password bool, can_delete bool, manage_users bool,
                    token_version int, created_at, last_login_at
 user_permissions   user_id FK, section text, level text CHECK (none|view|edit), PK(user_id, section)
 
-clients            id, name citext UNIQUE, created_at
+clients            id, name text (UNIQUE sobre lower(name)), created_at
 content_rules      id, weekday smallint (0=dom..6=sáb), time time NULL, theme text, format text,
                    channels text[], active bool, sort int
                    -- seed: mar carrusel por rubro (IG), mié 1-2 historias cotización (IG),
                    --       vie reel cliente real (IG+TikTok), dom 20:00 reel humor/trend (IG+TikTok)
 
 ideas              id, kind (idea|must), format (video|photo), category (domingo|viernes|producto|otra),
-                   client_id FK NULL, text, reference_url NULL, decision (pending|yes|no),
+                   client_id FK NULL, assignee_id FK NULL (quién la ejecuta; default Santi en la UI),
+                   text, reference_url NULL, decision (pending|yes|no),
                    done_at NULL, result_url NULL, due_date NULL,
                    note_santi NULL, note_santi_by FK NULL, note_sofi NULL, note_sofi_by FK NULL,
                    legacy_id NULL, created_by FK, created_at, updated_at
 
 calendar_items     id, date, title, channels text[] (ig_story|ig_post|ig_reel|tiktok),
-                   idea_id FK NULL, copy NULL, piece_url NULL, references text NULL,
+                   idea_id FK NULL, copy NULL, piece_url NULL, refs text NULL,  -- "references" es palabra reservada
                    status (draft|ready|published), sort, created_by FK, created_at, updated_at
 
 projects           id, name, status (active|proposal|upcoming|done), start_date NULL, end_date NULL,
                    goal_text, doing_text, how_text, legacy_id NULL, created_by FK, created_at, updated_at
 project_tasks      id, project_id FK ON DELETE CASCADE, text, due_date NULL, done bool, done_at NULL,
-                   sort, created_at
+                   sort, legacy_id NULL, created_at
 task_assignees     task_id FK ON DELETE CASCADE, user_id FK, PK(task_id, user_id)
 project_updates    id, project_id FK ON DELETE CASCADE, author_id FK, body, created_at
 
@@ -177,6 +178,9 @@ attempts, created_at)` y un cron horario + el arranque del servidor la reintenta
 `activity_log` con el diff de campos cambiados (en la misma transacción).
 
 ---
+
+**"Te toca":** "Te toca decidir" = ideas por decidir con `assignee_id` = yo; "Te toca hacer" = ideas por hacer / sí o sí
+con `assignee_id` = yo, más mis tareas abiertas de proyectos activos. La migración asigna las ideas a Santi.
 
 ## 6. API (resumen)
 
