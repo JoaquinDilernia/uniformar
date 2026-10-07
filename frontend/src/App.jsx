@@ -11,19 +11,15 @@ import { Login } from './pages/Login.jsx';
 import { ChangePassword } from './pages/ChangePassword.jsx';
 import { MorePage } from './pages/More.jsx';
 import { ComingSoon } from './pages/ComingSoon.jsx';
-import { Placeholder } from './pages/Placeholder.jsx';
 import { IdeasPage } from './pages/ideas/IdeasPage.jsx';
 import { CalendarPage } from './pages/calendar/CalendarPage.jsx';
 import { ProjectsPage } from './pages/projects/ProjectsPage.jsx';
 import { ProjectDetail } from './pages/projects/ProjectDetail.jsx';
 import { HomePage } from './pages/home/HomePage.jsx';
 import { UsersPage } from './pages/users/UsersPage.jsx';
+import { SettingsPage } from './pages/Settings.jsx';
+import { AccountPage } from './pages/Account.jsx';
 import s from './pages/pages.module.css';
-
-// Las pantallas reales reemplazan a estos placeholders en las Tasks 18–23
-
-const SettingsPage = () => <Placeholder title="Ajustes" />;
-const AccountPage = () => <Placeholder title="Mi cuenta" />;
 
 function Home() {
   const { user } = useAuth();
