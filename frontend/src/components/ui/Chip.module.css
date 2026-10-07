@@ -1,0 +1,10 @@
+.group { display: flex; gap: var(--sp-2); overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
+.group::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 var(--sp-3);
+  border-radius: var(--radius-pill); border: 1px solid var(--c-border-strong); background: var(--c-surface);
+  color: var(--c-text-2); font-size: var(--fs-s); font-weight: 600; cursor: pointer; white-space: nowrap;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.selected { background: var(--c-accent); border-color: var(--c-accent); color: var(--c-on-accent); }
+.count { font-size: var(--fs-xs); opacity: 0.8; }

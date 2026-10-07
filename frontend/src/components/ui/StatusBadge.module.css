@@ -1,0 +1,6 @@
+.badge { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: var(--radius-pill); font-size: var(--fs-xs); font-weight: 700; white-space: nowrap; }
+.accent { background: var(--c-accent-soft); color: var(--c-accent-text); }
+.warn { background: var(--c-warn-soft); color: var(--c-warn); }
+.info { background: var(--c-info-soft); color: var(--c-info); }
+.success { background: var(--c-success-soft); color: var(--c-success); }
+.neutral { background: var(--c-surface-2); color: var(--c-text-3); }

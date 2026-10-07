@@ -8,6 +8,7 @@ import './styles/tokens.css';
 import './styles/global.css';
 import { createQueryClient } from './api/queryClient.js';
 import { AuthProvider } from './state/auth.jsx';
+import { ConfirmProvider } from './components/ui/ConfirmDialog.jsx';
 import App from './App.jsx';
 
 const queryClient = createQueryClient();
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <QueryClientProvider client={queryClient}>
       <HashRouter>
         <AuthProvider>
-          <App />
+          <ConfirmProvider>
+            <App />
+          </ConfirmProvider>
         </AuthProvider>
       </HashRouter>
     </QueryClientProvider>
