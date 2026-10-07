@@ -1,0 +1,10 @@
+{
+  "name": "uniformar",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "npm --prefix backend ci --omit=dev && npm --prefix frontend ci && npm --prefix frontend run build",
+    "start": "npm --prefix backend start",
+    "test": "npm --prefix backend test && npm --prefix frontend test"
+  }
+}
