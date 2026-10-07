@@ -10,6 +10,7 @@ export function ConfirmProvider({ children }) {
   const resolver = useRef(null);
 
   const confirm = useCallback((o) => new Promise((resolve) => {
+    resolver.current?.(false);
     resolver.current = resolve;
     setOpts(o);
   }), []);
@@ -24,7 +25,7 @@ export function ConfirmProvider({ children }) {
     <ConfirmContext.Provider value={confirm}>
       {children}
       {opts && createPortal(
-        <div className={s.root} onKeyDown={(e) => e.key === 'Escape' && close(false)}>
+        <div className={s.root} onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); close(false); } }}>
           <div className={s.backdrop} onClick={() => close(false)} />
           <div role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" className={s.dialog}>
             <h2 id="confirm-title" className={s.title}>{opts.title}</h2>

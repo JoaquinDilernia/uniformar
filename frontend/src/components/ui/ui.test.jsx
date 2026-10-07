@@ -71,3 +71,41 @@ describe('StatusBadge y Segmented', () => {
     expect(onChange).toHaveBeenCalledWith('edit');
   });
 });
+
+describe('correcciones de Sheet y ConfirmDialog', () => {
+  it('re-render con un onClose nuevo no le saca el foco a un input', async () => {
+    const { rerender } = render(<Sheet open onClose={() => {}} title="Idea"><input aria-label="titulo" /></Sheet>);
+    const input = screen.getByLabelText('titulo');
+    input.focus();
+    expect(input).toHaveFocus();
+    rerender(<Sheet open onClose={() => {}} title="Idea"><input aria-label="titulo" /></Sheet>);
+    expect(screen.getByLabelText('titulo')).toHaveFocus();
+  });
+
+  it('Esc con un confirm abierto sobre una hoja cierra solo el confirm', async () => {
+    const onClose = vi.fn();
+    const onResult = vi.fn();
+    function Probe() {
+      const confirm = useConfirm();
+      return <button type="button" onClick={async () => onResult(await confirm({ title: '¿Seguro?' }))}>abrir</button>;
+    }
+    render(<ConfirmProvider><Sheet open onClose={onClose} title="Idea"><Probe /></Sheet></ConfirmProvider>);
+    await userEvent.click(screen.getByText('abrir'));
+    await userEvent.keyboard('{Escape}');
+    expect(onResult).toHaveBeenCalledWith(false);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('un segundo confirm() resuelve el primero en false', async () => {
+    const results = [];
+    function Probe() {
+      const confirm = useConfirm();
+      return <button type="button" onClick={() => confirm({ title: 'A' }).then((r) => results.push(r))}>abrir</button>;
+    }
+    render(<ConfirmProvider><Probe /></ConfirmProvider>);
+    await userEvent.click(screen.getByText('abrir'));
+    screen.getByText('abrir').click();
+    await Promise.resolve();
+    expect(results).toEqual([false]);
+  });
+});

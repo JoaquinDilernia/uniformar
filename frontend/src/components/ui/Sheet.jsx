@@ -6,10 +6,16 @@ import s from './Sheet.module.css';
 export function Sheet({ open, onClose, title, footer, size = 'md', children }) {
   const titleId = useId();
   const panel = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return undefined;
-    const onKey = (e) => e.key === 'Escape' && onClose();
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      if (document.querySelector('[role="alertdialog"]')) return;
+      onCloseRef.current();
+    };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -18,7 +24,7 @@ export function Sheet({ open, onClose, title, footer, size = 'md', children }) {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
   return createPortal(

@@ -8,3 +8,4 @@
 }
 .selected { background: var(--c-accent); border-color: var(--c-accent); color: var(--c-on-accent); }
 .count { font-size: var(--fs-xs); opacity: 0.8; }
+@media (pointer: coarse) { .chip { height: var(--tap); } }
