@@ -17,7 +17,7 @@ export function signSession(user, secret) {
 
 export function verifySession(token, secret) {
   try {
-    return jwt.verify(token, secret);
+    return jwt.verify(token, secret, { algorithms: ['HS256'] });
   } catch {
     return null;
   }
