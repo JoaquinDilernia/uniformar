@@ -13,6 +13,8 @@ import { createIdeasRepo } from './repo/ideas.js';
 import { createIdeasRouter } from './routes/ideas.js';
 import { createCalendarRepo } from './repo/calendar.js';
 import { createCalendarRouter } from './routes/calendar.js';
+import { createProjectsRepo } from './repo/projects.js';
+import { createProjectsRouter } from './routes/projects.js';
 
 export function buildApp({ db, jwtSecret, storage, secureCookies = false, staticDir, loginLimit = 10 }) {
   if (!jwtSecret) throw new Error('Falta jwtSecret');
@@ -24,6 +26,7 @@ export function buildApp({ db, jwtSecret, storage, secureCookies = false, static
   const activityRepo = createActivityRepo(db);
   const ideasRepo = createIdeasRepo(db);
   const calendarRepo = createCalendarRepo(db);
+  const projectsRepo = createProjectsRepo(db);
   const authenticate = createAuthenticate({ usersRepo, secret: jwtSecret, secureCookies });
 
   const api = Router();
@@ -35,6 +38,7 @@ export function buildApp({ db, jwtSecret, storage, secureCookies = false, static
   api.use(createFilesRouter({ files }));
   api.use(createIdeasRouter({ db, ideasRepo, clientsRepo, activityRepo, files }));
   api.use(createCalendarRouter({ db, calendarRepo, files }));
+  api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
   // (las tasks siguientes montan sus routers acá)
 
   const app = createApp({
