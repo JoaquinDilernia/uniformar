@@ -9,6 +9,8 @@ import { createActivityRepo } from './repo/activity.js';
 import { createSettingsRouter } from './routes/settings.js';
 import { createFilesService } from './services/files.js';
 import { createFilesRouter } from './routes/files.js';
+import { createIdeasRepo } from './repo/ideas.js';
+import { createIdeasRouter } from './routes/ideas.js';
 
 export function buildApp({ db, jwtSecret, storage, secureCookies = false, staticDir, loginLimit = 10 }) {
   if (!jwtSecret) throw new Error('Falta jwtSecret');
@@ -17,7 +19,8 @@ export function buildApp({ db, jwtSecret, storage, secureCookies = false, static
   const usersRepo = createUsersRepo(db);
   const clientsRepo = createClientsRepo(db);
   // eslint-disable-next-line no-unused-vars
-  const activityRepo = createActivityRepo(db); // lo usan las Tasks 8-10
+  const activityRepo = createActivityRepo(db);
+  const ideasRepo = createIdeasRepo(db);
   const authenticate = createAuthenticate({ usersRepo, secret: jwtSecret, secureCookies });
 
   const api = Router();
@@ -27,6 +30,7 @@ export function buildApp({ db, jwtSecret, storage, secureCookies = false, static
   api.use('/users', createUsersRouter({ usersRepo }));
   api.use(createSettingsRouter({ db, clientsRepo }));
   api.use(createFilesRouter({ files }));
+  api.use(createIdeasRouter({ db, ideasRepo, clientsRepo, activityRepo, files }));
   // (las tasks siguientes montan sus routers acá)
 
   const app = createApp({
