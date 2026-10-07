@@ -27,7 +27,7 @@ export function CalendarPage() {
   const from = weeks[0][0];
   const to = weeks.at(-1)[6];
   const { data: items = [] } = useCalendarRange(from, to);
-  const { data: rules = [] } = useRules();
+  const { data: rules = [], isSuccess: rulesReady } = useRules();
   const byDate = useMemo(() => items.reduce((acc, i) => ({ ...acc, [i.date]: [...(acc[i.date] ?? []), i] }), {}), [items]);
   const rulesFor = (d) => rules.filter((r) => r.active && r.weekday === weekdayOf(d));
   const open = (d) => navigate(`/calendario/${d}`);
@@ -51,7 +51,7 @@ export function CalendarPage() {
           : <WeekList weeks={weeks} month={month} byDate={byDate} rulesFor={rulesFor} onOpen={open} />}
       </div>
       {canEdit && <Fab icon={Plus} label="Agregar pieza" onClick={() => open(todayART())} />}
-      {date && <DaySheet key={date} date={date} items={byDate[date] ?? []} rules={rulesFor(date)} onClose={() => navigate('/calendario')} />}
+      {date && <DaySheet key={date} date={date} items={byDate[date] ?? []} rules={rulesFor(date)} rulesReady={rulesReady} onClose={() => navigate('/calendario')} />}
     </>
   );
 }

@@ -4,6 +4,7 @@ import { useAuth, useCan } from '../../state/auth.jsx';
 import { Sheet } from '../../components/ui/Sheet.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.jsx';
+import { Spinner } from '../../components/ui/Spinner.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { useConfirm } from '../../components/ui/ConfirmDialog.jsx';
 import { ImageUploader } from '../../components/media/ImageUploader.jsx';
@@ -56,13 +57,14 @@ function ItemCard({ item, open, onToggle, canEdit, canDelete }) {
   );
 }
 
-export function DaySheet({ date, items, rules, onClose }) {
+export function DaySheet({ date, items, rules, rulesReady = true, onClose }) {
   const canEdit = useCan()('calendar', 'edit');
   const { user } = useAuth();
   // null = automático: sin piezas, el alta arranca abierta (aunque la sesión llegue después del primer render)
   const [addingOverride, setAdding] = useState(null);
   const adding = addingOverride ?? (items.length === 0 && canEdit);
-  const [openId, setOpenId] = useState(items.length === 1 ? items[0].id : null);
+  const [openOverride, setOpenId] = useState(undefined);
+  const openId = openOverride === undefined ? (items.length === 1 ? items[0].id : null) : openOverride;
 
   return (
     <Sheet open onClose={onClose} title={cap(formatLong(date))} size="lg">
@@ -84,7 +86,7 @@ export function DaySheet({ date, items, rules, onClose }) {
         {canEdit && (adding ? (
           <div className={s.item}>
             <div className={s.itemBody}>
-              <ItemForm date={date} defaultChannels={rules[0]?.channels ?? []} onDone={(saved) => { setAdding(false); setOpenId(saved.id); }} onCancel={items.length ? () => setAdding(false) : undefined} />
+              {!rulesReady ? <Spinner /> : <ItemForm date={date} defaultChannels={rules[0]?.channels ?? []} onDone={(saved) => { setAdding(false); setOpenId(saved.id); }} onCancel={items.length ? () => setAdding(false) : undefined} />}
             </div>
           </div>
         ) : (

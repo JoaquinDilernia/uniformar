@@ -21,13 +21,14 @@ export function ItemForm({ date, item, defaultChannels = [], onDone, onCancel })
   const create = useCreateItem();
   const update = useUpdateItem();
   const pending = create.isPending || update.isPending;
+  const tooLong = form.copy.length > IG_COPY_MAX;
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v?.target ? v.target.value : v }));
   const toggleChannel = (c) => setForm((f) => ({ ...f, channels: f.channels.includes(c) ? f.channels.filter((x) => x !== c) : [...f.channels, c] }));
   const linkable = ideas.filter((i) => i.status !== 'no_se_hace');
 
   function onSubmit(e) {
     e.preventDefault();
-    if (pending) return;
+    if (pending || tooLong) return;
     const nul = (v) => (v.trim() === '' ? null : v);
     const body = { title: form.title.trim(), channels: CHANNELS.filter((c) => form.channels.includes(c)), status: form.status, idea_id: form.idea_id || null, copy: nul(form.copy), piece_url: nul(form.piece_url.trim()), refs: nul(form.refs) };
     const opts = { onError: (err) => setErrors(err.fields ?? {}), onSuccess: (saved) => { clearDraft(); onDone?.(saved); } };
@@ -53,6 +54,9 @@ export function ItemForm({ date, item, defaultChannels = [], onDone, onCancel })
       <Field label="Idea vinculada">
         <Select value={form.idea_id} onChange={set('idea_id')}>
           <option value="">— Ninguna —</option>
+          {form.idea_id && !linkable.some((i) => i.id === form.idea_id) && (
+            <option value={form.idea_id}>{(item?.idea?.text ?? ideas.find((i) => i.id === form.idea_id)?.text ?? 'Idea vinculada').split('\n')[0].slice(0, 80)}</option>
+          )}
           {IDEA_STATUS_ORDER.filter((st) => st !== 'no_se_hace').map((st) => {
             const group = linkable.filter((i) => i.status === st);
             return group.length ? (
@@ -63,7 +67,7 @@ export function ItemForm({ date, item, defaultChannels = [], onDone, onCancel })
           })}
         </Select>
       </Field>
-      <Field label="Copy del posteo" hint={`${form.copy.length} / ${IG_COPY_MAX} caracteres`} error={form.copy.length > IG_COPY_MAX ? 'Instagram admite hasta 2.200 caracteres' : errors.copy}>
+      <Field label="Copy del posteo" hint={`${form.copy.length} / ${IG_COPY_MAX} caracteres`} error={tooLong ? 'Instagram admite hasta 2.200 caracteres' : errors.copy}>
         <Textarea minRows={3} value={form.copy} onChange={set('copy')} />
       </Field>
       <Field label="Link de la pieza terminada" hint="Lo carga Santi cuando está lista (Drive, etc.)." error={errors.piece_url}>
@@ -74,7 +78,7 @@ export function ItemForm({ date, item, defaultChannels = [], onDone, onCancel })
       </Field>
       <div className={s.formActions}>
         {onCancel && <Button variant="secondary" onClick={onCancel}>Cancelar</Button>}
-        <Button type="submit" loading={pending}>{isNew ? 'Guardar pieza' : 'Guardar cambios'}</Button>
+        <Button type="submit" loading={pending} disabled={tooLong}>{isNew ? 'Guardar pieza' : 'Guardar cambios'}</Button>
       </div>
     </form>
   );

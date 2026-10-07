@@ -43,6 +43,26 @@ describe('DaySheet', () => {
   });
 });
 
+describe('DaySheet, grilla tardía', () => {
+  it('si las reglas llegan después del montaje, el alta queda con los canales de la grilla', async () => {
+    global.fetch = vi.fn((url) => (url === '/api/auth/me' ? json({ user: me }) : url === '/api/ideas' ? json({ ideas: [] }) : json({})));
+    const client = createQueryClient();
+    const tree = (rules, rulesReady) => (
+      <QueryClientProvider client={client}>
+        <MemoryRouter><AuthProvider><ConfirmProvider>
+          <DaySheet date="2026-10-09" items={[]} rules={rules} rulesReady={rulesReady} onClose={() => {}} />
+        </ConfirmProvider></AuthProvider></MemoryRouter>
+      </QueryClientProvider>
+    );
+    const { rerender } = render(tree([], false));
+    await screen.findByText('Viernes 9 de octubre', { exact: false }).catch(() => {});
+    expect(screen.queryByLabelText('¿Qué se sube?')).not.toBeInTheDocument();
+    rerender(tree([{ weekday: 5, theme: 'Cliente real', format: 'Reel', channels: ['ig_reel', 'tiktok'], time: null, active: true }], true));
+    expect(await screen.findByRole('button', { name: 'Reel IG' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'TikTok' })).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
 describe('PreviewMockup', () => {
   it('historia/reel → marco vertical; post → marco de feed con copy', () => {
     const files = [{ id: 'f1', url: '/x.png' }];
