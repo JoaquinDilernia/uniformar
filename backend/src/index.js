@@ -64,6 +64,7 @@ const app = buildApp({
   storage,
   corsOrigin: process.env.FRONTEND_URL,
   staticDir: fs.existsSync(path.join(distDir, 'index.html')) ? distDir : undefined,
+  ads: { meta, anthropic, config: adsConfig, model: process.env.ADS_AGENT_MODEL || undefined },
 });
 
 // Borrados de archivos que fallaron: al arrancar y cada hora
