@@ -146,6 +146,27 @@ describe('pauta', () => {
     expect((await admin.post(`/api/ads/creatives/${id}/publish`).send({ adset_id: '901' })).status).toBe(502);
   });
 
+  it('si la cuenta publicitaria no tiene acceso al Instagram, publica con la página', async () => {
+    const created = await admin.post('/api/ads/creatives').send({ name: 'Sin IG', copy: 'texto' });
+    const id = created.body.creative.id;
+    await admin.post('/api/files').field('owner_type', 'ad_feed').field('owner_id', id).attach('file', PNG_1x1, 'feed.png');
+    const original = meta.createCreative;
+    meta.createCreative = async (spec) => {
+      meta.calls.push(['createCreative', spec]);
+      if (spec.object_story_spec.instagram_user_id) throw new Error('Meta 200: Permissions error (La cuenta publicitaria no tiene acceso a esta cuenta de Instagram.)');
+      return { id: '906' };
+    };
+    try {
+      const pub = await admin.post(`/api/ads/creatives/${id}/publish`).send({ adset_id: '901' });
+      expect(pub.status).toBe(200);
+      const specs = meta.calls.filter((c) => c[0] === 'createCreative').map((c) => c[1]);
+      expect(specs).toHaveLength(2);
+      expect(specs[1].object_story_spec.instagram_user_id).toBeUndefined();
+    } finally {
+      meta.createCreative = original;
+    }
+  });
+
   it('activar o pausar a mano desde el panel queda en el historial', async () => {
     const res = await admin.post('/api/ads/objects/900/status').send({ level: 'campaign', status: 'ACTIVE', name: 'UNIFORMAR' });
     expect(res.status).toBe(200);

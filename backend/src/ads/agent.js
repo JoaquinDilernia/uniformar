@@ -30,12 +30,24 @@ export function createExecutor({ meta, repo, files, config }) {
     const feedHash = await meta.uploadImage(await files.read(await files.get(feed.id)));
     const storyHash = story ? await meta.uploadImage(await files.read(await files.get(story.id))) : null;
     const name = buildAdName({ adsetName: adsetName || adsetId, creativeName: creative.name, date: artDate() });
-    const spec = buildWhatsappCreativeSpec({
-      name, pageId: config.pageId, igUserId: config.igUserId, message: creative.copy, headline: creative.headline,
-      feedImageHash: feedHash, storyImageHash: storyHash,
-    });
-    const { id: metaCreativeId } = await meta.createCreative(spec);
-    const ad = await meta.createAd({ name, adsetId, creativeId: metaCreativeId, status: 'ACTIVE' });
+    const publish = async (igUserId) => {
+      const spec = buildWhatsappCreativeSpec({
+        name, pageId: config.pageId, igUserId, message: creative.copy, headline: creative.headline,
+        feedImageHash: feedHash, storyImageHash: storyHash,
+      });
+      const { id: metaCreativeId } = await meta.createCreative(spec);
+      return meta.createAd({ name, adsetId, creativeId: metaCreativeId, status: 'ACTIVE' });
+    };
+    let ad;
+    try {
+      ad = await publish(config.igUserId);
+    } catch (err) {
+      // Si la cuenta publicitaria no tiene acceso al Instagram, se publica con la identidad de la página
+      // (en Instagram aparece igual, como cuenta asociada a la página)
+      if (!config.igUserId || !/instagram/i.test(err.message)) throw err;
+      console.warn('[ads] sin acceso a la cuenta de Instagram, publico sin instagram_user_id:', err.message);
+      ad = await publish(null);
+    }
     await repo.markCreativeUsed(creativeId, ad.id, adsetId);
     return { ad_id: ad.id, name };
   }
