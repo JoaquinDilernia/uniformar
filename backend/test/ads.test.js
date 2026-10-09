@@ -4,7 +4,7 @@ import { PNG_1x1 } from './helpers/fixtures.js';
 import { buildWhatsappCreativeSpec, buildAdName } from '../src/ads/creativeSpec.js';
 import { summarizeRow, totals, CONVERSATION } from '../src/ads/metrics.js';
 
-const config = { accountId: 'act_1', pageId: '111', igUserId: '222', whatsappNumber: '5491100000000' };
+const config = { accountId: 'act_1', pageId: '111', igUserId: '222', pageBackedIgId: '333', whatsappNumber: '5491100000000' };
 
 function fakeMeta() {
   const calls = [];
@@ -146,14 +146,14 @@ describe('pauta', () => {
     expect((await admin.post(`/api/ads/creatives/${id}/publish`).send({ adset_id: '901' })).status).toBe(502);
   });
 
-  it('si la cuenta publicitaria no tiene acceso al Instagram, publica con la página', async () => {
+  it('si no hay acceso a la cuenta de Instagram, publica con la de la página', async () => {
     const created = await admin.post('/api/ads/creatives').send({ name: 'Sin IG', copy: 'texto' });
     const id = created.body.creative.id;
     await admin.post('/api/files').field('owner_type', 'ad_feed').field('owner_id', id).attach('file', PNG_1x1, 'feed.png');
     const original = meta.createCreative;
     meta.createCreative = async (spec) => {
       meta.calls.push(['createCreative', spec]);
-      if (spec.object_story_spec.instagram_user_id) throw new Error('Meta 200: Permissions error (La cuenta publicitaria no tiene acceso a esta cuenta de Instagram.)');
+      if (spec.object_story_spec.instagram_user_id === '222') throw new Error('Meta 200: Permissions error (La cuenta publicitaria no tiene acceso a esta cuenta de Instagram.)');
       return { id: '906' };
     };
     try {
@@ -161,7 +161,7 @@ describe('pauta', () => {
       expect(pub.status).toBe(200);
       const specs = meta.calls.filter((c) => c[0] === 'createCreative').map((c) => c[1]);
       expect(specs).toHaveLength(2);
-      expect(specs[1].object_story_spec.instagram_user_id).toBeUndefined();
+      expect(specs[1].object_story_spec.instagram_user_id).toBe('333');
     } finally {
       meta.createCreative = original;
     }

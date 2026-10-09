@@ -14,6 +14,8 @@ export function adsConfigFromEnv(env = process.env) {
     accountId: env.META_AD_ACCOUNT_ID || 'act_1385921086504906',
     pageId: env.META_PAGE_ID || '1297559076766655',
     igUserId: env.META_IG_USER_ID || '17841446936578488',
+    // Cuenta de Instagram "de la página" (page-backed): respaldo si la de @uniform.ar no está autorizada
+    pageBackedIgId: env.META_PAGE_BACKED_IG_ID || '17841432527012368',
     whatsappNumber: env.META_WHATSAPP_NUMBER || '5491130430035',
   };
 }
@@ -42,11 +44,11 @@ export function createExecutor({ meta, repo, files, config }) {
     try {
       ad = await publish(config.igUserId);
     } catch (err) {
-      // Si la cuenta publicitaria no tiene acceso al Instagram, se publica con la identidad de la página
-      // (en Instagram aparece igual, como cuenta asociada a la página)
-      if (!config.igUserId || !/instagram/i.test(err.message)) throw err;
-      console.warn('[ads] sin acceso a la cuenta de Instagram, publico sin instagram_user_id:', err.message);
-      ad = await publish(null);
+      // Si no hay acceso a @uniform.ar, se publica con la cuenta de Instagram de la página (page-backed):
+      // en Instagram el anuncio sale con el nombre y la foto de la página de Facebook
+      if (!config.pageBackedIgId || config.igUserId === config.pageBackedIgId || !/instagram/i.test(err.message)) throw err;
+      console.warn('[ads] sin acceso a la cuenta de Instagram, publico con la de la página:', err.message);
+      ad = await publish(config.pageBackedIgId);
     }
     await repo.markCreativeUsed(creativeId, ad.id, adsetId);
     return { ad_id: ad.id, name };
