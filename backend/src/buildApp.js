@@ -17,8 +17,12 @@ import { createIdeasRouter } from './routes/ideas.js';
 import { createCalendarRouter } from './routes/calendar.js';
 import { createProjectsRouter } from './routes/projects.js';
 import { createHomeRouter } from './routes/home.js';
+import { createAdsRepo } from './repo/ads.js';
+import { createAdsRouter } from './routes/ads.js';
+import { adsConfigFromEnv, createAgentRunner, createExecutor } from './ads/agent.js';
 
-export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginLimit = 10 }) {
+// ads (opcional): { meta, anthropic, config, model } — sin meta/anthropic la sección Pauta avisa qué falta
+export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginLimit = 10, ads = {} }) {
   if (!jwtSecret) throw new Error('Falta jwtSecret');
   if (!storage) throw new Error('Falta storage');
 
@@ -30,6 +34,12 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   const projectsRepo = createProjectsRepo(db);
   const files = createFilesService({ db, storage });
   const authenticate = createAuthenticate({ usersRepo, secret: jwtSecret });
+  const adsRepo = createAdsRepo(db);
+  const adsConfig = ads.config ?? adsConfigFromEnv();
+  const execute = ads.meta ? createExecutor({ meta: ads.meta, repo: adsRepo, files, config: adsConfig }) : null;
+  const startRun = ads.meta && ads.anthropic
+    ? createAgentRunner({ anthropic: ads.anthropic, meta: ads.meta, repo: adsRepo, execute, model: ads.model })
+    : null;
 
   const api = Router();
   api.use('/auth', createAuthRouter({ usersRepo, secret: jwtSecret, authenticate, loginLimit }));
@@ -42,6 +52,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   api.use(createCalendarRouter({ db, calendarRepo, files }));
   api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
   api.use(createHomeRouter({ homeRepo: createHomeRepo(db), storage }));
+  api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute }));
 
   const app = createApp({
     apiRouter: api,
@@ -53,5 +64,6 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
     },
   });
   app.locals.files = files;
+  app.locals.startAdsRun = startRun;
   return app;
 }

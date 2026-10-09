@@ -19,6 +19,7 @@ import { HomePage } from './pages/home/HomePage.jsx';
 import { UsersPage } from './pages/users/UsersPage.jsx';
 import { SettingsPage } from './pages/Settings.jsx';
 import { AccountPage } from './pages/Account.jsx';
+import { AdsPage } from './pages/ads/AdsPage.jsx';
 import s from './pages/pages.module.css';
 
 function Home() {
@@ -53,7 +54,7 @@ export default function App() {
         <Route path="/calendario/:date" element={<Guard section="calendar"><CalendarPage /></Guard>} />
         <Route path="/proyectos" element={<Guard section="projects"><ProjectsPage /></Guard>} />
         <Route path="/proyectos/:id" element={<Guard section="projects"><ProjectDetail /></Guard>} />
-        <Route path="/pauta" element={<Guard section="ads"><ComingSoon kind="ads" /></Guard>} />
+        <Route path="/pauta" element={<Guard section="ads"><AdsPage /></Guard>} />
         <Route path="/web" element={<Guard section="web"><ComingSoon kind="web" /></Guard>} />
         <Route path="/usuarios" element={<Guard flag="manage_users"><UsersPage /></Guard>} />
         <Route path="/ajustes" element={<Guard section="calendar" level="edit"><SettingsPage /></Guard>} />

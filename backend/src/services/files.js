@@ -9,6 +9,9 @@ export const OWNER_TYPES = {
   calendar_preview: { table: 'calendar_items', section: 'calendar', kind: 'image', max: 10 },
   project_photo: { table: 'projects', section: 'projects', kind: 'image', max: 50 },
   project_pdf: { table: 'projects', section: 'projects', kind: 'pdf', max: 20 },
+  // Piezas de pauta: van tal cual a Meta, que no acepta WebP — solo JPG/PNG y sin comprimir
+  ad_feed: { table: 'ad_creatives', section: 'ads', kind: 'image', max: 1, accept: ['image/jpeg', 'image/png'], maxBytes: 8 * 1024 * 1024 },
+  ad_story: { table: 'ad_creatives', section: 'ads', kind: 'image', max: 1, accept: ['image/jpeg', 'image/png'], maxBytes: 8 * 1024 * 1024 },
 };
 export const LIMITS = { image: 2 * 1024 * 1024, pdf: 10 * 1024 * 1024 };
 const ACCEPTED = { image: ['image/webp', 'image/jpeg', 'image/png'], pdf: ['application/pdf'] };
@@ -39,11 +42,13 @@ export function createFilesService({ db, storage }) {
     if (!owner[0]) throw notFound('No existe el elemento al que querés adjuntar el archivo.');
 
     const mime = (await fileTypeFromBuffer(buffer))?.mime;
-    if (!mime || !ACCEPTED[def.kind].includes(mime)) {
-      throw new AppError(415, 'UNSUPPORTED_FILE', def.kind === 'pdf' ? 'Solo se aceptan archivos PDF.' : 'Solo se aceptan imágenes JPG, PNG o WebP.');
+    if (!mime || !(def.accept ?? ACCEPTED[def.kind]).includes(mime)) {
+      throw new AppError(415, 'UNSUPPORTED_FILE', def.kind === 'pdf' ? 'Solo se aceptan archivos PDF.'
+        : def.accept ? 'Solo se aceptan imágenes JPG o PNG.' : 'Solo se aceptan imágenes JPG, PNG o WebP.');
     }
-    if (buffer.length > LIMITS[def.kind]) {
-      throw new AppError(413, 'FILE_TOO_LARGE', def.kind === 'pdf' ? 'El PDF pesa más de 10 MB.' : 'La imagen pesa más de 2 MB.');
+    const maxBytes = def.maxBytes ?? LIMITS[def.kind];
+    if (buffer.length > maxBytes) {
+      throw new AppError(413, 'FILE_TOO_LARGE', def.kind === 'pdf' ? 'El PDF pesa más de 10 MB.' : `La imagen pesa más de ${maxBytes / 1024 / 1024} MB.`);
     }
     const { rows: [{ n }] } = await db.query('SELECT count(*)::int AS n FROM files WHERE owner_type = $1 AND owner_id = $2', [ownerType, ownerId]);
     if (n >= def.max) throw new AppError(409, 'TOO_MANY_FILES', `Máximo ${def.max} archivos acá.`);

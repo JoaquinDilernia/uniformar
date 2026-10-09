@@ -6,7 +6,7 @@ export const NAV_ITEMS = [
   { to: '/ideas', label: 'Ideas', icon: Lightbulb, section: 'ideas', primary: true },
   { to: '/calendario', label: 'Calendario', icon: CalendarDays, section: 'calendar', primary: true },
   { to: '/proyectos', label: 'Proyectos', icon: FolderKanban, section: 'projects', primary: true },
-  { to: '/pauta', label: 'Agente de pauta', icon: Megaphone, section: 'ads', soon: true },
+  { to: '/pauta', label: 'Agente de pauta', icon: Megaphone, section: 'ads' },
   { to: '/web', label: 'Admin web', icon: Globe, section: 'web', soon: true },
   { to: '/usuarios', label: 'Usuarios', icon: Users, flag: 'manage_users' },
   { to: '/ajustes', label: 'Ajustes', icon: Settings2, section: 'calendar', level: 'edit' },
