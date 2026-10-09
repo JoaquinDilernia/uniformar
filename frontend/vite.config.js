@@ -27,7 +27,7 @@ export default defineConfig({
       workbox: {
         // Solo se cachea el shell; los datos siempre van a la red
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/health/],
+        navigateFallbackDenylist: [/^\/api\//, /^\/health/, /^\/privacidad\.html$/],
         runtimeCaching: [],
       },
     }),
