@@ -68,3 +68,18 @@ export function buildAdName({ adsetName, creativeName, date }) {
   const tag = clean(adsetName).replace(/\d{8}$/, '').slice(0, 30) || 'CONJUNTO';
   return `${tag}_${clean(creativeName).slice(0, 30)}_${date.replaceAll('-', '')}`;
 }
+
+export const IG_ACCESS_MSG = 'La cuenta publicitaria no tiene acceso a @uniform.ar: asignala en el Business Manager (Configuración del negocio → Cuentas de Instagram → Activos conectados).';
+
+// Promocionar un post/reel que ya está en Instagram: el anuncio usa el post original (suma likes y comentarios)
+// y le agrega el botón de WhatsApp. El texto es el del post.
+export function buildIgPostCreativeSpec({ name, pageId, igUserId, mediaId }) {
+  return {
+    name,
+    object_id: pageId,
+    instagram_user_id: igUserId,
+    source_instagram_media_id: mediaId,
+    call_to_action: { type: 'WHATSAPP_MESSAGE', value: { app_destination: 'WHATSAPP', link: WHATSAPP_LINK } },
+    degrees_of_freedom_spec: NO_AI_ENHANCEMENTS,
+  };
+}

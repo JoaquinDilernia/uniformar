@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestContext } from './helpers/testApp.js';
 import { PNG_1x1 } from './helpers/fixtures.js';
 import { config, fakeMeta, fakeAnthropic, toolTurn } from './helpers/adsFakes.js';
-import { buildWhatsappCreativeSpec, buildAdName } from '../src/ads/creativeSpec.js';
+import { buildWhatsappCreativeSpec, buildAdName, buildIgPostCreativeSpec } from '../src/ads/creativeSpec.js';
 import { summarizeRow, totals, CONVERSATION } from '../src/ads/metrics.js';
 
 let ctx, meta, admin, equipo;
@@ -47,6 +47,16 @@ describe('métricas y piezas', () => {
     expect(placed.asset_feed_spec.asset_customization_rules[1].image_label).toEqual({ name: 'story' });
     expect(buildAdName({ adsetName: 'WPP_INTERESES_AMBA_20261009', creativeName: 'Panadería Maná', date: '2026-10-09' }))
       .toBe('WPPINTERESESAMBA_PANADERIAMANA_20261009');
+  });
+
+  it('arma el creative que promociona un post existente de Instagram', () => {
+    const spec = buildIgPostCreativeSpec({ name: 'X', pageId: '111', igUserId: '222', mediaId: '1789' });
+    expect(spec).toMatchObject({
+      name: 'X', object_id: '111', instagram_user_id: '222', source_instagram_media_id: '1789',
+      call_to_action: { type: 'WHATSAPP_MESSAGE', value: { app_destination: 'WHATSAPP' } },
+    });
+    expect(spec.degrees_of_freedom_spec.creative_features_spec.enhance_cta).toEqual({ enroll_status: 'OPT_OUT' });
+    expect(spec.object_story_spec).toBeUndefined();
   });
 });
 
