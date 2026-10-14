@@ -5,7 +5,7 @@ import { toastBus } from '../../state/toastBus.js';
 
 export const adsKeys = {
   overview: ['ads', 'overview'], runs: ['ads', 'runs'], decisions: ['ads', 'decisions'], creatives: ['ads', 'creatives'],
-  requests: ['ads', 'requests'], learnings: ['ads', 'learnings'], questions: ['ads', 'questions'],
+  requests: ['ads', 'requests'], learnings: ['ads', 'learnings'], questions: ['ads', 'questions'], igPosts: ['ads', 'ig-posts'],
 };
 
 function useRefreshAds() {
@@ -126,4 +126,21 @@ export function useAnswerQuestion() {
 export function useDismissQuestion() {
   const refresh = useRefreshAds();
   return useMutation({ mutationFn: (id) => api.post(`/ads/questions/${id}/dismiss`), meta: { success: 'Pregunta descartada' }, onSettled: refresh });
+}
+
+// Si Instagram falla (p. ej. sin acceso a la cuenta), el error se muestra en la sección, no como toast
+export const useIgPosts = () => useQuery({
+  queryKey: adsKeys.igPosts,
+  queryFn: () => api.get('/ads/ig-posts').then((r) => r.posts),
+  meta: { silent: true },
+  retry: false,
+});
+
+export function usePromoteIgPost() {
+  const refresh = useRefreshAds();
+  return useMutation({
+    mutationFn: ({ id, adset_id, adset_name, permalink }) => api.post(`/ads/ig-posts/${id}/promote`, { adset_id, adset_name, permalink }),
+    meta: { success: 'Post promocionado en Meta ✓' },
+    onSettled: refresh,
+  });
 }

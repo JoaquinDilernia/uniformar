@@ -15,10 +15,11 @@ import { Field, Input, Select, Textarea } from '../../components/ui/Field.jsx';
 import { useConfirm } from '../../components/ui/ConfirmDialog.jsx';
 import {
   useAdsOverview, useArchiveCreative, useCloseRequest, useCreateCreative, useCreatives, useDecide, useDecisions,
-  useDeleteLearning, useLearnings, usePublishCreative, useRefreshMeta, useRequests, useSaveAdSettings, useSetStatus, useStartRun,
+  useDeleteLearning, useIgPosts, useLearnings, usePublishCreative, useRefreshMeta, useRequests, useSaveAdSettings, useSetStatus, useStartRun,
 } from './api.js';
 import { ars, when } from './format.js';
 import { AgentQuestions } from './Questions.jsx';
+import { IgPosts } from './IgPosts.jsx';
 import s from './ads.module.css';
 
 const STATUS_LABEL = {
@@ -27,7 +28,7 @@ const STATUS_LABEL = {
 };
 const TONE = { ACTIVE: s.ok, PAUSED: s.muted, CAMPAIGN_PAUSED: s.muted, ADSET_PAUSED: s.muted, DISAPPROVED: s.bad, WITH_ISSUES: s.bad };
 const TOOL_LABEL = {
-  pause_ad: 'Pausar anuncio', set_status: 'Activar / pausar', propose_budget_change: 'Presupuesto', propose_adset: 'Conjunto nuevo', create_ad: 'Publicar pieza',
+  pause_ad: 'Pausar anuncio', set_status: 'Activar / pausar', propose_budget_change: 'Presupuesto', propose_adset: 'Conjunto nuevo', create_ad: 'Publicar pieza', promote_ig_post: 'Promocionar post',
 };
 const DECISION_LABEL = { pending: 'Pendiente', executed: 'Hecho', rejected: 'Rechazado', failed: 'Falló' };
 
@@ -204,6 +205,7 @@ function Campaign({ c, snap, canEdit }) {
 
 function Recommendations({ canEdit }) {
   const decisions = useDecisions();
+  const igPosts = useIgPosts();
   const requests = useRequests();
   const learnings = useLearnings();
   const decide = useDecide();
@@ -230,6 +232,10 @@ function Recommendations({ canEdit }) {
           <article key={d.id} className={s.reco}>
             <div className={s.recoHead}><span className={s.kind}>{TOOL_LABEL[d.tool] ?? d.tool}</span><small>{when(d.created_at)}</small></div>
             <h3>{d.title || TOOL_LABEL[d.tool]}</h3>
+            {d.tool === 'promote_ig_post' && (() => {
+              const post = igPosts.data?.find((p) => p.id === d.input.ig_media_id);
+              return post?.thumbnail ? <img src={post.thumbnail} alt="" className={s.recoThumb} /> : null;
+            })()}
             {d.reason && <p>{d.reason}</p>}
             {d.expected_impact && <p className="muted">Qué esperamos: {d.expected_impact}</p>}
             {canEdit && (
@@ -320,6 +326,7 @@ function Creatives({ snapshot, canEdit }) {
       </div>
       {creating && <NewCreative onClose={() => setCreating(false)} />}
       {publishing && <Publish creative={publishing} snapshot={snapshot} onClose={() => setPublishing(null)} />}
+      <IgPosts snapshot={snapshot} canEdit={canEdit} />
     </div>
   );
 }

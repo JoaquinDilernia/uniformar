@@ -63,3 +63,6 @@ p.bad { background: none; margin: 0; }
 .check span { display: flex; flex-direction: column; gap: 2px; }
 .check small { color: var(--c-text-2); font-size: var(--fs-s); }
 .answer { color: var(--c-text-2); white-space: pre-wrap; }
+.link { font-size: var(--fs-s); color: var(--c-accent-text); align-self: center; }
+.card h2 { display: flex; align-items: center; gap: 6px; }
+.recoThumb { width: 96px; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 8px; }
