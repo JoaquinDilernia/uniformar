@@ -312,7 +312,7 @@ function Creatives({ snapshot, canEdit }) {
           <article key={c.id} className={s.piece}>
             <PieceMedia media={c.feed} />
             <div className={s.pieceBody}>
-              <div className={s.row}><strong className={s.grow}>{c.name}</strong>{c.status === 'used' ? <span className={`${s.badge} ${s.ok}`}>Publicada</span> : <span className={s.badge}>Sin usar</span>}</div>
+              <div className={s.row}><strong className={s.grow}>{c.name}</strong>{c.status === 'used' ? <span className={`${s.badge} ${s.ok}`}>Publicada</span> : <span className={s.badge}>{c.status === 'publishing' ? 'Publicando…' : 'Sin usar'}</span>}</div>
               <p className={s.copy}>{c.copy}</p>
               {c.story && <small>Con versión historia 9:16 ({c.story.kind === 'video' ? 'video' : 'imagen'})</small>}
               {canEdit && c.status === 'unused' && (

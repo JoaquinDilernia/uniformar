@@ -86,6 +86,15 @@ export function createAdsRepo(db) {
       const set = cols.map((c, i) => `${c} = $${i + 2}`).join(', ');
       return one(`UPDATE ad_creatives SET ${set} WHERE id = $1 RETURNING *`, [id, ...Object.values(patch)], 'No existe esa pieza.');
     },
+    async claimCreative(id) {
+      const { rows } = await db.query("UPDATE ad_creatives SET status = 'publishing' WHERE id = $1 AND status = 'unused' RETURNING *", [id]);
+      if (rows[0]) return rows[0];
+      const c = await this.getCreative(id);
+      if (c.status === 'used') throw conflict(`La pieza "${c.name}" ya se publicó (anuncio ${c.meta_ad_id}).`);
+      if (c.status === 'publishing') throw conflict(`La pieza "${c.name}" se está publicando. Esperá a que termine.`);
+      throw conflict(`La pieza "${c.name}" está archivada.`);
+    },
+    releaseCreative: (id) => db.query("UPDATE ad_creatives SET status = 'unused' WHERE id = $1 AND status = 'publishing'", [id]),
     markCreativeUsed: (id, adId, adsetId) => one(
       "UPDATE ad_creatives SET status = 'used', meta_ad_id = $2, meta_adset_id = $3, used_at = now() WHERE id = $1 RETURNING *",
       [id, adId, adsetId],

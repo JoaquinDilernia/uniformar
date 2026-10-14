@@ -43,4 +43,38 @@ describe('piezas con video', () => {
     const spec = meta.calls.find((c) => c[0] === 'createCreative')[1];
     expect(spec.asset_feed_spec.videos[0]).toMatchObject({ video_id: 'vid1', thumbnail_url: 'https://t/thumb.jpg' });
   });
+
+  it('publicar dos veces a la vez (reintento mientras Meta procesa) crea un solo anuncio', async () => {
+    const id = (await admin.post('/api/ads/creatives').send({ name: 'Doble', copy: 'texto' })).body.creative.id;
+    await uploadVideo(id, 'ad_feed');
+    const original = meta.waitVideoReady;
+    meta.waitVideoReady = async (v) => { await new Promise((r) => setTimeout(r, 50)); return original(v); };
+    meta.calls.length = 0;
+    let results;
+    try {
+      results = await Promise.all([
+        admin.post(`/api/ads/creatives/${id}/publish`).send({ adset_id: '901' }),
+        admin.post(`/api/ads/creatives/${id}/publish`).send({ adset_id: '901' }),
+      ]);
+    } finally {
+      meta.waitVideoReady = original;
+    }
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+    expect(meta.calls.filter((c) => c[0] === 'createAd')).toHaveLength(1);
+  });
+
+  it('si Meta falla al publicar, la pieza vuelve a quedar sin usar', async () => {
+    const id = (await admin.post('/api/ads/creatives').send({ name: 'Falla', copy: 'texto' })).body.creative.id;
+    await uploadVideo(id, 'ad_feed');
+    const original = meta.createAd;
+    meta.createAd = async () => { throw new Error('Meta 100: Invalid parameter'); };
+    try {
+      expect((await admin.post(`/api/ads/creatives/${id}/publish`).send({ adset_id: '901' })).status).toBe(502);
+    } finally {
+      meta.createAd = original;
+    }
+    const c = (await admin.get('/api/ads/creatives')).body.creatives.find((x) => x.id === id);
+    expect(c.status).toBe('unused');
+    expect((await admin.post(`/api/ads/creatives/${id}/publish`).send({ adset_id: '901' })).status).toBe(200);
+  });
 });

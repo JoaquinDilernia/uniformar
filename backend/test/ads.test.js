@@ -141,7 +141,7 @@ describe('pauta', () => {
     const spec = meta.calls.find((c) => c[0] === 'createCreative')[1];
     expect(spec.object_story_spec).toMatchObject({ page_id: '111', instagram_user_id: '222' });
     expect(meta.calls.find((c) => c[0] === 'createAd')[1]).toMatchObject({ adsetId: '901', creativeId: '904', status: 'ACTIVE' });
-    expect((await admin.post(`/api/ads/creatives/${id}/publish`).send({ adset_id: '901' })).status).toBe(502);
+    expect((await admin.post(`/api/ads/creatives/${id}/publish`).send({ adset_id: '901' })).status).toBe(409);
   });
 
   it('si no hay acceso a la cuenta de Instagram, publica con la de la página', async () => {

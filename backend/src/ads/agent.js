@@ -23,9 +23,19 @@ export function adsConfigFromEnv(env = process.env) {
 
 // Ejecuta una acción sobre Meta (al aprobarla en el panel, o sola en modo autónomo)
 export function createExecutor({ meta, repo, files, config }) {
+  // La pieza se reclama antes de tocar Meta (puede tardar minutos con video): un segundo "Publicar" recibe 409
   async function publishCreative({ creative_id: creativeId, adset_id: adsetId, adset_name: adsetName }) {
-    const creative = await repo.getCreative(creativeId);
-    if (creative.status === 'used') throw new Error(`La pieza "${creative.name}" ya se publicó (anuncio ${creative.meta_ad_id}).`);
+    const creative = await repo.claimCreative(creativeId);
+    try {
+      return await publishClaimed(creative, adsetId, adsetName);
+    } catch (err) {
+      await repo.releaseCreative(creativeId);
+      throw err;
+    }
+  }
+
+  async function publishClaimed(creative, adsetId, adsetName) {
+    const creativeId = creative.id;
     const media = await files.listFor(['ad_feed', 'ad_story'], [creativeId]);
     const feedFile = media.find((f) => f.owner_type === 'ad_feed');
     const storyFile = media.find((f) => f.owner_type === 'ad_story');
@@ -44,8 +54,7 @@ export function createExecutor({ meta, repo, files, config }) {
       await meta.waitVideoReady(videoId);
       return { type: 'video', videoId, thumbnailUrl: await meta.videoThumbnail(videoId) };
     };
-    const feed = await toMeta(feedFile);
-    const story = storyFile ? await toMeta(storyFile) : null;
+    const [feed, story] = await Promise.all([toMeta(feedFile), storyFile ? toMeta(storyFile) : null]);
     const name = buildAdName({ adsetName: adsetName || adsetId, creativeName: creative.name, date: artDate() });
     const publish = async (igUserId) => {
       const spec = buildWhatsappCreativeSpec({

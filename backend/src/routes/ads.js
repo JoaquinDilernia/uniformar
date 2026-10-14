@@ -165,6 +165,7 @@ export function createAdsRouter({ repo, meta, startRun, execute, config, files }
       invalidate();
       res.json({ ok: true, ...result });
     } catch (err) {
+      if (err.status === 409) throw err;
       await repo.addDecision({ ...base, status: 'failed', error: String(err.message || err) });
       throw new AppError(502, 'META_ERROR', `Meta rechazó el anuncio: ${err.message}`);
     }
