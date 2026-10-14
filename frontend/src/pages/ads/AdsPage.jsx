@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { AlertTriangle, Check, ImagePlus, Lightbulb, Megaphone, Pause, Play, RefreshCw, Sparkles, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertTriangle, Check, ImagePlus, Lightbulb, Megaphone, Pause, Play, PlayCircle, RefreshCw, Sparkles, X } from 'lucide-react';
 import { useAuth } from '../../state/auth.jsx';
 import { can } from '../../lib/permissions.js';
 import { fileUrl } from '../../api/client.js';
@@ -18,6 +18,7 @@ import {
   useDeleteLearning, useIgPosts, useLearnings, usePublishCreative, useRefreshMeta, useRequests, useSaveAdSettings, useSetStatus, useStartRun,
 } from './api.js';
 import { ars, when } from './format.js';
+import { ALLOW_MIXED_MEDIA, MEDIA_ACCEPT, mediaKind } from './media.js';
 import { AgentQuestions } from './Questions.jsx';
 import { IgPosts } from './IgPosts.jsx';
 import s from './ads.module.css';
@@ -304,19 +305,19 @@ function Creatives({ snapshot, canEdit }) {
       {canEdit && <div><Button icon={ImagePlus} onClick={() => setCreating(true)}>Nueva pieza</Button></div>}
       {creatives.isLoading && <Spinner size={20} />}
       {!creatives.isLoading && list.length === 0 && (
-        <EmptyState icon={Megaphone} title="Todavía no hay piezas">Subí la imagen (feed 4:5 y, si hay, historia 9:16) con el texto del anuncio. Después la publicás en un conjunto o se la dejás al agente.</EmptyState>
+        <EmptyState icon={Megaphone} title="Todavía no hay piezas">Subí la imagen o el video (feed 4:5 y, si hay, historia 9:16) con el texto del anuncio. Después la publicás en un conjunto o se la dejás al agente.</EmptyState>
       )}
       <div className={s.grid}>
         {list.map((c) => (
           <article key={c.id} className={s.piece}>
-            {c.feed_file_id ? <img src={fileUrl(`/api/files/${c.feed_file_id}/raw`)} alt="" /> : <div className={s.noImg}>Sin imagen</div>}
+            <PieceMedia media={c.feed} />
             <div className={s.pieceBody}>
               <div className={s.row}><strong className={s.grow}>{c.name}</strong>{c.status === 'used' ? <span className={`${s.badge} ${s.ok}`}>Publicada</span> : <span className={s.badge}>Sin usar</span>}</div>
               <p className={s.copy}>{c.copy}</p>
-              {c.story_file_id && <small>Con versión historia 9:16</small>}
+              {c.story && <small>Con versión historia 9:16 ({c.story.kind === 'video' ? 'video' : 'imagen'})</small>}
               {canEdit && c.status === 'unused' && (
                 <div className={s.actions}>
-                  <Button size="sm" disabled={!snapshot || !c.feed_file_id} onClick={() => setPublishing(c)}>Publicar</Button>
+                  <Button size="sm" disabled={!snapshot || !c.feed} onClick={() => setPublishing(c)}>Publicar</Button>
                   <Button size="sm" variant="ghost" onClick={() => archive.mutate(c.id)}>Archivar</Button>
                 </div>
               )}
@@ -331,25 +332,70 @@ function Creatives({ snapshot, canEdit }) {
   );
 }
 
+// Vista previa del archivo elegido (imagen o video) antes de subirlo
+function MediaPreview({ file }) {
+  const [url, setUrl] = useState(null);
+  useEffect(() => {
+    if (!file) return undefined;
+    const u = URL.createObjectURL(file);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+  if (!file || !url) return null;
+  return mediaKind(file) === 'video'
+    ? <video src={url} className={s.preview} muted playsInline controls />
+    : <img src={url} alt="" className={s.preview} />;
+}
+
+function PieceMedia({ media }) {
+  if (!media) return <div className={s.noImg}>Sin imagen</div>;
+  if (media.kind === 'video') {
+    return (
+      <div className={s.videoWrap}>
+        <video src={fileUrl(media.url)} muted playsInline preload="metadata" />
+        <PlayCircle size={40} className={s.play} aria-label="Video" />
+      </div>
+    );
+  }
+  return <img src={fileUrl(media.url)} alt="" />;
+}
+
 function NewCreative({ onClose }) {
   const create = useCreateCreative();
   const [form, setForm] = useState({ name: '', copy: '', headline: '', notes: '' });
   const [feed, setFeed] = useState(null);
   const [story, setStory] = useState(null);
+  const [progress, setProgress] = useState(null);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const ok = form.name.trim() && form.copy.trim() && feed;
-  const submit = () => create.mutate({ ...form, feed, story }, { onSuccess: onClose });
+  const mixed = feed && story && mediaKind(feed) !== mediaKind(story);
+  const mixedError = !ALLOW_MIXED_MEDIA && mixed ? 'Feed e historia tienen que ser los dos imagen o los dos video.' : undefined;
+  const ok = form.name.trim() && form.copy.trim() && feed && !mixedError;
+  const hasVideo = [feed, story].some((f) => f && mediaKind(f) === 'video');
+  const submit = () => create.mutate(
+    { ...form, feed, story, onProgress: (slot, p) => setProgress({ slot, p }) },
+    { onSuccess: onClose, onSettled: () => setProgress(null) },
+  );
 
   return (
-    <Sheet open onClose={onClose} title="Nueva pieza" footer={<Button full loading={create.isPending} disabled={!ok} onClick={submit}>Guardar pieza</Button>}>
+    <Sheet open onClose={onClose} title="Nueva pieza"
+      footer={(
+        <>
+          {progress && hasVideo && (
+            <Progress value={Math.round(progress.p * 100)} max={100} label={`Subiendo ${progress.slot === 'feed' ? 'feed' : 'historia'}: ${Math.round(progress.p * 100)}%`} />
+          )}
+          <Button full loading={create.isPending} disabled={!ok} onClick={submit}>Guardar pieza</Button>
+        </>
+      )}>
       <div className={s.form}>
         <Field label="Nombre" required hint="Corto, para reconocerla (ej. Panadería Maná)"><Input value={form.name} onChange={set('name')} maxLength={60} /></Field>
-        <Field label="Imagen feed 4:5 (1080×1350)" required hint="JPG o PNG, hasta 8 MB">
-          <Input type="file" accept="image/jpeg,image/png" onChange={(e) => setFeed(e.target.files[0] ?? null)} />
+        <Field label="Feed 4:5 (1080×1350)" required hint="Imagen JPG/PNG hasta 8 MB o video MP4/MOV hasta 200 MB">
+          <Input type="file" accept={MEDIA_ACCEPT} onChange={(e) => setFeed(e.target.files[0] ?? null)} />
         </Field>
-        <Field label="Imagen historia 9:16 (1080×1920)" hint="Opcional. Si no la subís, Meta adapta la de feed.">
-          <Input type="file" accept="image/jpeg,image/png" onChange={(e) => setStory(e.target.files[0] ?? null)} />
+        <MediaPreview file={feed} />
+        <Field label="Historia 9:16 (1080×1920)" hint="Opcional. Si no la subís, Meta adapta la de feed." error={mixedError}>
+          <Input type="file" accept={MEDIA_ACCEPT} onChange={(e) => setStory(e.target.files[0] ?? null)} />
         </Field>
+        <MediaPreview file={story} />
         <Field label="Texto del anuncio" required hint="Lo que se lee arriba de la imagen. Terminá invitando a escribir por WhatsApp.">
           <Textarea value={form.copy} onChange={set('copy')} maxLength={2000} />
         </Field>

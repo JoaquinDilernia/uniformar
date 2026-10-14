@@ -60,11 +60,11 @@ export function useSetStatus() {
 export function useCreateCreative() {
   const refresh = useRefreshAds();
   return useMutation({
-    mutationFn: async ({ feed, story, ...body }) => {
+    mutationFn: async ({ feed, story, onProgress, ...body }) => {
       const creative = (await api.post('/ads/creatives', body)).creative;
       try {
-        await uploadFile({ ownerType: 'ad_feed', ownerId: creative.id, file: feed, kind: 'raw' });
-        if (story) await uploadFile({ ownerType: 'ad_story', ownerId: creative.id, file: story, kind: 'raw' });
+        await uploadFile({ ownerType: 'ad_feed', ownerId: creative.id, file: feed, kind: 'media', onProgress: (p) => onProgress?.('feed', p) });
+        if (story) await uploadFile({ ownerType: 'ad_story', ownerId: creative.id, file: story, kind: 'media', onProgress: (p) => onProgress?.('story', p) });
       } catch (err) {
         await api.patch(`/ads/creatives/${creative.id}`, { status: 'archived' }).catch(() => {});
         throw err;
