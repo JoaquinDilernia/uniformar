@@ -35,3 +35,44 @@ describe('posts de Instagram', () => {
     expect(fetchFn.calls.find((c) => c.url.pathname.endsWith('/m1/insights')).url.searchParams.get('metric')).toBe('reach');
   });
 });
+
+describe('videos', () => {
+  it('sube por URL o por archivo', async () => {
+    const fetchFn = fakeFetch(() => ({ id: 'v1' }));
+    const meta = createMetaClient({ accessToken: 't', accountId: 'act_1', fetchFn, retryDelayMs: 0 });
+    expect(await meta.uploadVideo({ fileUrl: 'https://r2/x.mp4', name: 'Reel' })).toBe('v1');
+    expect(fetchFn.calls[0].url.pathname).toBe('/v23.0/act_1/advideos');
+    expect(JSON.parse(fetchFn.calls[0].opts.body)).toEqual({ file_url: 'https://r2/x.mp4', name: 'Reel' });
+    expect(await meta.uploadVideo({ buffer: Buffer.from('abc'), name: 'Reel' })).toBe('v1');
+    const form = fetchFn.calls[1].opts.body;
+    expect(form).toBeInstanceOf(FormData);
+    expect(form.get('name')).toBe('Reel');
+    expect(form.get('source')).toBeInstanceOf(Blob);
+  });
+
+  it('espera a que Meta procese el video', async () => {
+    const states = ['processing', 'processing', 'ready'];
+    const fetchFn = fakeFetch(() => ({ status: { video_status: states.shift() } }));
+    const meta = createMetaClient({ accessToken: 't', accountId: 'act_1', fetchFn, retryDelayMs: 0 });
+    await meta.waitVideoReady('v1', { intervalMs: 1 });
+    expect(fetchFn.calls).toHaveLength(3);
+    expect(fetchFn.calls[0].url.searchParams.get('fields')).toBe('status');
+  });
+
+  it('error de procesamiento y tiempo agotado', async () => {
+    const failing = createMetaClient({ accessToken: 't', accountId: 'act_1', retryDelayMs: 0,
+      fetchFn: fakeFetch(() => ({ status: { video_status: 'error', processing_phase: { errors: [{ message: 'codec no soportado' }] } } })) });
+    await expect(failing.waitVideoReady('v1', { intervalMs: 1 })).rejects.toThrow('Meta no pudo procesar el video: codec no soportado');
+    const slow = createMetaClient({ accessToken: 't', accountId: 'act_1', retryDelayMs: 0,
+      fetchFn: fakeFetch(() => ({ status: { video_status: 'processing' } })) });
+    await expect(slow.waitVideoReady('v1', { intervalMs: 1, timeoutMs: 20 }))
+      .rejects.toThrow('Meta sigue procesando el video, probá publicar de nuevo en unos minutos.');
+  });
+
+  it('miniatura preferida', async () => {
+    const fetchFn = fakeFetch(() => ({ data: [{ uri: 'https://t/a.jpg' }, { uri: 'https://t/b.jpg', is_preferred: true }] }));
+    const meta = createMetaClient({ accessToken: 't', accountId: 'act_1', fetchFn, retryDelayMs: 0 });
+    expect(await meta.videoThumbnail('v1')).toBe('https://t/b.jpg');
+    expect(fetchFn.calls[0].url.pathname).toBe('/v23.0/v1/thumbnails');
+  });
+});

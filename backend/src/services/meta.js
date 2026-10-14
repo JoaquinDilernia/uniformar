@@ -6,13 +6,13 @@ const RETRYABLE = new Set([4, 17, 32, 613]);
 export function createMetaClient({ accessToken, accountId, fetchFn = fetch, retryDelayMs = 2000 }) {
   const BASE = `https://graph.facebook.com/${V}`;
 
-  async function reqOnce(path, { method = 'GET', params = {}, body } = {}) {
+  async function reqOnce(path, { method = 'GET', params = {}, body, form } = {}) {
     const url = new URL(`${BASE}/${path}`);
     url.searchParams.set('access_token', accessToken);
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, typeof v === 'string' ? v : JSON.stringify(v));
     const res = await fetchFn(url, {
       method,
-      ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
+      ...(form ? { body: form } : body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
     });
     const json = await res.json();
     if (json.error) {
@@ -60,6 +60,30 @@ export function createMetaClient({ accessToken, accountId, fetchFn = fetch, retr
     async uploadImage(buffer) {
       const json = await req(`${accountId}/adimages`, { method: 'POST', body: { bytes: buffer.toString('base64') } });
       return Object.values(json.images)[0].hash;
+    },
+    // Con fileUrl (R2 firmado) Meta descarga el video; con buffer (storage local en desarrollo) se manda el archivo
+    async uploadVideo({ fileUrl, buffer, name }) {
+      if (fileUrl) return (await req(`${accountId}/advideos`, { method: 'POST', body: { file_url: fileUrl, ...(name ? { name } : {}) } })).id;
+      const form = new FormData();
+      if (name) form.append('name', name);
+      form.append('source', new Blob([buffer]), 'video.mp4');
+      return (await req(`${accountId}/advideos`, { method: 'POST', form })).id;
+    },
+    async waitVideoReady(videoId, { timeoutMs = 10 * 60_000, intervalMs = 10_000 } = {}) {
+      const until = Date.now() + timeoutMs;
+      for (;;) {
+        const { status } = await req(videoId, { params: { fields: 'status' } });
+        if (status?.video_status === 'ready') return;
+        if (status?.video_status === 'error') {
+          throw new Error(`Meta no pudo procesar el video: ${status.processing_phase?.errors?.[0]?.message ?? 'error desconocido'}`);
+        }
+        if (Date.now() >= until) throw new Error('Meta sigue procesando el video, probá publicar de nuevo en unos minutos.');
+        await new Promise((r) => setTimeout(r, intervalMs));
+      }
+    },
+    async videoThumbnail(videoId) {
+      const { data = [] } = await req(`${videoId}/thumbnails`);
+      return (data.find((t) => t.is_preferred) ?? data[0])?.uri ?? null;
     },
     createCreative: (spec) => req(`${accountId}/adcreatives`, { method: 'POST', body: spec }),
     createAd: ({ name, adsetId, creativeId, status }) =>
