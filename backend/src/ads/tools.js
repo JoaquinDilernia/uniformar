@@ -88,6 +88,19 @@ export const TOOL_DEFINITIONS = [
     description: 'Registrar qué pasó realmente después de una decisión ejecutada (lista decisionsToEvaluate), con números.',
     input_schema: { type: 'object', properties: { decision_id: s('ID de la decisión'), outcome: s('Resultado medido') }, required: ['decision_id', 'outcome'] },
   },
+  {
+    name: 'ask_team',
+    description: 'Hacerle una pregunta al equipo cuando te falta un dato que solo ellos tienen (calidad de las consultas que llegan, si se contestan los WhatsApp, stock, promos, ventas). La ven en el panel y la contestan; la respuesta te llega en answeredQuestions en una próxima corrida. Una pregunta por llamada, concreta y que se pueda contestar en una o dos líneas. No repitas preguntas que sigan en openQuestions.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        question: s('La pregunta, concreta (ej. "De las 20 conversaciones de esta semana, ¿cuántas fueron empresas con +30 prendas y de qué conjunto vinieron?")'),
+        why: s('Qué decisión destraba la respuesta'),
+        quick_answers: { type: 'array', items: { type: 'string' }, maxItems: 4, description: 'Opcional: hasta 4 respuestas típicas cortas para contestar con un toque (ej. "Sí", "No")' },
+      },
+      required: ['question', 'why'],
+    },
+  },
 ];
 
 export const READ_ONLY_TOOLS = new Set(['search_interest']);

@@ -2,6 +2,7 @@ import { conflict, notFound } from '../lib/errors.js';
 
 const DECISION_COLS = `d.id, d.run_id, d.tool, d.input, d.title, d.reason, d.expected_impact, d.status, d.result, d.error,
   d.outcome, d.created_at, d.decided_at, u.name AS decided_by_name`;
+const QUESTION_SELECT = 'SELECT q.*, u.name AS answered_by_name FROM ad_questions q LEFT JOIN users u ON u.id = q.answered_by';
 
 export function createAdsRepo(db) {
   const one = async (sql, params, msg) => {
@@ -123,6 +124,52 @@ export function createAdsRepo(db) {
     async deleteLearning(id) {
       const { rowCount } = await db.query('DELETE FROM ad_learnings WHERE id = $1', [id]);
       if (!rowCount) throw notFound('No existe ese aprendizaje.');
+    },
+
+    // quick_answers es jsonb: el array va serializado (pg mandaría un array de Postgres)
+    addQuestion: (q) => one(
+      'INSERT INTO ad_questions (run_id, question, why, quick_answers) VALUES ($1, $2, $3, $4) RETURNING *',
+      [q.runId ?? null, q.question, q.why ?? '', JSON.stringify(q.quickAnswers ?? [])],
+    ),
+    getQuestion: (id) => one(`${QUESTION_SELECT} WHERE q.id = $1`, [id], 'No existe esa pregunta.'),
+    async listQuestions({ status = 'open', limit = 30 } = {}) {
+      const { rows } = await db.query(
+        `${QUESTION_SELECT} WHERE q.status = $1 ORDER BY coalesce(q.answered_at, q.created_at) DESC LIMIT $2`,
+        [status, limit],
+      );
+      return rows;
+    },
+    countOpenQuestions: async () => (await one("SELECT count(*)::int AS n FROM ad_questions WHERE status = 'open'")).n,
+    // Solo si sigue abierta: evita que dos personas respondan la misma
+    async answerQuestion(id, answer, userId) {
+      const { rows } = await db.query(
+        "UPDATE ad_questions SET status = 'answered', answer = $2, answered_by = $3, answered_at = now() WHERE id = $1 AND status = 'open' RETURNING id",
+        [id, answer, userId],
+      );
+      if (!rows[0]) {
+        await this.getQuestion(id);
+        throw conflict('Esta pregunta ya fue respondida o descartada.');
+      }
+      return this.getQuestion(id);
+    },
+    async dismissQuestion(id) {
+      const { rows } = await db.query("UPDATE ad_questions SET status = 'dismissed' WHERE id = $1 AND status = 'open' RETURNING id", [id]);
+      if (!rows[0]) {
+        await this.getQuestion(id);
+        throw conflict('Esta pregunta ya fue respondida o descartada.');
+      }
+      return this.getQuestion(id);
+    },
+    // Respondidas desde que ARRANCÓ la última corrida terminada: lo que se contestó durante esa corrida no lo vio
+    async answeredSinceLastRun() {
+      const { rows } = await db.query(
+        `SELECT q.question, q.answer, q.answered_at, u.name AS answered_by_name
+         FROM ad_questions q LEFT JOIN users u ON u.id = q.answered_by
+         WHERE q.status = 'answered'
+           AND q.answered_at > coalesce((SELECT max(started_at) FROM ad_runs WHERE status = 'done'), '-infinity'::timestamptz)
+         ORDER BY q.answered_at LIMIT 20`,
+      );
+      return rows;
     },
   };
 }

@@ -101,6 +101,16 @@ export function createDispatcher({ meta, repo, execute }) {
         await repo.recordOutcome(input.decision_id, input.outcome);
         return { ok: true };
       }
+      if (name === 'ask_team') {
+        const question = String(input.question ?? '').trim();
+        if (!question) return { error: 'Falta la pregunta.' };
+        const quickAnswers = (Array.isArray(input.quick_answers) ? input.quick_answers : [])
+          .filter((a) => typeof a === 'string' && a.trim())
+          .slice(0, 4)
+          .map((a) => a.trim().slice(0, 80));
+        const q = await repo.addQuestion({ runId, question, why: String(input.why ?? ''), quickAnswers });
+        return { ok: true, question_id: q.id, note: 'La pregunta quedó en el panel; la respuesta te llega en una próxima corrida.' };
+      }
       if (!META_ACTIONS.has(name)) return { error: `Herramienta desconocida: ${name}` };
 
       if (name === 'pause_ad' && settings.autonomous) {
@@ -118,7 +128,7 @@ export function createDispatcher({ meta, repo, execute }) {
 }
 
 export async function buildContext({ meta, repo }) {
-  const [snapshot, settings, unusedCreatives, openRequests, learnings, pending, recent, toEvaluate] = await Promise.all([
+  const [snapshot, settings, unusedCreatives, openRequests, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions] = await Promise.all([
     buildSnapshot(meta),
     repo.getSettings(),
     repo.listCreatives({ status: 'unused' }),
@@ -127,6 +137,8 @@ export async function buildContext({ meta, repo }) {
     repo.listDecisions({ status: 'pending', limit: 30 }),
     repo.listDecisions({ limit: 30 }),
     repo.executedWithoutOutcome(48),
+    repo.listQuestions({ status: 'open', limit: 30 }),
+    repo.answeredSinceLastRun(),
   ]);
   const sections = {
     today: snapshot.today,
@@ -142,6 +154,8 @@ export async function buildContext({ meta, repo }) {
     pendingRecommendations: pending.map((d) => ({ id: d.id, tool: d.tool, title: d.title, created_at: d.created_at })),
     recentDecisions: recent.filter((d) => d.status !== 'pending').map((d) => ({ id: d.id, tool: d.tool, title: d.title, status: d.status, outcome: d.outcome, created_at: d.created_at })),
     decisionsToEvaluate: toEvaluate,
+    openQuestions: openQuestions.map((q) => ({ id: q.id, question: q.question, created_at: q.created_at })),
+    answeredQuestions: answeredQuestions.map((q) => ({ question: q.question, answer: q.answer, answered_by: q.answered_by_name, answered_at: q.answered_at })),
   };
   return Object.entries(sections).map(([k, v]) => `## ${k}\n${JSON.stringify(v)}`).join('\n\n');
 }
