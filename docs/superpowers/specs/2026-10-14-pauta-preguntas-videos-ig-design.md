@@ -125,7 +125,7 @@ CREATE INDEX ad_ig_promotions_media ON ad_ig_promotions (ig_media_id);
 
 ### Ejecución
 - Acción nueva `promote_ig_post` en el executor: `{ ig_media_id, adset_id, adset_name }` → crea creative + anuncio
-  ACTIVO en el conjunto (nombre con `buildAdName`, pieza = `IG_<fecha del post>`), registra en `ad_ig_promotions`.
+  ACTIVO en el conjunto (nombre con `buildAdName`, pieza = `IG` + últimos 6 dígitos del id del post), registra en `ad_ig_promotions`.
   Rechaza si ese post ya está promocionado en ese conjunto.
 - Agente: herramienta `promote_ig_post` (`ig_media_id`, `adset_id`, `adset_name` + title/reason/expected_impact),
   en `META_ACTIONS` → siempre queda **pendiente de aprobación** (no es autónoma).
@@ -191,8 +191,9 @@ CREATE INDEX ad_ig_promotions_media ON ad_ig_promotions (ig_media_id);
   - Feed + historia, mismo tipo: `asset_feed_spec` con `images` o `videos` (con `thumbnail_url`), `ad_formats`
     `SINGLE_IMAGE` / `SINGLE_VIDEO`, reglas por ubicación con `image_label` / `video_label`.
   - Feed + historia, tipos mezclados: **se valida contra Meta al implementar** (`asset_feed_spec` con imágenes y
-    videos, `ad_formats: ['AUTOMATIC_FORMAT']`). Si Meta no lo acepta, se prohíbe en la creación de la pieza
-    (400 "Feed e historia tienen que ser los dos imagen o los dos video") y en el formulario.
+    videos, `ad_formats: ['AUTOMATIC_FORMAT']`). Si Meta no lo acepta, se apaga la constante `ALLOW_MIXED_MEDIA`
+    (backend y frontend): el formulario lo impide y publicar falla con "Feed e historia tienen que ser los dos imagen
+    o los dos video".
 - `publishCreative` sube cada archivo según su tipo; mantiene opt-out de IA, respaldo de IG de la página y
   convención de nombres.
 
