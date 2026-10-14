@@ -1,7 +1,7 @@
 // Spec de creative "clic a WhatsApp". Mismas reglas que agente-gineza:
 //  - instagram_user_id (instagram_actor_id está deprecado desde Graph v22)
 //  - sin mejoras de IA de Meta: opt-out función por función
-//  - con pieza de historia: customización por ubicación (feed 4:5 / historia 9:16), image_label como objeto
+//  - con pieza de historia: customización por ubicación (feed 4:5 / historia 9:16), image_label / video_label como objeto
 export const WHATSAPP_LINK = 'https://api.whatsapp.com/send';
 
 const NO_AI_ENHANCEMENTS = {
@@ -14,48 +14,51 @@ const NO_AI_ENHANCEMENTS = {
   ),
 };
 
-export function buildWhatsappCreativeSpec({ name, pageId, igUserId, message, headline, feedImageHash, storyImageHash }) {
+// Si Meta no acepta feed y historia con distinto tipo (imagen/video) en el mismo anuncio, poner false:
+// el formulario lo impide y publicar falla con un mensaje claro (ver frontend/src/pages/ads/media.js)
+export const ALLOW_MIXED_MEDIA = true;
+
+const CTA = { type: 'WHATSAPP_MESSAGE', value: { app_destination: 'WHATSAPP', link: WHATSAPP_LINK } };
+const POSITIONS = {
+  feed: { publisher_platforms: ['facebook', 'instagram'], facebook_positions: ['feed'], instagram_positions: ['stream'] },
+  story: { publisher_platforms: ['facebook', 'instagram'], facebook_positions: ['story'], instagram_positions: ['story'] },
+};
+
+// feed/story: { type: 'image', hash } | { type: 'video', videoId, thumbnailUrl }
+export function buildWhatsappCreativeSpec({ name, pageId, igUserId, message, headline, feed, story }) {
   const identity = { page_id: pageId, ...(igUserId ? { instagram_user_id: igUserId } : {}) };
-  if (!storyImageHash) {
-    return {
-      name,
-      object_story_spec: {
-        ...identity,
-        link_data: {
-          link: WHATSAPP_LINK,
-          message,
-          ...(headline ? { name: headline } : {}),
-          image_hash: feedImageHash,
-          call_to_action: { type: 'WHATSAPP_MESSAGE', value: { app_destination: 'WHATSAPP' } },
-        },
-      },
-      degrees_of_freedom_spec: NO_AI_ENHANCEMENTS,
-    };
+  if (!story) {
+    const data = feed.type === 'image'
+      ? { link_data: { link: WHATSAPP_LINK, message, ...(headline ? { name: headline } : {}), image_hash: feed.hash, call_to_action: { type: 'WHATSAPP_MESSAGE', value: { app_destination: 'WHATSAPP' } } } }
+      : { video_data: { video_id: feed.videoId, image_url: feed.thumbnailUrl, message, ...(headline ? { title: headline } : {}), call_to_action: CTA } };
+    return { name, object_story_spec: { ...identity, ...data }, degrees_of_freedom_spec: NO_AI_ENHANCEMENTS };
   }
+
+  const images = [];
+  const videos = [];
+  const rule = (media, label) => {
+    if (media.type === 'image') {
+      images.push({ hash: media.hash, adlabels: [{ name: label }] });
+      return { customization_spec: POSITIONS[label], image_label: { name: label } };
+    }
+    videos.push({ video_id: media.videoId, thumbnail_url: media.thumbnailUrl, adlabels: [{ name: label }] });
+    return { customization_spec: POSITIONS[label], video_label: { name: label } };
+  };
+  const rules = [rule(feed, 'feed'), rule(story, 'story')];
+  const format = feed.type !== story.type ? 'AUTOMATIC_FORMAT' : feed.type === 'image' ? 'SINGLE_IMAGE' : 'SINGLE_VIDEO';
   return {
     name,
     object_story_spec: identity,
     asset_feed_spec: {
-      images: [
-        { hash: feedImageHash, adlabels: [{ name: 'feed' }] },
-        { hash: storyImageHash, adlabels: [{ name: 'story' }] },
-      ],
+      ...(images.length ? { images } : {}),
+      ...(videos.length ? { videos } : {}),
       bodies: [{ text: message }],
       titles: [{ text: headline || name }],
       link_urls: [{ website_url: WHATSAPP_LINK }],
-      ad_formats: ['SINGLE_IMAGE'],
+      ad_formats: [format],
       call_to_action_types: ['WHATSAPP_MESSAGE'],
       optimization_type: 'PLACEMENT',
-      asset_customization_rules: [
-        {
-          customization_spec: { publisher_platforms: ['facebook', 'instagram'], facebook_positions: ['feed'], instagram_positions: ['stream'] },
-          image_label: { name: 'feed' },
-        },
-        {
-          customization_spec: { publisher_platforms: ['facebook', 'instagram'], facebook_positions: ['story'], instagram_positions: ['story'] },
-          image_label: { name: 'story' },
-        },
-      ],
+      asset_customization_rules: rules,
     },
     degrees_of_freedom_spec: NO_AI_ENHANCEMENTS,
   };

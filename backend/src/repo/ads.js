@@ -94,7 +94,9 @@ export function createAdsRepo(db) {
       const { rows } = await db.query(
         `SELECT c.*,
            (SELECT f.id FROM files f WHERE f.owner_type = 'ad_feed' AND f.owner_id = c.id LIMIT 1) AS feed_file_id,
-           (SELECT f.id FROM files f WHERE f.owner_type = 'ad_story' AND f.owner_id = c.id LIMIT 1) AS story_file_id
+           (SELECT f.id FROM files f WHERE f.owner_type = 'ad_story' AND f.owner_id = c.id LIMIT 1) AS story_file_id,
+           (SELECT f.kind FROM files f WHERE f.owner_type = 'ad_feed' AND f.owner_id = c.id LIMIT 1) AS feed_kind,
+           (SELECT f.kind FROM files f WHERE f.owner_type = 'ad_story' AND f.owner_id = c.id LIMIT 1) AS story_kind
          FROM ad_creatives c WHERE ($1::text IS NULL OR c.status = $1) ORDER BY c.created_at DESC`,
         [status ?? null],
       );

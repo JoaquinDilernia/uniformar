@@ -32,7 +32,7 @@ const answerSchema = z.object({
 const LEVEL_LABEL = { campaign: 'la campaña', adset: 'el conjunto', ad: 'el anuncio' };
 const SNAPSHOT_TTL_MS = 5 * 60_000;
 
-export function createAdsRouter({ repo, meta, startRun, execute, config }) {
+export function createAdsRouter({ repo, meta, startRun, execute, config, files }) {
   const r = Router();
   const view = requirePermission('ads', 'view');
   const edit = requirePermission('ads', 'edit');
@@ -129,7 +129,16 @@ export function createAdsRouter({ repo, meta, startRun, execute, config }) {
     res.json({ decision: await repo.getDecision(id) });
   });
 
-  r.get('/ads/creatives', view, async (_req, res) => res.json({ creatives: await repo.listCreatives() }));
+  // Cada pieza trae su feed/historia con tipo y URL (firmada en R2: los videos no pasan por el servidor)
+  r.get('/ads/creatives', view, async (_req, res) => {
+    const creatives = await repo.listCreatives();
+    const media = await files.listFor(['ad_feed', 'ad_story'], creatives.map((c) => c.id));
+    const pick = (type, id) => {
+      const f = media.find((m) => m.owner_type === type && m.owner_id === id);
+      return f ? { id: f.id, kind: f.kind, url: f.url } : null;
+    };
+    res.json({ creatives: creatives.map((c) => ({ ...c, feed: pick('ad_feed', c.id), story: pick('ad_story', c.id) })) });
+  });
 
   r.post('/ads/creatives', edit, async (req, res) => {
     const body = parse(creativeSchema, req.body);

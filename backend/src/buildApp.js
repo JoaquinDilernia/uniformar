@@ -52,7 +52,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   api.use(createCalendarRouter({ db, calendarRepo, files }));
   api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
   api.use(createHomeRouter({ homeRepo: createHomeRepo(db), storage }));
-  api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig }));
+  api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig, files }));
 
   const app = createApp({
     apiRouter: api,

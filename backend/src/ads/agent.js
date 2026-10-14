@@ -1,7 +1,7 @@
 import { TOOL_DEFINITIONS, READ_ONLY_TOOLS, META_ACTIONS } from './tools.js';
 import { SYSTEM_PROMPT } from './systemPrompt.js';
 import { buildSnapshot } from './snapshot.js';
-import { buildAdName, buildWhatsappCreativeSpec, buildIgPostCreativeSpec, IG_ACCESS_MSG } from './creativeSpec.js';
+import { buildAdName, buildWhatsappCreativeSpec, buildIgPostCreativeSpec, IG_ACCESS_MSG, ALLOW_MIXED_MEDIA } from './creativeSpec.js';
 import { artDate } from './metrics.js';
 import { conflict } from '../lib/errors.js';
 import { loadIgPosts } from './igPosts.js';
@@ -26,17 +26,30 @@ export function createExecutor({ meta, repo, files, config }) {
   async function publishCreative({ creative_id: creativeId, adset_id: adsetId, adset_name: adsetName }) {
     const creative = await repo.getCreative(creativeId);
     if (creative.status === 'used') throw new Error(`La pieza "${creative.name}" ya se publicó (anuncio ${creative.meta_ad_id}).`);
-    const imgs = await files.listFor(['ad_feed', 'ad_story'], [creativeId]);
-    const feed = imgs.find((f) => f.owner_type === 'ad_feed');
-    const story = imgs.find((f) => f.owner_type === 'ad_story');
-    if (!feed) throw new Error(`La pieza "${creative.name}" no tiene imagen de feed.`);
-    const feedHash = await meta.uploadImage(await files.read(await files.get(feed.id)));
-    const storyHash = story ? await meta.uploadImage(await files.read(await files.get(story.id))) : null;
+    const media = await files.listFor(['ad_feed', 'ad_story'], [creativeId]);
+    const feedFile = media.find((f) => f.owner_type === 'ad_feed');
+    const storyFile = media.find((f) => f.owner_type === 'ad_story');
+    if (!feedFile) throw new Error(`La pieza "${creative.name}" no tiene imagen ni video de feed.`);
+    if (!ALLOW_MIXED_MEDIA && storyFile && storyFile.kind !== feedFile.kind) {
+      throw new Error('Feed e historia tienen que ser los dos imagen o los dos video.');
+    }
+    // Imagen: se sube el archivo y Meta devuelve un hash. Video: con R2 Meta lo descarga del link firmado
+    // (el servidor no mueve los MB); con storage local se manda el archivo. Después hay que esperar el procesamiento.
+    const toMeta = async (f) => {
+      if (f.kind !== 'video') return { type: 'image', hash: await meta.uploadImage(await files.read(await files.get(f.id))) };
+      const videoName = f.original_name || creative.name;
+      const videoId = /^https:\/\//.test(f.url)
+        ? await meta.uploadVideo({ fileUrl: f.url, name: videoName })
+        : await meta.uploadVideo({ buffer: await files.read(await files.get(f.id)), name: videoName });
+      await meta.waitVideoReady(videoId);
+      return { type: 'video', videoId, thumbnailUrl: await meta.videoThumbnail(videoId) };
+    };
+    const feed = await toMeta(feedFile);
+    const story = storyFile ? await toMeta(storyFile) : null;
     const name = buildAdName({ adsetName: adsetName || adsetId, creativeName: creative.name, date: artDate() });
     const publish = async (igUserId) => {
       const spec = buildWhatsappCreativeSpec({
-        name, pageId: config.pageId, igUserId, message: creative.copy, headline: creative.headline,
-        feedImageHash: feedHash, storyImageHash: storyHash,
+        name, pageId: config.pageId, igUserId, message: creative.copy, headline: creative.headline, feed, story,
       });
       const { id: metaCreativeId } = await meta.createCreative(spec);
       return meta.createAd({ name, adsetId, creativeId: metaCreativeId, status: 'ACTIVE' });
@@ -181,7 +194,7 @@ export async function buildContext({ meta, repo, config }) {
     campaigns: snapshot.campaigns,
     adsets: snapshot.adsets,
     ads: snapshot.ads,
-    unusedCreatives: unusedCreatives.map((c) => ({ id: c.id, name: c.name, copy: c.copy, headline: c.headline, notes: c.notes, hasStory: Boolean(c.story_file_id), hasFeed: Boolean(c.feed_file_id) })),
+    unusedCreatives: unusedCreatives.map((c) => ({ id: c.id, name: c.name, copy: c.copy, headline: c.headline, notes: c.notes, feed: c.feed_kind ?? null, story: c.story_kind ?? null })),
     igPosts,
     openCreativeRequests: openRequests.map((r) => ({ concept: r.concept, created_at: r.created_at })),
     activeLearnings: learnings.map((l) => ({ id: l.id, text: l.text, evidence: l.evidence })),

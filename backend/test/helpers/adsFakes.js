@@ -20,6 +20,9 @@ export function fakeMeta() {
     createCreative: async (spec) => { log('createCreative')(spec); return { id: '904' }; },
     createAd: async (a) => { log('createAd')(a); return { id: '905' }; },
     searchInterests: async () => [{ id: '6003436950375', name: 'Restaurantes' }],
+    uploadVideo: async (a) => { log('uploadVideo')(a); return 'vid1'; },
+    waitVideoReady: async (id) => { log('waitVideoReady')(id); },
+    videoThumbnail: async () => 'https://t/thumb.jpg',
     getIgMedia: async () => [
       { id: '17900000000123456', type: 'reel', caption: 'Así quedó el equipo de Panadería Maná', thumbnail: 'https://t/1.jpg', permalink: 'https://ig/1', timestamp: '2026-10-10T10:00:00+0000', likes: 40, comments: 3, reach: 1200 },
       { id: '17900000000654321', type: 'post', caption: 'Chaquetas bordadas', thumbnail: 'https://t/2.jpg', permalink: 'https://ig/2', timestamp: '2026-10-09T10:00:00+0000', likes: 12, comments: 0, reach: null },

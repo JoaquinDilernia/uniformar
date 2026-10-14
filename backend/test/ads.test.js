@@ -39,12 +39,40 @@ describe('métricas y piezas', () => {
     expect(totals([row, { spend: '1000' }])).toMatchObject({ spend: 10000, conversations: 3, costPerConversation: 3333 });
   });
 
-  it('arma el creative de WhatsApp simple o por ubicación', () => {
-    const simple = buildWhatsappCreativeSpec({ name: 'X', pageId: '1', igUserId: '2', message: 'hola', feedImageHash: 'h1' });
-    expect(simple.object_story_spec.link_data.call_to_action.type).toBe('WHATSAPP_MESSAGE');
-    const placed = buildWhatsappCreativeSpec({ name: 'X', pageId: '1', igUserId: '2', message: 'hola', feedImageHash: 'h1', storyImageHash: 'h2' });
+  it('arma el creative de WhatsApp para imagen y video, solo feed o por ubicación', () => {
+    const img = (hash) => ({ type: 'image', hash });
+    const vid = (videoId) => ({ type: 'video', videoId, thumbnailUrl: `https://t/${videoId}.jpg` });
+    const base = { name: 'X', pageId: '1', igUserId: '2', message: 'hola', headline: 'Título' };
+
+    const simple = buildWhatsappCreativeSpec({ ...base, feed: img('h1') });
+    expect(simple.object_story_spec.link_data).toMatchObject({ image_hash: 'h1', name: 'Título', call_to_action: { type: 'WHATSAPP_MESSAGE' } });
+
+    const video = buildWhatsappCreativeSpec({ ...base, feed: vid('v1') });
+    expect(video.object_story_spec.video_data).toMatchObject({
+      video_id: 'v1', image_url: 'https://t/v1.jpg', message: 'hola', title: 'Título',
+      call_to_action: { type: 'WHATSAPP_MESSAGE', value: { app_destination: 'WHATSAPP' } },
+    });
+
+    const placed = buildWhatsappCreativeSpec({ ...base, feed: img('h1'), story: img('h2') });
+    expect(placed.asset_feed_spec.ad_formats).toEqual(['SINGLE_IMAGE']);
     expect(placed.asset_feed_spec.call_to_action_types).toEqual(['WHATSAPP_MESSAGE']);
     expect(placed.asset_feed_spec.asset_customization_rules[1].image_label).toEqual({ name: 'story' });
+    expect(placed.asset_feed_spec.videos).toBeUndefined();
+
+    const videos = buildWhatsappCreativeSpec({ ...base, feed: vid('v1'), story: vid('v2') });
+    expect(videos.asset_feed_spec.ad_formats).toEqual(['SINGLE_VIDEO']);
+    expect(videos.asset_feed_spec.videos).toEqual([
+      { video_id: 'v1', thumbnail_url: 'https://t/v1.jpg', adlabels: [{ name: 'feed' }] },
+      { video_id: 'v2', thumbnail_url: 'https://t/v2.jpg', adlabels: [{ name: 'story' }] },
+    ]);
+    expect(videos.asset_feed_spec.asset_customization_rules.map((r) => r.video_label)).toEqual([{ name: 'feed' }, { name: 'story' }]);
+    expect(videos.asset_feed_spec.images).toBeUndefined();
+
+    const mixed = buildWhatsappCreativeSpec({ ...base, feed: img('h1'), story: vid('v2') });
+    expect(mixed.asset_feed_spec.ad_formats).toEqual(['AUTOMATIC_FORMAT']);
+    expect(mixed.asset_feed_spec.asset_customization_rules[0].image_label).toEqual({ name: 'feed' });
+    expect(mixed.asset_feed_spec.asset_customization_rules[1].video_label).toEqual({ name: 'story' });
+
     expect(buildAdName({ adsetName: 'WPP_INTERESES_AMBA_20261009', creativeName: 'Panadería Maná', date: '2026-10-09' }))
       .toBe('WPPINTERESESAMBA_PANADERIAMANA_20261009');
   });
