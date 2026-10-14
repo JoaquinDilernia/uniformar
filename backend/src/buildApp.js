@@ -32,7 +32,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   const ideasRepo = createIdeasRepo(db);
   const calendarRepo = createCalendarRepo(db);
   const projectsRepo = createProjectsRepo(db);
-  const files = createFilesService({ db, storage });
+  const files = createFilesService({ db, storage, uploadSecret: jwtSecret });
   const authenticate = createAuthenticate({ usersRepo, secret: jwtSecret });
   const adsRepo = createAdsRepo(db);
   const adsConfig = ads.config ?? adsConfigFromEnv();

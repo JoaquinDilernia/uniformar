@@ -15,3 +15,6 @@ async function insert(db, table, values) {
 export const insertIdea = (db, o = {}) => insert(db, 'ideas', { kind: 'idea', format: 'video', category: 'domingo', text: 'Idea de prueba', ...o });
 export const insertProject = (db, o = {}) => insert(db, 'projects', { name: 'Proyecto de prueba', status: 'active', ...o });
 export const insertCalendarItem = (db, o = {}) => insert(db, 'calendar_items', { date: '2026-10-07', title: 'Pieza', ...o });
+
+// Encabezado mínimo de un MP4 (caja ftyp "isom"): alcanza para que file-type lo reconozca como video/mp4
+export const MP4_MIN = Buffer.concat([Buffer.from('000000186674797069736f6d0000020069736f6d6d703431', 'hex'), Buffer.alloc(200)]);

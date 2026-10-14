@@ -1,7 +1,11 @@
 import crypto from 'node:crypto';
+import jwt from 'jsonwebtoken';
 import { fileTypeFromBuffer } from 'file-type';
 import sizeOf from 'image-size';
-import { AppError, badRequest, notFound } from '../lib/errors.js';
+import { AppError, badRequest, forbidden, notFound } from '../lib/errors.js';
+
+// Videos de piezas de pauta: se suben directo al storage (no pasan por la memoria del servidor)
+const VIDEO_DEF = { accept: ['video/mp4', 'video/quicktime'], maxBytes: 200 * 1024 * 1024 };
 
 export const OWNER_TYPES = {
   idea_ref: { table: 'ideas', section: 'ideas', kind: 'image', max: 20 },
@@ -10,14 +14,14 @@ export const OWNER_TYPES = {
   project_photo: { table: 'projects', section: 'projects', kind: 'image', max: 50 },
   project_pdf: { table: 'projects', section: 'projects', kind: 'pdf', max: 20 },
   // Piezas de pauta: van tal cual a Meta, que no acepta WebP — solo JPG/PNG y sin comprimir
-  ad_feed: { table: 'ad_creatives', section: 'ads', kind: 'image', max: 1, accept: ['image/jpeg', 'image/png'], maxBytes: 8 * 1024 * 1024 },
-  ad_story: { table: 'ad_creatives', section: 'ads', kind: 'image', max: 1, accept: ['image/jpeg', 'image/png'], maxBytes: 8 * 1024 * 1024 },
+  ad_feed: { table: 'ad_creatives', section: 'ads', kind: 'image', max: 1, accept: ['image/jpeg', 'image/png'], maxBytes: 8 * 1024 * 1024, video: VIDEO_DEF },
+  ad_story: { table: 'ad_creatives', section: 'ads', kind: 'image', max: 1, accept: ['image/jpeg', 'image/png'], maxBytes: 8 * 1024 * 1024, video: VIDEO_DEF },
 };
 export const LIMITS = { image: 2 * 1024 * 1024, pdf: 10 * 1024 * 1024 };
 const ACCEPTED = { image: ['image/webp', 'image/jpeg', 'image/png'], pdf: ['application/pdf'] };
-const EXT = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png', 'application/pdf': 'pdf' };
+const EXT = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png', 'application/pdf': 'pdf', 'video/mp4': 'mp4', 'video/quicktime': 'mov' };
 
-export function createFilesService({ db, storage }) {
+export function createFilesService({ db, storage, uploadSecret }) {
   async function toDTO(rows) {
     return Promise.all(rows.map(async (f) => ({
       id: f.id, owner_type: f.owner_type, owner_id: f.owner_id, kind: f.kind, mime: f.mime, bytes: f.bytes,
@@ -135,5 +139,80 @@ export function createFilesService({ db, storage }) {
     return rows[0];
   }
 
-  return { listFor, upload, get, read, remove, removeOwnerRows, purgeKeys, retryPending, reorder };
+  async function checkSlot(def, ownerType, ownerId) {
+    const { rows: owner } = await db.query(`SELECT id FROM ${def.table} WHERE id = $1`, [ownerId]);
+    if (!owner[0]) throw notFound('No existe el elemento al que querés adjuntar el archivo.');
+    const { rows: [{ n }] } = await db.query('SELECT count(*)::int AS n FROM files WHERE owner_type = $1 AND owner_id = $2', [ownerType, ownerId]);
+    if (n >= def.max) throw new AppError(409, 'TOO_MANY_FILES', `Máximo ${def.max} archivos acá.`);
+    return n;
+  }
+
+  async function prepareUpload({ ownerType, ownerId, mime, bytes, originalName, userId }) {
+    const def = OWNER_TYPES[ownerType];
+    if (!def?.video) throw badRequest('Acá no se pueden subir videos.');
+    if (!def.video.accept.includes(mime)) throw new AppError(415, 'UNSUPPORTED_FILE', 'Solo se aceptan videos MP4 o MOV.');
+    if (bytes > def.video.maxBytes) throw new AppError(413, 'FILE_TOO_LARGE', `El video pesa más de ${def.video.maxBytes / 1024 / 1024} MB.`);
+    await checkSlot(def, ownerType, ownerId);
+    const key = `${ownerType}/${ownerId}/${crypto.randomUUID()}.${EXT[mime]}`;
+    const token = jwt.sign(
+      { p: 'upload', k: key, ot: ownerType, oi: ownerId, m: mime, b: bytes, n: String(originalName ?? '').slice(0, 200), u: userId },
+      uploadSecret, { expiresIn: '30m' },
+    );
+    const uploadUrl = storage.driver === 's3' ? await storage.presignPut(key, mime) : `/api/files/local-upload/${token}`;
+    return { upload_url: uploadUrl, token };
+  }
+
+  function verifyUploadToken(token) {
+    try {
+      const t = jwt.verify(token, uploadSecret, { algorithms: ['HS256'] });
+      if (t.p !== 'upload') throw new Error('no es de subida');
+      return t;
+    } catch {
+      throw badRequest('El permiso de subida venció o no es válido. Probá subir de nuevo.');
+    }
+  }
+
+  async function receiveLocalUpload(token, stream) {
+    if (storage.driver !== 'local') throw notFound();
+    const t = verifyUploadToken(token);
+    try {
+      await storage.putStream(t.k, stream, t.b);
+    } catch (err) {
+      if (err.code === 'TOO_LARGE') throw new AppError(413, 'FILE_TOO_LARGE', 'El video es más grande de lo que se declaró.');
+      throw err;
+    }
+  }
+
+  async function completeUpload(token, userId) {
+    const t = verifyUploadToken(token);
+    if (t.u !== userId) throw forbidden('Este video lo empezó a subir otra persona.');
+    // Idempotente: si ya se confirmó (reintento, doble clic) devuelve el mismo archivo
+    const { rows: existing } = await db.query('SELECT * FROM files WHERE storage_key = $1', [t.k]);
+    if (existing[0]) return (await toDTO(existing))[0];
+
+    const def = OWNER_TYPES[t.ot];
+    const head = await storage.head(t.k);
+    if (!head) throw badRequest('No encontramos el video subido. Probá de nuevo.');
+    const reject = async (err) => {
+      await purgeKeys([t.k]);
+      throw err;
+    };
+    if (head.bytes !== t.b) return reject(badRequest('El video no se subió completo. Probá de nuevo.'));
+    const mime = (await fileTypeFromBuffer(await storage.readHead(t.k, 4100)))?.mime;
+    if (!def.video.accept.includes(mime)) return reject(new AppError(415, 'UNSUPPORTED_FILE', 'El archivo no es un video MP4 o MOV.'));
+    let n;
+    try {
+      n = await checkSlot(def, t.ot, t.oi);
+    } catch (err) {
+      return reject(err);
+    }
+    const { rows } = await db.query(
+      `INSERT INTO files (owner_type, owner_id, kind, storage_key, mime, bytes, original_name, sort, uploaded_by)
+       VALUES ($1, $2, 'video', $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [t.ot, t.oi, t.k, mime, head.bytes, t.n, n, userId],
+    );
+    return (await toDTO(rows))[0];
+  }
+
+  return { listFor, upload, get, read, remove, removeOwnerRows, purgeKeys, retryPending, reorder, prepareUpload, receiveLocalUpload, completeUpload };
 }
