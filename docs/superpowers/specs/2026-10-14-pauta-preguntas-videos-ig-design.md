@@ -108,7 +108,7 @@ para el alcance orgánico). El respaldo con la cuenta de IG de la página **no a
 - Si Meta responde error de acceso a Instagram: error claro "La cuenta publicitaria no tiene acceso a @uniform.ar:
   asignala en el Business Manager." — **sin** caer al respaldo de la página.
 
-### Datos — en la misma migración `003`
+### Datos — migración `004_ad_ig_promotions.sql`
 ```sql
 CREATE TABLE ad_ig_promotions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -164,8 +164,8 @@ CREATE INDEX ad_ig_promotions_media ON ad_ig_promotions (ig_media_id);
 
 ### Archivos (`services/files.js`, `services/storage.js`, `routes/files.js`)
 - `OWNER_TYPES.ad_feed/ad_story`: `kinds: ['image','video']`, video `accept: ['video/mp4','video/quicktime']`,
-  `maxBytes` video 200 MB. El chequeo `files.kind` en la tabla ya admite cualquier texto; se agrega `'video'` a
-  `EXT` (`mp4`, `mov`).
+  `maxBytes` video 200 MB. Migración `005_files_video.sql`: `files.kind` hoy tiene `CHECK (kind IN ('image','pdf'))`
+  → se reemplaza por `('image','pdf','video')`. Se agrega `video/mp4 → mp4` y `video/quicktime → mov` a `EXT`.
 - Storage: `presignPut(key, mime, bytes)` (S3: `PutObjectCommand` firmado 15 min con `ContentType` y
   `ContentLength`), `head(key)` → `{ bytes }`, `readRange(key, 0, 4100)` para detectar el tipo real.
   Local: `presignPut` devuelve una URL del backend (`PUT /api/files/local-upload/:token`) que escribe en disco
@@ -223,7 +223,8 @@ CREATE INDEX ad_ig_promotions_media ON ad_ig_promotions (ig_media_id);
 - Carruseles armados desde el panel (los carruseles de IG sí se pueden promocionar como post existente).
 
 ## 6. Deploy y configuración
-- Migración `003_ad_questions_ig.sql` (se aplica sola al arrancar).
+- Migraciones `003_ad_questions.sql` (A), `004_ad_ig_promotions.sql` (C), `005_files_video.sql` (B); se aplican
+  solas al arrancar.
 - Parte C: acceso de la cuenta publicitaria a @uniform.ar + permisos `instagram_basic` / `instagram_manage_insights`
   en el token (`META_ACCESS_TOKEN`).
 - Parte B: CORS del bucket R2.
