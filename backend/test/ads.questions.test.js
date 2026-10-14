@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestContext } from './helpers/testApp.js';
-import { fakeMeta, contextSection } from './helpers/adsFakes.js';
+import { fakeMeta, fakeAnthropic, config, contextSection } from './helpers/adsFakes.js';
 import { createAdsRepo } from '../src/repo/ads.js';
 import { createDispatcher, buildContext } from '../src/ads/agent.js';
 
@@ -71,5 +71,68 @@ describe('contexto del agente', () => {
     const answered = contextSection(text, 'answeredQuestions');
     expect(answered.map((q) => q.question)).toEqual(['Durante A']);
     expect(answered[0]).toMatchObject({ answer: 'resp durante', answered_by: 'Santi' });
+  });
+});
+
+describe('rutas de preguntas', () => {
+  let app, admin, equipo, adminUser;
+  beforeAll(async () => {
+    app = await createTestContext({ ads: { meta: fakeMeta(), anthropic: fakeAnthropic([]), config } });
+    ({ agent: admin, user: adminUser } = await app.asUser({ template: 'admin', name: 'Sofi' }));
+    ({ agent: equipo } = await app.asUser({ template: 'equipo' }));
+  });
+  afterAll(() => app.close());
+
+  const newQuestion = (text = '¿Se contestan los WhatsApp?') => createAdsRepo(app.db).addQuestion({ question: text, why: 'decidir', quickAnswers: ['Sí', 'No'] });
+
+  async function waitIdle() {
+    for (let i = 0; i < 50; i++) {
+      const { rows } = await app.db.query("SELECT 1 FROM ad_runs WHERE status = 'running'");
+      if (!rows.length) return;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    throw new Error('la corrida no terminó');
+  }
+
+  it('lista abiertas, cuenta en el resumen y responde (una sola vez)', async () => {
+    const q = await newQuestion();
+    const list = await equipo.get('/api/ads/questions');
+    expect(list.status).toBe(200);
+    expect(list.body.questions[0]).toMatchObject({ id: q.id, quick_answers: ['Sí', 'No'] });
+    expect((await equipo.get('/api/ads/overview')).body.openQuestions).toBe(1);
+
+    expect((await equipo.post(`/api/ads/questions/${q.id}/answer`).send({ answer: 'Sí' })).status).toBe(403);
+    expect((await admin.post(`/api/ads/questions/${q.id}/answer`).send({ answer: '  ' })).status).toBe(400);
+    const res = await admin.post(`/api/ads/questions/${q.id}/answer`).send({ answer: 'Sí, todas' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ question: { status: 'answered', answer: 'Sí, todas', answered_by_name: 'Sofi' }, run: null, note: null });
+    expect((await admin.post(`/api/ads/questions/${q.id}/answer`).send({ answer: 'otra' })).status).toBe(409);
+    const answered = (await equipo.get('/api/ads/questions?status=answered')).body.questions;
+    expect(answered[0].id).toBe(q.id);
+  });
+
+  it('guardar y analizar ahora arranca una corrida', async () => {
+    const q = await newQuestion('P analizar');
+    const res = await admin.post(`/api/ads/questions/${q.id}/answer`).send({ answer: '6 empresas reales', analyze: true });
+    expect(res.status).toBe(200);
+    expect(res.body.run).toMatchObject({ kind: 'manual', status: 'running', started_by: adminUser.id });
+    await waitIdle();
+  });
+
+  it('si ya hay un análisis corriendo, guarda la respuesta y avisa', async () => {
+    await createAdsRepo(app.db).startRun('manual', null); // queda "running"
+    const q = await newQuestion('P con corrida');
+    const res = await admin.post(`/api/ads/questions/${q.id}/answer`).send({ answer: 'Sí', analyze: true });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ question: { status: 'answered' }, run: null, note: 'Ya hay un análisis corriendo: el agente la toma en el próximo.' });
+    await app.db.query("UPDATE ad_runs SET status = 'failed' WHERE status = 'running'");
+  });
+
+  it('descartar', async () => {
+    const q = await newQuestion('P descartar');
+    expect((await equipo.post(`/api/ads/questions/${q.id}/dismiss`)).status).toBe(403);
+    const res = await admin.post(`/api/ads/questions/${q.id}/dismiss`);
+    expect(res.body.question.status).toBe('dismissed');
+    expect((await admin.post(`/api/ads/questions/${q.id}/dismiss`)).status).toBe(409);
   });
 });

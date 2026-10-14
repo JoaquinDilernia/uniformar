@@ -22,6 +22,11 @@ const settingsSchema = z.object({
   business_notes: z.string().max(5000),
 }).partial();
 
+const answerSchema = z.object({
+  answer: z.string().trim().min(1, 'Escribí la respuesta').max(2000),
+  analyze: z.boolean().default(false),
+});
+
 const LEVEL_LABEL = { campaign: 'la campaña', adset: 'el conjunto', ad: 'el anuncio' };
 const SNAPSHOT_TTL_MS = 5 * 60_000;
 
@@ -49,7 +54,9 @@ export function createAdsRouter({ repo, meta, startRun, execute }) {
   const invalidate = () => { cache = null; };
 
   r.get('/ads/overview', view, async (req, res) => {
-    const [settings, runs, pending] = await Promise.all([repo.getSettings(), repo.listRuns(1), repo.listDecisions({ status: 'pending', limit: 100 })]);
+    const [settings, runs, pending, openQuestions] = await Promise.all([
+      repo.getSettings(), repo.listRuns(1), repo.listDecisions({ status: 'pending', limit: 100 }), repo.countOpenQuestions(),
+    ]);
     let snap = null;
     let metaError = null;
     if (meta) {
@@ -61,7 +68,7 @@ export function createAdsRouter({ repo, meta, startRun, execute }) {
     }
     res.json({
       configured: { meta: Boolean(meta), agent: Boolean(startRun) },
-      settings, lastRun: runs[0] ?? null, pendingCount: pending.length, snapshot: snap, metaError,
+      settings, lastRun: runs[0] ?? null, pendingCount: pending.length, openQuestions, snapshot: snap, metaError,
     });
   });
 
@@ -150,6 +157,38 @@ export function createAdsRouter({ repo, meta, startRun, execute }) {
   r.delete('/ads/learnings/:id', edit, async (req, res) => {
     await repo.deleteLearning(parse(uuid, req.params.id));
     res.json({ ok: true });
+  });
+
+  r.get('/ads/questions', view, async (req, res) => {
+    const status = req.query.status ? parse(z.enum(['open', 'answered']), req.query.status) : 'open';
+    res.json({ questions: await repo.listQuestions({ status, limit: 30 }) });
+  });
+
+  r.post('/ads/questions/:id/answer', edit, async (req, res) => {
+    const id = parse(uuid, req.params.id);
+    const body = parse(answerSchema, req.body);
+    const question = await repo.answerQuestion(id, body.answer, req.user.id);
+    let run = null;
+    let note = null;
+    if (body.analyze) {
+      if (!startRun || !meta) {
+        note = 'Respuesta guardada. El agente no está configurado para analizar ahora.';
+      } else {
+        try {
+          const started = await startRun('manual', req.user.id);
+          started.done.finally(invalidate);
+          run = started.run;
+        } catch (err) {
+          if (err.status !== 409) throw err;
+          note = 'Ya hay un análisis corriendo: el agente la toma en el próximo.';
+        }
+      }
+    }
+    res.json({ question, run, note });
+  });
+
+  r.post('/ads/questions/:id/dismiss', edit, async (req, res) => {
+    res.json({ question: await repo.dismissQuestion(parse(uuid, req.params.id)) });
   });
 
   r.get('/ads/settings', view, async (_req, res) => res.json({ settings: await repo.getSettings() }));
