@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api/client.js';
 import { uploadFile } from '../../lib/upload.js';
+import { toastBus } from '../../state/toastBus.js';
 
 export const adsKeys = {
   overview: ['ads', 'overview'], runs: ['ads', 'runs'], decisions: ['ads', 'decisions'], creatives: ['ads', 'creatives'],
-  requests: ['ads', 'requests'], learnings: ['ads', 'learnings'],
+  requests: ['ads', 'requests'], learnings: ['ads', 'learnings'], questions: ['ads', 'questions'],
 };
 
 function useRefreshAds() {
@@ -102,4 +103,27 @@ export function useDeleteLearning() {
 export function useSaveAdSettings() {
   const refresh = useRefreshAds();
   return useMutation({ mutationFn: (patch) => api.put('/ads/settings', patch).then((r) => r.settings), meta: { success: 'Ajustes guardados ✓' }, onSettled: refresh });
+}
+
+export const useQuestions = (status = 'open') => useQuery({
+  queryKey: [...adsKeys.questions, status],
+  queryFn: () => api.get(`/ads/questions?status=${status}`).then((r) => r.questions),
+});
+
+export function useAnswerQuestion() {
+  const refresh = useRefreshAds();
+  return useMutation({
+    mutationFn: ({ id, answer, analyze }) => api.post(`/ads/questions/${id}/answer`, { answer, analyze }),
+    meta: { success: false },
+    onSuccess: (r, vars) => {
+      if (r.note) toastBus.info(r.note);
+      else toastBus.success(vars.analyze ? 'Respuesta guardada. El agente arrancó a analizar.' : 'Respuesta guardada ✓');
+    },
+    onSettled: refresh,
+  });
+}
+
+export function useDismissQuestion() {
+  const refresh = useRefreshAds();
+  return useMutation({ mutationFn: (id) => api.post(`/ads/questions/${id}/dismiss`), meta: { success: 'Pregunta descartada' }, onSettled: refresh });
 }

@@ -17,10 +17,9 @@ import {
   useAdsOverview, useArchiveCreative, useCloseRequest, useCreateCreative, useCreatives, useDecide, useDecisions,
   useDeleteLearning, useLearnings, usePublishCreative, useRefreshMeta, useRequests, useSaveAdSettings, useSetStatus, useStartRun,
 } from './api.js';
+import { ars, when } from './format.js';
+import { AgentQuestions } from './Questions.jsx';
 import s from './ads.module.css';
-
-const ars = (n) => (n == null ? '—' : `$${Math.round(n).toLocaleString('es-AR')}`);
-const when = (iso) => (iso ? new Date(iso).toLocaleString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
 
 const STATUS_LABEL = {
   ACTIVE: 'Activo', PAUSED: 'Pausado', CAMPAIGN_PAUSED: 'Campaña pausada', ADSET_PAUSED: 'Conjunto pausado',
@@ -69,7 +68,7 @@ export function AdsPage() {
       <PageHeader title="Agente de pauta" subtitle="Meta Ads · mensajes a WhatsApp" actions={actions} />
       <div className={s.page}>
         <Segmented label="Sección" value={tab} onChange={setTab} options={[
-          { value: 'summary', label: 'Resumen' },
+          { value: 'summary', label: `Resumen${data?.openQuestions ? ` (${data.openQuestions})` : ''}` },
           { value: 'reco', label: `Recomendaciones${data?.pendingCount ? ` (${data.pendingCount})` : ''}` },
           { value: 'creatives', label: 'Anuncios' },
           { value: 'settings', label: 'Ajustes' },
@@ -120,6 +119,8 @@ function Summary({ data, canEdit, onRefresh, refreshing }) {
         {run?.status === 'failed' && <p className={s.bad}>Falló el análisis: {run.error}</p>}
         {run?.report && run.status !== 'running' && <Report text={run.report} />}
       </section>
+
+      <AgentQuestions canEdit={canEdit} />
 
       {snap && (
         <section className={s.card}>

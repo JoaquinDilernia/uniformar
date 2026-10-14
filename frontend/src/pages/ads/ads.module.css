@@ -62,3 +62,4 @@ p.bad { background: none; margin: 0; }
 .check input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
 .check span { display: flex; flex-direction: column; gap: 2px; }
 .check small { color: var(--c-text-2); font-size: var(--fs-s); }
+.answer { color: var(--c-text-2); white-space: pre-wrap; }
