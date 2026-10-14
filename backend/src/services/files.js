@@ -175,6 +175,9 @@ export function createFilesService({ db, storage, uploadSecret }) {
   async function receiveLocalUpload(token, stream) {
     if (storage.driver !== 'local') throw notFound();
     const t = verifyUploadToken(token);
+    // Ya confirmado: el link no sirve para pisar el archivo con otros bytes
+    const { rows: done } = await db.query('SELECT 1 FROM files WHERE storage_key = $1', [t.k]);
+    if (done[0]) throw new AppError(409, 'CONFLICT', 'Este video ya se subió.');
     try {
       await storage.putStream(t.k, stream, t.b);
     } catch (err) {
@@ -193,25 +196,37 @@ export function createFilesService({ db, storage, uploadSecret }) {
     const def = OWNER_TYPES[t.ot];
     const head = await storage.head(t.k);
     if (!head) throw badRequest('No encontramos el video subido. Probá de nuevo.');
+    // Nunca se borra un objeto que ya quedó registrado (lo pudo confirmar un reintento simultáneo)
     const reject = async (err) => {
-      await purgeKeys([t.k]);
+      const { rows } = await db.query('SELECT 1 FROM files WHERE storage_key = $1', [t.k]);
+      if (!rows[0]) await purgeKeys([t.k]);
       throw err;
     };
     if (head.bytes !== t.b) return reject(badRequest('El video no se subió completo. Probá de nuevo.'));
     const mime = (await fileTypeFromBuffer(await storage.readHead(t.k, 4100)))?.mime;
     if (!def.video.accept.includes(mime)) return reject(new AppError(415, 'UNSUPPORTED_FILE', 'El archivo no es un video MP4 o MOV.'));
-    let n;
+
+    // Con el dueño bloqueado: dos confirmaciones a la vez no pueden pasar las dos el chequeo de cupo
+    let row;
     try {
-      n = await checkSlot(def, t.ot, t.oi);
+      row = await db.tx(async (q) => {
+        const { rows: owner } = await q.query(`SELECT id FROM ${def.table} WHERE id = $1 FOR UPDATE`, [t.oi]);
+        if (!owner[0]) throw notFound('No existe el elemento al que querés adjuntar el archivo.');
+        const { rows: again } = await q.query('SELECT * FROM files WHERE storage_key = $1', [t.k]);
+        if (again[0]) return again[0];
+        const { rows: [{ n }] } = await q.query('SELECT count(*)::int AS n FROM files WHERE owner_type = $1 AND owner_id = $2', [t.ot, t.oi]);
+        if (n >= def.max) throw new AppError(409, 'TOO_MANY_FILES', `Máximo ${def.max} archivos acá.`);
+        const { rows } = await q.query(
+          `INSERT INTO files (owner_type, owner_id, kind, storage_key, mime, bytes, original_name, sort, uploaded_by)
+           VALUES ($1, $2, 'video', $3, $4, $5, $6, $7, $8) RETURNING *`,
+          [t.ot, t.oi, t.k, mime, head.bytes, t.n, n, userId],
+        );
+        return rows[0];
+      });
     } catch (err) {
       return reject(err);
     }
-    const { rows } = await db.query(
-      `INSERT INTO files (owner_type, owner_id, kind, storage_key, mime, bytes, original_name, sort, uploaded_by)
-       VALUES ($1, $2, 'video', $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [t.ot, t.oi, t.k, mime, head.bytes, t.n, n, userId],
-    );
-    return (await toDTO(rows))[0];
+    return (await toDTO([row]))[0];
   }
 
   return { listFor, upload, get, read, remove, removeOwnerRows, purgeKeys, retryPending, reorder, prepareUpload, receiveLocalUpload, completeUpload };

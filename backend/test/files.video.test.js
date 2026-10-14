@@ -45,6 +45,39 @@ describe('subida de videos', () => {
     await ctx.app.locals.files.remove(done.body.file.id); // borra fila y archivo del disco
   });
 
+  it('dos confirmaciones a la vez (reintento) dejan un solo archivo y no borran el video', async () => {
+    const res = await ask(admin);
+    await putLocal(admin, res.body.upload_url, MP4_MIN);
+    const [a, b] = await Promise.all([
+      admin.post('/api/files/complete').send({ token: res.body.token }),
+      admin.post('/api/files/complete').send({ token: res.body.token }),
+    ]);
+    expect([a.status, b.status]).toEqual([201, 201]);
+    expect(a.body.file.id).toBe(b.body.file.id);
+    const { rows: [row] } = await ctx.db.query('SELECT storage_key FROM files WHERE id = $1', [a.body.file.id]);
+    await expect(fs.stat(path.join(ctx.dir, row.storage_key))).resolves.toBeTruthy();
+    // Una vez confirmado, el link de subida ya no sirve para pisar el archivo
+    expect((await putLocal(admin, res.body.upload_url, Buffer.alloc(MP4_MIN.length))).status).toBe(409);
+    await ctx.app.locals.files.remove(a.body.file.id);
+  });
+
+  it('dos subidas distintas al mismo lugar a la vez: entra una sola y la otra se borra', async () => {
+    const one = await ask(admin);
+    const two = await ask(admin);
+    await putLocal(admin, one.body.upload_url, MP4_MIN);
+    await putLocal(admin, two.body.upload_url, MP4_MIN);
+    const results = await Promise.all([
+      admin.post('/api/files/complete').send({ token: one.body.token }),
+      admin.post('/api/files/complete').send({ token: two.body.token }),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
+    const { rows } = await ctx.db.query('SELECT storage_key FROM files WHERE owner_id = $1', [creativeId]);
+    expect(rows).toHaveLength(1);
+    const left = await fs.readdir(path.join(ctx.dir, 'ad_feed', creativeId));
+    expect(left).toEqual([path.basename(rows[0].storage_key)]);
+    await ctx.app.locals.files.remove((await ctx.db.query('SELECT id FROM files WHERE owner_id = $1', [creativeId])).rows[0].id);
+  });
+
   it('si lo subido no coincide con lo declarado o no es video, se rechaza y se borra', async () => {
     const short = await ask(admin, { bytes: MP4_MIN.length + 10 });
     await putLocal(admin, short.body.upload_url, MP4_MIN);
