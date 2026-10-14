@@ -45,6 +45,35 @@ describe('posts de Instagram', () => {
     expect(meta.calls.find((c) => c[0] === 'createAd')).toBeUndefined();
   });
 
+  it('dos promociones a la vez del mismo post en el mismo conjunto crean un solo anuncio', async () => {
+    const OTHER = '17900000000999999';
+    // Meta tarda: las dos requests llegan a chequear antes de que la primera termine
+    const original = meta.createCreative;
+    meta.createCreative = async (spec) => { await new Promise((r) => setTimeout(r, 50)); return original(spec); };
+    let results;
+    try {
+      results = await Promise.all([
+        admin.post(`/api/ads/ig-posts/${OTHER}/promote`).send({ adset_id: '901' }),
+        admin.post(`/api/ads/ig-posts/${OTHER}/promote`).send({ adset_id: '901' }),
+      ]);
+    } finally {
+      meta.createCreative = original;
+    }
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+    expect(meta.calls.filter((c) => c[0] === 'createAd')).toHaveLength(1);
+  });
+
+  it('si Meta falla, la promoción no queda registrada y se puede reintentar', async () => {
+    const original = meta.createAd;
+    meta.createAd = async () => { throw new Error('Meta 100: Invalid parameter'); };
+    try {
+      expect((await admin.post('/api/ads/ig-posts/17900000000888888/promote').send({ adset_id: '901' })).status).toBe(502);
+    } finally {
+      meta.createAd = original;
+    }
+    expect((await admin.post('/api/ads/ig-posts/17900000000888888/promote').send({ adset_id: '901' })).status).toBe(200);
+  });
+
   it('sin acceso a @uniform.ar: error claro y NO usa la cuenta de la página', async () => {
     const original = meta.createCreative;
     meta.createCreative = async (spec) => {

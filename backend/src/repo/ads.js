@@ -174,14 +174,20 @@ export function createAdsRepo(db) {
       return rows;
     },
 
-    addIgPromotion: (p) => one(
-      `INSERT INTO ad_ig_promotions (ig_media_id, permalink, meta_ad_id, meta_adset_id, adset_name, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [p.igMediaId, p.permalink ?? '', p.adId, p.adsetId, p.adsetName ?? '', p.userId ?? null],
-    ),
-    findIgPromotion: (mediaId, adsetId) => one('SELECT * FROM ad_ig_promotions WHERE ig_media_id = $1 AND meta_adset_id = $2 LIMIT 1', [mediaId, adsetId]),
+    // Reserva antes de llamar a Meta: si el post ya está (o se está promocionando) en ese conjunto, 409
+    async reserveIgPromotion(p) {
+      const { rows } = await db.query(
+        `INSERT INTO ad_ig_promotions (ig_media_id, permalink, meta_adset_id, adset_name, created_by)
+         VALUES ($1, $2, $3, $4, $5) ON CONFLICT (ig_media_id, meta_adset_id) DO NOTHING RETURNING *`,
+        [p.igMediaId, p.permalink ?? '', p.adsetId, p.adsetName ?? '', p.userId ?? null],
+      );
+      if (!rows[0]) throw conflict('Ese post ya está promocionado en ese conjunto.');
+      return rows[0];
+    },
+    completeIgPromotion: (id, adId) => one('UPDATE ad_ig_promotions SET meta_ad_id = $2 WHERE id = $1 RETURNING *', [id, adId]),
+    releaseIgPromotion: (id) => db.query('DELETE FROM ad_ig_promotions WHERE id = $1 AND meta_ad_id IS NULL', [id]),
     async listIgPromotions() {
-      const { rows } = await db.query('SELECT * FROM ad_ig_promotions ORDER BY created_at DESC LIMIT 500');
+      const { rows } = await db.query('SELECT * FROM ad_ig_promotions WHERE meta_ad_id IS NOT NULL ORDER BY created_at DESC LIMIT 500');
       return rows;
     },
   };

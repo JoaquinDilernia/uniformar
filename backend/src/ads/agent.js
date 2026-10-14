@@ -69,18 +69,25 @@ export function createExecutor({ meta, repo, files, config }) {
   }
 
   async function promoteIgPost({ ig_media_id: mediaId, adset_id: adsetId, adset_name: adsetName, permalink }, { userId } = {}) {
-    if (await repo.findIgPromotion(mediaId, adsetId)) throw conflict('Ese post ya está promocionado en ese conjunto.');
+    // Se reserva antes de tocar Meta: dos pedidos a la vez del mismo post y conjunto no crean dos anuncios
+    const reservation = await repo.reserveIgPromotion({ igMediaId: mediaId, permalink, adsetId, adsetName, userId });
     const name = buildAdName({ adsetName: adsetName || adsetId, creativeName: `IG${mediaId.slice(-6)}`, date: artDate() });
-    let creative;
+    let ad;
     try {
-      creative = await meta.createCreative(buildIgPostCreativeSpec({ name, pageId: config.pageId, igUserId: config.igUserId, mediaId }));
+      let creative;
+      try {
+        creative = await meta.createCreative(buildIgPostCreativeSpec({ name, pageId: config.pageId, igUserId: config.igUserId, mediaId }));
+      } catch (err) {
+        // Acá no hay respaldo con la cuenta de la página: el post existe solo en @uniform.ar
+        if (/instagram/i.test(err.message)) throw new Error(`${IG_ACCESS_MSG} (${err.message})`);
+        throw err;
+      }
+      ad = await meta.createAd({ name, adsetId, creativeId: creative.id, status: 'ACTIVE' });
     } catch (err) {
-      // Acá no hay respaldo con la cuenta de la página: el post existe solo en @uniform.ar
-      if (/instagram/i.test(err.message)) throw new Error(`${IG_ACCESS_MSG} (${err.message})`);
+      await repo.releaseIgPromotion(reservation.id);
       throw err;
     }
-    const ad = await meta.createAd({ name, adsetId, creativeId: creative.id, status: 'ACTIVE' });
-    await repo.addIgPromotion({ igMediaId: mediaId, permalink, adId: ad.id, adsetId, adsetName, userId });
+    await repo.completeIgPromotion(reservation.id, ad.id);
     return { ad_id: ad.id, name };
   }
 
