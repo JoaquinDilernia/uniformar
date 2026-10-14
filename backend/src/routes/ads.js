@@ -4,6 +4,7 @@ import { parse, uuid } from '../lib/validate.js';
 import { AppError } from '../lib/errors.js';
 import { requirePermission } from '../services/permissions.js';
 import { buildSnapshot } from '../ads/snapshot.js';
+import { loadIgPosts } from '../ads/igPosts.js';
 
 const metaId = z.string().regex(/^\d{1,30}$/, 'Id de Meta inválido');
 const creativeSchema = z.object({
@@ -22,6 +23,7 @@ const settingsSchema = z.object({
   business_notes: z.string().max(5000),
 }).partial();
 
+const promoteSchema = z.object({ adset_id: metaId, adset_name: z.string().max(200).default(''), permalink: z.string().max(500).default('') });
 const answerSchema = z.object({
   answer: z.string().trim().min(1, 'Escribí la respuesta').max(2000),
   analyze: z.boolean().default(false),
@@ -30,7 +32,7 @@ const answerSchema = z.object({
 const LEVEL_LABEL = { campaign: 'la campaña', adset: 'el conjunto', ad: 'el anuncio' };
 const SNAPSHOT_TTL_MS = 5 * 60_000;
 
-export function createAdsRouter({ repo, meta, startRun, execute }) {
+export function createAdsRouter({ repo, meta, startRun, execute, config }) {
   const r = Router();
   const view = requirePermission('ads', 'view');
   const edit = requirePermission('ads', 'edit');
@@ -52,6 +54,14 @@ export function createAdsRouter({ repo, meta, startRun, execute }) {
     return data;
   }
   const invalidate = () => { cache = null; };
+
+  let igCache = null;
+  async function igPosts(force) {
+    if (!force && igCache && Date.now() - igCache.at < SNAPSHOT_TTL_MS) return igCache.data;
+    const data = await loadIgPosts({ meta, repo, igUserId: config.igUserId });
+    igCache = { at: Date.now(), data };
+    return data;
+  }
 
   r.get('/ads/overview', view, async (req, res) => {
     const [settings, runs, pending, openQuestions] = await Promise.all([
@@ -103,12 +113,13 @@ export function createAdsRouter({ repo, meta, startRun, execute }) {
     const id = parse(uuid, req.params.id);
     const d = await repo.claimPending(id, req.user.id, 'executed');
     try {
-      const result = await execute(d.tool, d.input);
+      const result = await execute(d.tool, d.input, { userId: req.user.id });
       await repo.setDecisionResult(id, { status: 'executed', result });
     } catch (err) {
       await repo.setDecisionResult(id, { status: 'failed', error: String(err.message || err) });
     }
     invalidate();
+    igCache = null;
     res.json({ decision: await repo.getDecision(id) });
   });
 
@@ -145,6 +156,32 @@ export function createAdsRouter({ repo, meta, startRun, execute }) {
       invalidate();
       res.json({ ok: true, ...result });
     } catch (err) {
+      await repo.addDecision({ ...base, status: 'failed', error: String(err.message || err) });
+      throw new AppError(502, 'META_ERROR', `Meta rechazó el anuncio: ${err.message}`);
+    }
+  });
+
+  r.get('/ads/ig-posts', view, needMeta, async (req, res) => {
+    try {
+      res.json({ posts: await igPosts(req.query.refresh === '1') });
+    } catch (err) {
+      throw new AppError(502, 'META_ERROR', `Instagram no respondió: ${err.message}`);
+    }
+  });
+
+  r.post('/ads/ig-posts/:mediaId/promote', edit, needMeta, async (req, res) => {
+    const mediaId = parse(metaId, req.params.mediaId);
+    const body = parse(promoteSchema, req.body);
+    const input = { ig_media_id: mediaId, adset_id: body.adset_id, adset_name: body.adset_name, permalink: body.permalink };
+    const base = { tool: 'promote_ig_post', input, title: `Promocionar post de Instagram en ${body.adset_name || body.adset_id}`, reason: 'Hecho a mano desde el panel.' };
+    try {
+      const result = await execute('promote_ig_post', input, { userId: req.user.id });
+      await repo.addDecision({ ...base, status: 'executed', result });
+      invalidate();
+      igCache = null;
+      res.json({ ok: true, ...result });
+    } catch (err) {
+      if (err.status === 409) throw err;
       await repo.addDecision({ ...base, status: 'failed', error: String(err.message || err) });
       throw new AppError(502, 'META_ERROR', `Meta rechazó el anuncio: ${err.message}`);
     }

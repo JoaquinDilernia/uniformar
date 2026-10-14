@@ -1,7 +1,7 @@
 import { TOOL_DEFINITIONS, READ_ONLY_TOOLS, META_ACTIONS } from './tools.js';
 import { SYSTEM_PROMPT } from './systemPrompt.js';
 import { buildSnapshot } from './snapshot.js';
-import { buildAdName, buildWhatsappCreativeSpec } from './creativeSpec.js';
+import { buildAdName, buildWhatsappCreativeSpec, buildIgPostCreativeSpec, IG_ACCESS_MSG } from './creativeSpec.js';
 import { artDate } from './metrics.js';
 import { conflict } from '../lib/errors.js';
 
@@ -54,7 +54,23 @@ export function createExecutor({ meta, repo, files, config }) {
     return { ad_id: ad.id, name };
   }
 
-  return async function execute(tool, input) {
+  async function promoteIgPost({ ig_media_id: mediaId, adset_id: adsetId, adset_name: adsetName, permalink }, { userId } = {}) {
+    if (await repo.findIgPromotion(mediaId, adsetId)) throw conflict('Ese post ya está promocionado en ese conjunto.');
+    const name = buildAdName({ adsetName: adsetName || adsetId, creativeName: `IG${mediaId.slice(-6)}`, date: artDate() });
+    let creative;
+    try {
+      creative = await meta.createCreative(buildIgPostCreativeSpec({ name, pageId: config.pageId, igUserId: config.igUserId, mediaId }));
+    } catch (err) {
+      // Acá no hay respaldo con la cuenta de la página: el post existe solo en @uniform.ar
+      if (/instagram/i.test(err.message)) throw new Error(`${IG_ACCESS_MSG} (${err.message})`);
+      throw err;
+    }
+    const ad = await meta.createAd({ name, adsetId, creativeId: creative.id, status: 'ACTIVE' });
+    await repo.addIgPromotion({ igMediaId: mediaId, permalink, adId: ad.id, adsetId, adsetName, userId });
+    return { ad_id: ad.id, name };
+  }
+
+  return async function execute(tool, input, ctx = {}) {
     switch (tool) {
       case 'pause_ad':
         await meta.setStatus(input.ad_id, 'PAUSED');
@@ -80,6 +96,8 @@ export function createExecutor({ meta, repo, files, config }) {
       }
       case 'create_ad':
         return publishCreative(input);
+      case 'promote_ig_post':
+        return promoteIgPost(input, ctx);
       default:
         throw new Error(`Acción desconocida: ${tool}`);
     }
