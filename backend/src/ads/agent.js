@@ -4,6 +4,7 @@ import { buildSnapshot } from './snapshot.js';
 import { buildAdName, buildWhatsappCreativeSpec, buildIgPostCreativeSpec, IG_ACCESS_MSG } from './creativeSpec.js';
 import { artDate } from './metrics.js';
 import { conflict } from '../lib/errors.js';
+import { loadIgPosts } from './igPosts.js';
 
 export const DEFAULT_MODEL = 'claude-opus-5-5';
 const MAX_TURNS = 12;
@@ -145,8 +146,21 @@ export function createDispatcher({ meta, repo, execute }) {
   };
 }
 
-export async function buildContext({ meta, repo }) {
-  const [snapshot, settings, unusedCreatives, openRequests, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions] = await Promise.all([
+async function igPostsForContext({ meta, repo, config }) {
+  if (!config?.igUserId || !meta.getIgMedia) return [];
+  try {
+    const posts = await loadIgPosts({ meta, repo, igUserId: config.igUserId });
+    return posts.map((p) => ({
+      id: p.id, type: p.type, caption: p.caption.slice(0, 300), timestamp: p.timestamp, permalink: p.permalink,
+      likes: p.likes, comments: p.comments, reach: p.reach, promotedIn: p.promotedIn.map((x) => x.adset_name || x.adset_id),
+    }));
+  } catch (err) {
+    return { error: String(err.message || err) };
+  }
+}
+
+export async function buildContext({ meta, repo, config }) {
+  const [snapshot, settings, unusedCreatives, openRequests, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions, igPosts] = await Promise.all([
     buildSnapshot(meta),
     repo.getSettings(),
     repo.listCreatives({ status: 'unused' }),
@@ -157,6 +171,7 @@ export async function buildContext({ meta, repo }) {
     repo.executedWithoutOutcome(48),
     repo.listQuestions({ status: 'open', limit: 30 }),
     repo.answeredSinceLastRun(),
+    igPostsForContext({ meta, repo, config }),
   ]);
   const sections = {
     today: snapshot.today,
@@ -167,6 +182,7 @@ export async function buildContext({ meta, repo }) {
     adsets: snapshot.adsets,
     ads: snapshot.ads,
     unusedCreatives: unusedCreatives.map((c) => ({ id: c.id, name: c.name, copy: c.copy, headline: c.headline, notes: c.notes, hasStory: Boolean(c.story_file_id), hasFeed: Boolean(c.feed_file_id) })),
+    igPosts,
     openCreativeRequests: openRequests.map((r) => ({ concept: r.concept, created_at: r.created_at })),
     activeLearnings: learnings.map((l) => ({ id: l.id, text: l.text, evidence: l.evidence })),
     pendingRecommendations: pending.map((d) => ({ id: d.id, tool: d.tool, title: d.title, created_at: d.created_at })),
@@ -178,12 +194,12 @@ export async function buildContext({ meta, repo }) {
   return Object.entries(sections).map(([k, v]) => `## ${k}\n${JSON.stringify(v)}`).join('\n\n');
 }
 
-export function createAgentRunner({ anthropic, meta, repo, execute, model = DEFAULT_MODEL }) {
+export function createAgentRunner({ anthropic, meta, repo, execute, model = DEFAULT_MODEL, config }) {
   const dispatch = createDispatcher({ meta, repo, execute });
 
   async function process(runRow, settings) {
     try {
-      const context = await buildContext({ meta, repo });
+      const context = await buildContext({ meta, repo, config });
       const messages = [{ role: 'user', content: `Análisis ${runRow.kind === 'daily' ? 'diario' : 'pedido desde el panel'} de la cuenta. Datos actuales:\n\n${context}` }];
       let report = '';
       for (let turn = 0; turn < MAX_TURNS; turn++) {

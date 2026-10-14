@@ -65,6 +65,19 @@ export const TOOL_DEFINITIONS = [
     input_schema: { type: 'object', properties: { creative_id: s('id de la pieza en el panel'), adset_id: s('ID del conjunto destino'), adset_name: s('Nombre del conjunto'), ...why }, required: ['creative_id', 'adset_id', ...whyReq] },
   },
   {
+    name: 'promote_ig_post',
+    description: 'Proponer promocionar un post o reel que ya está publicado en @uniform.ar (lista igPosts) como anuncio en un conjunto, con botón de WhatsApp. Usa el post original: suma sus likes y comentarios, y el texto es el del post (no se edita). No lo propongas si ya está en promotedIn para ese conjunto.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ig_media_id: s('id del post (de igPosts)'), adset_id: s('ID del conjunto destino'), adset_name: s('Nombre del conjunto'),
+        permalink: s('Link del post (de igPosts)'),
+        ...why,
+      },
+      required: ['ig_media_id', 'adset_id', ...whyReq],
+    },
+  },
+  {
     name: 'search_interest',
     description: 'Buscar intereses reales de Meta (con tamaño de público) para armar segmentaciones. Solo lectura.',
     input_schema: { type: 'object', properties: { query: s('Término, ej. "gastronomía", "construcción"') }, required: ['query'] },
@@ -104,4 +117,4 @@ export const TOOL_DEFINITIONS = [
 ];
 
 export const READ_ONLY_TOOLS = new Set(['search_interest']);
-export const META_ACTIONS = new Set(['pause_ad', 'set_status', 'propose_budget_change', 'propose_adset', 'create_ad']);
+export const META_ACTIONS = new Set(['pause_ad', 'set_status', 'propose_budget_change', 'propose_adset', 'create_ad', 'promote_ig_post']);

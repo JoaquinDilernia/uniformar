@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestContext } from './helpers/testApp.js';
-import { config, fakeMeta, fakeAnthropic } from './helpers/adsFakes.js';
+import { config, fakeMeta, fakeAnthropic, contextSection } from './helpers/adsFakes.js';
+import { createAdsRepo } from '../src/repo/ads.js';
+import { createDispatcher, buildContext } from '../src/ads/agent.js';
 
 const REEL = '17900000000123456';
 let ctx, meta, admin, equipo;
@@ -57,5 +59,34 @@ describe('posts de Instagram', () => {
     } finally {
       meta.createCreative = original;
     }
+  });
+});
+
+describe('agente y posts de IG', () => {
+  it('promote_ig_post queda pendiente aunque el modo autónomo esté prendido', async () => {
+    const repo = createAdsRepo(ctx.db);
+    const executed = [];
+    const dispatch = createDispatcher({ meta, repo, execute: async (...a) => { executed.push(a); return {}; } });
+    const res = await dispatch('promote_ig_post', {
+      ig_media_id: '17900000000654321', adset_id: '901', adset_name: 'WPP_INTERESES_AMBA_20261009',
+      title: 'Promocionar el post de chaquetas', reason: '12 likes orgánicos', expected_impact: 'más conversaciones',
+    }, { runId: null, settings: { autonomous: true } });
+    expect(res).toMatchObject({ queued: true });
+    expect(executed).toHaveLength(0);
+    const pending = (await admin.get('/api/ads/decisions?status=pending')).body.decisions;
+    expect(pending.find((d) => d.tool === 'promote_ig_post')).toBeTruthy();
+  });
+
+  it('el contexto trae los posts con dónde ya se promocionaron', async () => {
+    const text = await buildContext({ meta, repo: createAdsRepo(ctx.db), config });
+    const posts = contextSection(text, 'igPosts');
+    expect(posts[0]).toMatchObject({ id: REEL, type: 'reel', likes: 40, reach: 1200, promotedIn: ['WPP_INTERESES_AMBA_20261009'] });
+    expect(posts[0].caption.length).toBeLessThanOrEqual(300);
+  });
+
+  it('si Instagram falla, el contexto avisa y el análisis sigue', async () => {
+    const broken = { ...meta, getIgMedia: async () => { throw new Error('Meta 10: sin permiso'); } };
+    const text = await buildContext({ meta: broken, repo: createAdsRepo(ctx.db), config });
+    expect(contextSection(text, 'igPosts')).toEqual({ error: 'Meta 10: sin permiso' });
   });
 });

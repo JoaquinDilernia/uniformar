@@ -38,7 +38,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   const adsConfig = ads.config ?? adsConfigFromEnv();
   const execute = ads.meta ? createExecutor({ meta: ads.meta, repo: adsRepo, files, config: adsConfig }) : null;
   const startRun = ads.meta && ads.anthropic
-    ? createAgentRunner({ anthropic: ads.anthropic, meta: ads.meta, repo: adsRepo, execute, model: ads.model })
+    ? createAgentRunner({ anthropic: ads.anthropic, meta: ads.meta, repo: adsRepo, execute, model: ads.model, config: adsConfig })
     : null;
 
   const api = Router();
