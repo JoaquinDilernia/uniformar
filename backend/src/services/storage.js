@@ -7,7 +7,7 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, Head
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Interfaz común: { driver, put(key, buffer, mime), read(key) → Buffer, remove(key), urlFor(fileRow) → Promise<string>,
-//   head(key) → { bytes } | null, readHead(key, n) → Buffer } + s3: presignPut(key, mime) · local: putStream(key, stream, maxBytes)
+//   head(key) → { bytes } | null, readHead(key, n) → Buffer } + s3: presignPut(key, mime, bytes) · local: putStream(key, stream, maxBytes)
 
 export function createLocalStorage({ dir }) {
   const root = path.resolve(dir);
@@ -70,7 +70,11 @@ export function createLocalStorage({ dir }) {
 }
 
 export function createS3Storage({ endpoint, region = 'auto', bucket, accessKeyId, secretAccessKey, urlTtlSeconds = 3600 }) {
-  const client = new S3Client({ endpoint, region, credentials: { accessKeyId, secretAccessKey } });
+  // Sin checksums automáticos (SDK ≥3.729): en una URL firmada irían calculados sobre un cuerpo vacío y R2 rechazaría la subida
+  const client = new S3Client({
+    endpoint, region, credentials: { accessKeyId, secretAccessKey },
+    requestChecksumCalculation: 'WHEN_REQUIRED', responseChecksumValidation: 'WHEN_REQUIRED',
+  });
   return {
     driver: 's3',
     put: (key, buffer, mime) => client.send(new PutObjectCommand({
@@ -84,7 +88,12 @@ export function createS3Storage({ endpoint, region = 'auto', bucket, accessKeyId
     // URL firmada: el bucket es privado; dura 1 h para que la galería no se rompa mientras se navega
     urlFor: (file) => getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: file.storage_key }), { expiresIn: urlTtlSeconds }),
     // El navegador sube directo a R2 (el bucket necesita CORS para PUT desde el front)
-    presignPut: (key, mime) => getSignedUrl(client, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: mime }), { expiresIn: 900 }),
+    // Tamaño y tipo van firmados: R2 rechaza un PUT con otro tamaño o tipo que el declarado
+    presignPut: (key, mime, bytes) => getSignedUrl(
+      client,
+      new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: mime, ContentLength: bytes }),
+      { expiresIn: 900, signableHeaders: new Set(['content-type', 'content-length']) },
+    ),
     async head(key) {
       try {
         const out = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));

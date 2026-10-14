@@ -158,7 +158,7 @@ export function createFilesService({ db, storage, uploadSecret }) {
       { p: 'upload', k: key, ot: ownerType, oi: ownerId, m: mime, b: bytes, n: String(originalName ?? '').slice(0, 200), u: userId },
       uploadSecret, { expiresIn: '30m' },
     );
-    const uploadUrl = storage.driver === 's3' ? await storage.presignPut(key, mime) : `/api/files/local-upload/${token}`;
+    const uploadUrl = storage.driver === 's3' ? await storage.presignPut(key, mime, bytes) : `/api/files/local-upload/${token}`;
     return { upload_url: uploadUrl, token };
   }
 
