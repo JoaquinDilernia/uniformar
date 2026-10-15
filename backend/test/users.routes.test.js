@@ -44,6 +44,9 @@ describe('usuarios', () => {
     expect(ok.body.user.permissions.ideas).toBe('edit');
     const bad = await adminAgent.put(`/api/users/${santi.id}/permissions`).send({ projects: 'admin' });
     expect(bad.status).toBe(400);
+    const decide = await adminAgent.put(`/api/users/${santi.id}/permissions`).send({ ideas: 'decide' });
+    expect(decide.body.user.permissions.ideas).toBe('decide');
+    expect((await adminAgent.put(`/api/users/${santi.id}/permissions`).send({ calendar: 'decide' })).status).toBe(400);
   });
 
   it('nadie se quita a sí mismo manage_users ni se desactiva', async () => {

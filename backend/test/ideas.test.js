@@ -108,6 +108,32 @@ describe('ideas', () => {
     expect(res.body.error.message).toBe('No tenés permiso para editar Ideas');
   });
 
+  it('"Decidir": acepta/rechaza, completa con link, deja su nota y sube fotos del resultado, pero no crea ni edita', async () => {
+    const { agent: decider } = await ctx.asUser({ template: 'equipo', name: 'Santi D', permissions: { ideas: 'decide' } });
+    expect((await create(decider)).status).toBe(403);
+    const id = (await create(equipo, { format: 'photo' })).body.idea.id;
+
+    const editText = await decider.patch(`/api/ideas/${id}`).send({ text: 'Cambiado' });
+    expect(editText.status).toBe(403);
+    expect(editText.body.error.message).toBe('Solo podés dejar tu nota: el contenido de la idea no lo podés editar.');
+    expect((await decider.patch(`/api/ideas/${id}`).send({ note_sofi: 'x' })).status).toBe(403);
+    const note = await decider.patch(`/api/ideas/${id}`).send({ note_santi: 'Dale, la hago el finde' });
+    expect(note.status).toBe(200);
+    expect(note.body.idea).toMatchObject({ note_santi: 'Dale, la hago el finde', note_santi_by_name: 'Santi D', text: base.text });
+
+    expect((await decider.post(`/api/ideas/${id}/decide`).send({ decision: 'no' })).body.idea.status).toBe('no_se_hace');
+    expect((await decider.post(`/api/ideas/${id}/undecide`)).body.idea.status).toBe('por_decidir');
+    expect((await decider.post(`/api/ideas/${id}/decide`).send({ decision: 'yes' })).body.idea.status).toBe('por_hacer');
+    const done = await decider.post(`/api/ideas/${id}/complete`).send({ result_url: 'https://instagram.com/p/x' });
+    expect(done.body.idea).toMatchObject({ status: 'realizada', result_url: 'https://instagram.com/p/x' });
+
+    const result = await decider.post('/api/files').field('owner_type', 'idea_result').field('owner_id', id).attach('file', PNG_1x1, 'r.png');
+    expect(result.status).toBe(201);
+    expect((await decider.post('/api/files').field('owner_type', 'idea_ref').field('owner_id', id).attach('file', PNG_1x1, 'r.png')).status).toBe(403);
+    expect((await decider.post(`/api/ideas/${id}/reopen`)).body.idea.status).toBe('por_hacer');
+    expect((await lectura.post(`/api/ideas/${id}/decide`).send({ decision: 'no' })).body.error.message).toBe('No tenés permiso para decidir en Ideas');
+  });
+
   it('borrar: requiere permiso, borra archivos y deja la pieza vinculada sin idea', async () => {
     const id = (await create(equipo, { format: 'photo' })).body.idea.id;
     const item = await insertCalendarItem(ctx.db, { idea_id: id });

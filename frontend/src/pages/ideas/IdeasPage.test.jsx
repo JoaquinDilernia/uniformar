@@ -8,7 +8,7 @@ import { AuthProvider } from '../../state/auth.jsx';
 import { ConfirmProvider } from '../../components/ui/ConfirmDialog.jsx';
 import { IdeasPage } from './IdeasPage.jsx';
 
-const me = { id: 'u1', name: 'Santi', can_delete: false, permissions: { home: 'edit', ideas: 'edit', calendar: 'edit', projects: 'edit', ads: 'view', web: 'view' } };
+const editor = { id: 'u1', name: 'Santi', can_delete: false, permissions: { home: 'edit', ideas: 'edit', calendar: 'edit', projects: 'edit', ads: 'view', web: 'view' } };
 const ideas = [
   { id: 'a', kind: 'idea', format: 'video', category: 'domingo', status: 'por_decidir', decision: 'pending', text: 'Reel humor delantal', created_at: '2026-10-01T10:00:00Z', ref_count: 0 },
   { id: 'b', kind: 'must', format: 'photo', category: 'producto', status: 'si_o_si', decision: 'pending', text: 'Fotos catálogo', due_date: '2026-10-20', created_at: '2026-10-02T10:00:00Z', ref_count: 2 },
@@ -33,8 +33,11 @@ function renderAt(path) {
   );
 }
 
+let me = editor;
+
 describe('IdeasPage', () => {
   beforeEach(() => {
+    me = editor;
     global.fetch = vi.fn((url, opts = {}) => {
       if (url === '/api/auth/me') return json({ user: me });
       if (url === '/api/ideas') return json({ ideas });
@@ -79,5 +82,21 @@ describe('IdeasPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Marcar realizada' }));
     expect(await screen.findByText(/Pegá el link del resultado/)).toBeInTheDocument();
     expect(global.fetch.mock.calls.some(([u]) => u === '/api/ideas/c/complete')).toBe(false);
+  });
+});
+
+describe('IdeasPage con permiso "Decidir"', () => {
+  beforeEach(() => {
+    me = { ...editor, permissions: { ...editor.permissions, ideas: 'decide' } };
+  });
+
+  it('sin "Nueva idea" ni "Editar": solo decide y deja su nota', async () => {
+    renderAt('/ideas/a');
+    expect(await screen.findByRole('button', { name: 'Sí, la hago' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'No la hago' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Nueva idea' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Nota de Santi')).not.toHaveAttribute('readonly');
+    expect(screen.getByLabelText(/Nota de Sofi/)).toHaveAttribute('readonly');
   });
 });

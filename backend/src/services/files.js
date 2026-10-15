@@ -9,7 +9,7 @@ const VIDEO_DEF = { accept: ['video/mp4', 'video/quicktime'], maxBytes: 200 * 10
 
 export const OWNER_TYPES = {
   idea_ref: { table: 'ideas', section: 'ideas', kind: 'image', max: 20 },
-  idea_result: { table: 'ideas', section: 'ideas', kind: 'image', max: 20 },
+  idea_result: { table: 'ideas', section: 'ideas', kind: 'image', max: 20, uploadLevel: 'decide' },
   calendar_preview: { table: 'calendar_items', section: 'calendar', kind: 'image', max: 10 },
   project_photo: { table: 'projects', section: 'projects', kind: 'image', max: 50 },
   project_pdf: { table: 'projects', section: 'projects', kind: 'pdf', max: 20 },

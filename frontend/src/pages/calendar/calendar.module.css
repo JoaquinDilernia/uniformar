@@ -5,6 +5,10 @@
 .cell:nth-child(7n) { border-right: 0; }
 .cell:hover { background: var(--c-surface-2); }
 .out { background: var(--c-bg); color: var(--c-text-3); }
+/* Días que ya pasaron: grises y con el número tachado, para separarlos de lo que viene */
+.past { background: var(--c-surface-2); color: var(--c-text-3); }
+.past .dayNum { text-decoration: line-through; }
+.past .pill, .past .rule { opacity: 0.55; }
 .hasRule { box-shadow: inset 3px 0 0 var(--c-accent); }
 .dayNum { font-weight: 700; font-size: var(--fs-s); }
 .today .dayNum { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--c-accent); color: var(--c-on-accent); }
@@ -22,6 +26,9 @@
 .dayRow { display: flex; align-items: center; gap: var(--sp-3); min-height: 64px; padding: var(--sp-2) var(--sp-4); border: 0; border-bottom: 1px solid var(--c-border); background: transparent; text-align: left; cursor: pointer; color: var(--c-text); }
 .dayRow:last-child { border-bottom: 0; }
 .todayRow { background: var(--c-accent-soft); }
+.pastRow { background: var(--c-surface-2); }
+.pastRow .dayBadge strong { color: var(--c-text-3); text-decoration: line-through; }
+.pastRow .dayMain { opacity: 0.6; }
 .dayBadge { flex: none; width: 44px; display: flex; flex-direction: column; align-items: center; font-size: var(--fs-xs); color: var(--c-text-3); }
 .dayBadge strong { font-size: var(--fs-l); color: var(--c-text); font-family: var(--font-display); }
 .dayMain { flex: 1; min-width: 0; display: flex; flex-direction: column; }

@@ -65,6 +65,8 @@ export function IdeaSheet({ id, onClose }) {
   const can = useCan();
   const { user } = useAuth();
   const canEdit = can('ideas', 'edit');
+  // Con "Decidir" (Santi): aceptar/rechazar, marcar realizada, fotos del resultado y su nota
+  const canDecide = can('ideas', 'decide');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
@@ -98,7 +100,7 @@ export function IdeaSheet({ id, onClose }) {
   }
 
   let footer = null;
-  if (canEdit && !editing) {
+  if (canDecide && !editing) {
     if (completing) {
       footer = <><Button variant="secondary" onClick={() => setCompleting(false)}>Cancelar</Button><Button onClick={submitComplete} loading={action.isPending}>Marcar realizada</Button></>;
     } else if (idea.status === 'por_decidir') {
@@ -155,7 +157,7 @@ export function IdeaSheet({ id, onClose }) {
               <EmbedPreview url={idea.result_url} />
               {(idea.format === 'photo' || idea.result_files.length > 0) && (
                 <ImageUploader ownerType="idea_result" ownerId={idea.id} files={idea.result_files} invalidate={[ideaKeys.one(id), ideaKeys.all, ['home']]}
-                  canEdit={canEdit} canDelete={user.can_delete} label="Subir fotos del resultado" />
+                  canEdit={canDecide} canDelete={canEdit && user.can_delete} label="Subir fotos del resultado" />
               )}
             </section>
           )}
@@ -177,7 +179,7 @@ export function IdeaSheet({ id, onClose }) {
 
           <section className={s.section}>
             <h3>Notas</h3>
-            <NoteField key={`s-${idea.note_santi}`} idea={idea} field="note_santi" label="Nota de Santi" canEdit={canEdit} />
+            <NoteField key={`s-${idea.note_santi}`} idea={idea} field="note_santi" label="Nota de Santi" canEdit={canDecide} />
             <NoteField key={`f-${idea.note_sofi}`} idea={idea} field="note_sofi" label="Nota de Sofi" canEdit={canEdit} />
           </section>
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { parse, uuid } from '../lib/validate.js';
 import { conflict, notFound } from '../lib/errors.js';
 import { toPublicUser } from '../repo/users.js';
-import { requireFlag, TEMPLATES, SECTIONS, LEVELS } from '../services/permissions.js';
+import { requireFlag, TEMPLATES, SECTIONS, LEVELS, DECIDE_SECTIONS } from '../services/permissions.js';
 import { hashPassword, generateTempPassword } from '../services/auth.js';
 import { colorSchema } from './auth.js';
 
@@ -22,7 +22,13 @@ const patchSchema = z.object({
   can_delete: z.boolean().optional(),
   manage_users: z.boolean().optional(),
 });
-const permissionsSchema = z.record(z.enum(SECTIONS), z.enum(LEVELS));
+const permissionsSchema = z.record(z.enum(SECTIONS), z.enum(LEVELS)).superRefine((perms, ctx) => {
+  for (const [section, level] of Object.entries(perms)) {
+    if (level === 'decide' && !DECIDE_SECTIONS.includes(section)) {
+      ctx.addIssue({ code: 'custom', path: [section], message: '"Decidir" solo existe para Ideas' });
+    }
+  }
+});
 
 export function createUsersRouter({ usersRepo }) {
   const r = Router();

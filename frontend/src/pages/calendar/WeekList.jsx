@@ -24,7 +24,7 @@ export function WeekList({ weeks, month, byDate, rulesFor, onOpen }) {
                 const items = byDate[d] ?? [];
                 const rules = rulesFor(d);
                 return (
-                  <button key={d} type="button" className={`${s.dayRow} ${d === today ? s.todayRow : ''}`} onClick={() => onOpen(d)}>
+                  <button key={d} type="button" className={[s.dayRow, d === today && s.todayRow, d < today && s.pastRow].filter(Boolean).join(' ')} onClick={() => onOpen(d)}>
                     <span className={s.dayBadge}><span>{WEEKDAY_SHORT[weekdayOf(d)]}</span><strong>{Number(d.slice(8))}</strong></span>
                     <span className={s.dayMain}>
                       <span className={s.dayTheme}>{rules.map((r) => r.theme).join(' · ') || 'Día libre'}</span>

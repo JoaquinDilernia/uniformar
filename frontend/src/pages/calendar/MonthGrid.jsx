@@ -11,7 +11,7 @@ export function MonthGrid({ weeks, month, byDate, rulesFor, onOpen }) {
           {w.map((d) => {
             const items = byDate[d] ?? [];
             const rules = rulesFor(d);
-            const cls = [s.cell, monthOf(d) !== month && s.out, d === today && s.today, rules.length && s.hasRule].filter(Boolean).join(' ');
+            const cls = [s.cell, monthOf(d) !== month && s.out, d < today && s.past, d === today && s.today, rules.length && s.hasRule].filter(Boolean).join(' ');
             return (
               <button key={d} type="button" className={cls} onClick={() => onOpen(d)}
                 aria-label={`${formatLong(d)}${rules.length ? `, ${rules[0].theme}` : ''}, ${items.length} piezas`}>

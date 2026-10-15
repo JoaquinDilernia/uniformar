@@ -12,6 +12,15 @@ describe('permisos', () => {
     expect(hasLevel(u, 'calendar', 'view')).toBe(false);
   });
 
+  it('"decide" queda entre ver y editar', () => {
+    const u = user({ ideas: 'decide' });
+    expect(hasLevel(u, 'ideas', 'view')).toBe(true);
+    expect(hasLevel(u, 'ideas', 'decide')).toBe(true);
+    expect(hasLevel(u, 'ideas', 'edit')).toBe(false);
+    expect(hasLevel(user({ ideas: 'edit' }), 'ideas', 'decide')).toBe(true);
+    expect(hasLevel(user({ ideas: 'view' }), 'ideas', 'decide')).toBe(false);
+  });
+
   it('requirePermission lanza 403 con el nombre de la sección', () => {
     const mw = requirePermission('projects', 'edit');
     expect(() => mw({ user: user({ projects: 'view' }) }, {}, () => {})).toThrow('No tenés permiso para editar Proyectos');

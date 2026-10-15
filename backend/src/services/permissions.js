@@ -1,8 +1,10 @@
 import { forbidden } from '../lib/errors.js';
 
 export const SECTIONS = ['home', 'ideas', 'calendar', 'projects', 'ads', 'web'];
-export const LEVELS = ['none', 'view', 'edit'];
-const RANK = { none: 0, view: 1, edit: 2 };
+export const LEVELS = ['none', 'view', 'decide', 'edit'];
+const RANK = { none: 0, view: 1, decide: 2, edit: 3 };
+// "Decidir" solo tiene sentido en ideas: aceptar/rechazar, marcar realizada y dejar nota
+export const DECIDE_SECTIONS = ['ideas'];
 
 export const SECTION_LABELS = {
   home: 'Inicio', ideas: 'Ideas', calendar: 'Calendario', projects: 'Proyectos', ads: 'Agente de pauta', web: 'Admin web',
@@ -24,12 +26,15 @@ export function hasLevel(user, section, level) {
   return RANK[user?.permissions?.[section] ?? 'none'] >= RANK[level];
 }
 
+const DENIED = {
+  view: (label) => `No tenés acceso a ${label}`,
+  decide: (label) => `No tenés permiso para decidir en ${label}`,
+  edit: (label) => `No tenés permiso para editar ${label}`,
+};
+export const deniedMessage = (section, level) => DENIED[level](SECTION_LABELS[section]);
+
 export const requirePermission = (section, level) => (req, _res, next) => {
-  if (!hasLevel(req.user, section, level)) {
-    throw forbidden(level === 'edit'
-      ? `No tenés permiso para editar ${SECTION_LABELS[section]}`
-      : `No tenés acceso a ${SECTION_LABELS[section]}`);
-  }
+  if (!hasLevel(req.user, section, level)) throw forbidden(deniedMessage(section, level));
   next();
 };
 

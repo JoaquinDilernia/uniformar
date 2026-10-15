@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { parse, uuid, dateStr, optionalUrl, requiredUrl, nullableText } from '../lib/validate.js';
-import { conflict, notFound } from '../lib/errors.js';
+import { conflict, forbidden, notFound } from '../lib/errors.js';
 import { buildInsert, buildUpdate, pick } from '../lib/sql.js';
-import { requirePermission, requireFlag } from '../services/permissions.js';
+import { requirePermission, requireFlag, hasLevel } from '../services/permissions.js';
 import { logActivity, diffFields } from '../services/activity.js';
 
 const FIELDS = {
@@ -23,6 +23,9 @@ const updateSchema = z.object(FIELDS).partial();
 const decideSchema = z.object({ decision: z.enum(['yes', 'no']) });
 const completeSchema = z.object({ result_url: requiredUrl });
 
+// Lo único que puede cambiar con "Decidir" vía PATCH (el resto son acciones: decide/complete/...)
+const DECIDE_FIELDS = ['note_santi'];
+
 const EDITABLE = ['kind', 'format', 'category', 'client_id', 'assignee_id', 'text', 'reference_url', 'due_date',
   'note_santi', 'note_santi_by', 'note_sofi', 'note_sofi_by', 'decision'];
 
@@ -35,6 +38,8 @@ export function createIdeasRouter({ db, ideasRepo, clientsRepo, activityRepo, fi
   const r = Router();
   const view = requirePermission('ideas', 'view');
   const edit = requirePermission('ideas', 'edit');
+  // "Decidir": aceptar/rechazar, marcar realizada con el link y dejar la nota de Santi, sin tocar el contenido
+  const decide = requirePermission('ideas', 'decide');
 
   async function detail(id) {
     const idea = await ideasRepo.get(id);
@@ -74,8 +79,11 @@ export function createIdeasRouter({ db, ideasRepo, clientsRepo, activityRepo, fi
     res.status(201).json({ idea: await detail(id) });
   });
 
-  r.patch('/ideas/:id', edit, async (req, res) => {
+  r.patch('/ideas/:id', decide, async (req, res) => {
     const b = parse(updateSchema, req.body);
+    if (!hasLevel(req.user, 'ideas', 'edit') && Object.keys(b).some((k) => !DECIDE_FIELDS.includes(k))) {
+      throw forbidden('Solo podés dejar tu nota: el contenido de la idea no lo podés editar.');
+    }
     await db.tx(async (q) => {
       const before = await lock(q, req.params.id);
       const patch = pick(b, ['kind', 'format', 'category', 'text', 'assignee_id', 'reference_url', 'due_date', 'note_santi', 'note_sofi']);
@@ -104,7 +112,7 @@ export function createIdeasRouter({ db, ideasRepo, clientsRepo, activityRepo, fi
     return detail(req.params.id);
   }
 
-  r.post('/ideas/:id/decide', edit, async (req, res) => {
+  r.post('/ideas/:id/decide', decide, async (req, res) => {
     const { decision } = parse(decideSchema, req.body);
     const idea = await transition(req, decision === 'yes' ? 'decide_yes' : 'decide_no', (i) => {
       if (i.kind === 'must') throw conflict('Los contenidos "sí o sí" no se deciden: ya están por hacer.');
@@ -113,14 +121,14 @@ export function createIdeasRouter({ db, ideasRepo, clientsRepo, activityRepo, fi
     res.json({ idea });
   });
 
-  r.post('/ideas/:id/undecide', edit, async (req, res) => {
+  r.post('/ideas/:id/undecide', decide, async (req, res) => {
     const idea = await transition(req, 'undecide', (i) => {
       if (i.done_at) throw conflict('Esta idea ya está realizada. Reabrila primero.');
     }, { decision: 'pending' });
     res.json({ idea });
   });
 
-  r.post('/ideas/:id/complete', edit, async (req, res) => {
+  r.post('/ideas/:id/complete', decide, async (req, res) => {
     const { result_url } = parse(completeSchema, req.body);
     const idea = await transition(req, 'complete', (i) => {
       if (i.decision === 'no') throw conflict('Esta idea está marcada como "No se hace".');
@@ -130,7 +138,7 @@ export function createIdeasRouter({ db, ideasRepo, clientsRepo, activityRepo, fi
     res.json({ idea });
   });
 
-  r.post('/ideas/:id/reopen', edit, async (req, res) => {
+  r.post('/ideas/:id/reopen', decide, async (req, res) => {
     const idea = await transition(req, 'reopen', (i) => {
       if (!i.done_at) throw conflict('Esta idea no está realizada.');
     }, { done_at: null });

@@ -14,7 +14,7 @@ import p from '../pages.module.css';
 function roleLabel(u) {
   if (u.manage_users) return 'Admin';
   const levels = Object.values(u.permissions);
-  if (levels.every((l) => l !== 'edit')) return 'Solo lectura';
+  if (levels.every((l) => l === 'none' || l === 'view')) return 'Solo lectura';
   return 'Equipo';
 }
 

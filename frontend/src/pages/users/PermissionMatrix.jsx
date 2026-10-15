@@ -3,6 +3,8 @@ import s from './users.module.css';
 
 export const SECTION_LABELS = { home: 'Inicio', ideas: 'Ideas', calendar: 'Calendario', projects: 'Proyectos', ads: 'Agente de pauta', web: 'Admin web' };
 const LEVELS = [{ value: 'none', label: 'Sin acceso' }, { value: 'view', label: 'Ver' }, { value: 'edit', label: 'Editar' }];
+// En ideas hay un nivel intermedio: aceptar/rechazar, marcar realizada con el link y dejar nota, sin crear ni editar
+const IDEAS_LEVELS = [LEVELS[0], LEVELS[1], { value: 'decide', label: 'Decidir' }, LEVELS[2]];
 
 export function PermissionMatrix({ value, onChange, disabled }) {
   return (
@@ -10,7 +12,8 @@ export function PermissionMatrix({ value, onChange, disabled }) {
       {Object.entries(SECTION_LABELS).map(([section, label]) => (
         <div key={section} className={s.matrixRow}>
           <span className={s.matrixLabel}>{label}</span>
-          <Segmented label={label} value={value[section]} disabled={disabled} options={LEVELS} onChange={(level) => onChange({ ...value, [section]: level })} />
+          <Segmented label={label} value={value[section]} disabled={disabled} options={section === 'ideas' ? IDEAS_LEVELS : LEVELS}
+            onChange={(level) => onChange({ ...value, [section]: level })} />
         </div>
       ))}
     </div>
