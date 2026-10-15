@@ -5,16 +5,24 @@ const RETRYABLE = new Set([4, 17, 32, 613]);
 
 export function createMetaClient({ accessToken, accountId, fetchFn = fetch, retryDelayMs = 2000 }) {
   const BASE = `https://graph.facebook.com/${V}`;
+  // Los archivos de video se suben a este host: graph.facebook.com corta el upload y responde vacío
+  const VIDEO_BASE = `https://graph-video.facebook.com/${V}`;
 
-  async function reqOnce(path, { method = 'GET', params = {}, body, form } = {}) {
-    const url = new URL(`${BASE}/${path}`);
+  async function reqOnce(path, { method = 'GET', params = {}, body, form, base = BASE } = {}) {
+    const url = new URL(`${base}/${path}`);
     url.searchParams.set('access_token', accessToken);
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, typeof v === 'string' ? v : JSON.stringify(v));
     const res = await fetchFn(url, {
       method,
       ...(form ? { body: form } : body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
     });
-    const json = await res.json();
+    const text = await res.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(`Meta respondió HTTP ${res.status} sin datos válidos${text ? `: ${text.slice(0, 200)}` : ''}`);
+    }
     if (json.error) {
       const detail = json.error.error_user_msg || (json.error.error_subcode ? `subcode ${json.error.error_subcode}` : null);
       const err = new Error(`Meta ${json.error.code}: ${json.error.message}${detail ? ` (${detail})` : ''}`);
@@ -67,7 +75,7 @@ export function createMetaClient({ accessToken, accountId, fetchFn = fetch, retr
       const form = new FormData();
       if (name) form.append('name', name);
       form.append('source', new Blob([buffer]), 'video.mp4');
-      return (await req(`${accountId}/advideos`, { method: 'POST', form })).id;
+      return (await req(`${accountId}/advideos`, { method: 'POST', form, base: VIDEO_BASE })).id;
     },
     async waitVideoReady(videoId, { timeoutMs = 10 * 60_000, intervalMs = 10_000 } = {}) {
       const until = Date.now() + timeoutMs;

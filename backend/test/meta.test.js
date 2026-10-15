@@ -6,7 +6,8 @@ function fakeFetch(handler) {
   const fn = async (url, opts = {}) => {
     const u = new URL(url);
     fn.calls.push({ url: u, opts });
-    return { json: async () => handler(u, opts) };
+    const out = await handler(u, opts);
+    return { status: 200, text: async () => (typeof out === 'string' ? out : JSON.stringify(out)) };
   };
   fn.calls = [];
   return fn;
@@ -44,10 +45,18 @@ describe('videos', () => {
     expect(fetchFn.calls[0].url.pathname).toBe('/v23.0/act_1/advideos');
     expect(JSON.parse(fetchFn.calls[0].opts.body)).toEqual({ file_url: 'https://r2/x.mp4', name: 'Reel' });
     expect(await meta.uploadVideo({ buffer: Buffer.from('abc'), name: 'Reel' })).toBe('v1');
+    expect(fetchFn.calls[1].url.host).toBe('graph-video.facebook.com');
+    expect(fetchFn.calls[1].url.pathname).toBe('/v23.0/act_1/advideos');
     const form = fetchFn.calls[1].opts.body;
     expect(form).toBeInstanceOf(FormData);
     expect(form.get('name')).toBe('Reel');
     expect(form.get('source')).toBeInstanceOf(Blob);
+  });
+
+  it('respuesta vacía de Meta da un error claro', async () => {
+    const meta = createMetaClient({ accessToken: 't', accountId: 'act_1', retryDelayMs: 0,
+      fetchFn: async () => ({ status: 413, text: async () => '' }) });
+    await expect(meta.uploadVideo({ buffer: Buffer.from('abc') })).rejects.toThrow('Meta respondió HTTP 413 sin datos válidos');
   });
 
   it('espera a que Meta procese el video', async () => {
