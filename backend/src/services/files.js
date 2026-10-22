@@ -232,5 +232,32 @@ export function createFilesService({ db, storage, uploadSecret }) {
     return (await toDTO([row]))[0];
   }
 
-  return { listFor, upload, get, read, remove, removeOwnerRows, purgeKeys, retryPending, reorder, prepareUpload, receiveLocalUpload, completeUpload };
+  // Links que un servicio externo (Instagram) puede descargar sin sesión. En R2 es la URL firmada;
+  // con storage local, un link firmado de la API que vence en 2 h (baseUrl = URL pública del backend).
+  async function listPublic(ownerTypes, ownerIds, baseUrl) {
+    if (!ownerIds.length) return [];
+    const { rows } = await db.query('SELECT * FROM files WHERE owner_type = ANY($1) AND owner_id = ANY($2) ORDER BY sort, created_at', [ownerTypes, ownerIds]);
+    return Promise.all(rows.map(async (f) => {
+      let url = await storage.urlFor(f);
+      if (storage.driver === 'local' && baseUrl) {
+        const token = jwt.sign({ p: 'public', f: f.id }, uploadSecret, { expiresIn: '2h' });
+        url = `${baseUrl.replace(/\/+$/, '')}/api/public-files/${token}/${f.id}.${EXT[f.mime] ?? 'bin'}`;
+      }
+      return { id: f.id, owner_type: f.owner_type, owner_id: f.owner_id, kind: f.kind, mime: f.mime, url };
+    }));
+  }
+
+  async function resolvePublic(token) {
+    let t;
+    try {
+      t = jwt.verify(token, uploadSecret, { algorithms: ['HS256'] });
+    } catch {
+      throw notFound('El link venció.');
+    }
+    if (t.p !== 'public') throw notFound();
+    const row = await get(t.f);
+    return { row, path: storage.pathFor?.(row.storage_key) ?? null };
+  }
+
+  return { listFor, listPublic, resolvePublic, upload, get, read, remove, removeOwnerRows, purgeKeys, retryPending, reorder, prepareUpload, receiveLocalUpload, completeUpload };
 }

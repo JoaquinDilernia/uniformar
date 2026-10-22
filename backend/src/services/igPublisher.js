@@ -13,7 +13,7 @@ export function planChannel(channel, media, channels) {
   const videos = media.filter((f) => f.kind === 'video');
   const images = media.filter((f) => f.kind === 'image');
   if (!media.length) throw badRequest(`${CHANNEL_NAME[channel]} no tiene archivos: subilos en "Archivos para publicar".`);
-  if (media.some((f) => !/^https:\/\//.test(f.url))) throw badRequest('Instagram necesita descargar los archivos de R2: el servidor está con storage local.');
+  if (media.some((f) => !/^https:\/\//.test(f.url))) throw badRequest('Instagram no puede descargar los archivos: falta la URL pública del servidor (PUBLIC_API_URL).');
   if (channel === 'ig_reel') {
     if (!videos.length) throw badRequest('El reel necesita un video en "Archivos para publicar".');
     return { type: 'reel', files: [videos[0]] };
@@ -27,7 +27,8 @@ export function planChannel(channel, media, channels) {
 
 const mediaParam = (f) => (f.kind === 'video' ? { video_url: f.url } : { image_url: f.url });
 
-export function createIgPublisher({ db, meta, files, igUserId }) {
+// publicBaseUrl: URL pública del backend, para los links firmados cuando el storage es local
+export function createIgPublisher({ db, meta, files, igUserId, publicBaseUrl }) {
   async function container(params) {
     const id = await meta.createIgContainer(igUserId, params);
     await meta.waitIgContainer(id);
@@ -98,7 +99,7 @@ export function createIgPublisher({ db, meta, files, igUserId }) {
   }
 
   const itemChannels = (item) => IG_CHANNELS.filter((c) => item.channels.includes(c));
-  const mediaOf = (item) => files.listFor(['calendar_media'], [item.id]);
+  const mediaOf = (item) => files.listPublic(['calendar_media'], [item.id], publicBaseUrl);
 
   // "Publicar ahora": valida antes de reservar (el error vuelve al panel) y publica en segundo plano
   async function publishNow(item, userId) {

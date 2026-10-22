@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestContext } from './helpers/testApp.js';
-import { PNG_1x1 } from './helpers/fixtures.js';
+import request from 'supertest';
+import { PNG_1x1, JPG_1x1 } from './helpers/fixtures.js';
 import { config, fakeMeta } from './helpers/adsFakes.js';
 import { planChannel } from '../src/services/igPublisher.js';
 
@@ -43,7 +44,7 @@ describe('qué archivo va a cada canal', () => {
     expect(() => planChannel('ig_reel', [], ['ig_reel'])).toThrow(/no tiene archivos/);
     expect(() => planChannel('ig_reel', [f('image')], ['ig_reel'])).toThrow(/necesita un video/);
     expect(() => planChannel('ig_post', [f('video')], ['ig_reel', 'ig_post'])).toThrow(/al menos una imagen/);
-    expect(() => planChannel('ig_story', [f('image', '/api/files/1/raw')], ['ig_story'])).toThrow(/storage local/);
+    expect(() => planChannel('ig_story', [f('image', '/api/files/1/raw')], ['ig_story'])).toThrow(/URL pública/);
   });
 });
 
@@ -169,5 +170,33 @@ describe('publicar en Instagram desde el calendario', () => {
     expect((await admin.patch(`/api/calendar/${it.id}`).send({ publish_time: '25:00' })).status).toBe(400);
     expect((await admin.patch(`/api/calendar/${it.id}`).send({ publish_time: null })).body.item.publish_time).toBeNull();
     expect((await lectura.get('/api/calendar/publishing')).body).toEqual({ instagram: true });
+  });
+});
+
+describe('links públicos con storage local', () => {
+  let ctx, admin, meta;
+  beforeAll(async () => {
+    meta = igMeta();
+    ctx = await createTestContext({ ads: { meta, config }, publicBaseUrl: 'https://api.test' });
+    admin = (await ctx.asUser({ template: 'admin' })).agent;
+  });
+  afterAll(() => ctx.close());
+
+  it('Instagram recibe un link firmado que se descarga sin sesión', async () => {
+    const { body: { item: it } } = await admin.post('/api/calendar').send({ date: '2026-10-10', channels: ['ig_story'] });
+    const up = await admin.post('/api/files').field('owner_type', 'calendar_media').field('owner_id', it.id)
+      .attach('file', JPG_1x1, 'a.jpg');
+    expect(up.status).toBe(201);
+
+    const { done } = await ctx.app.locals.igPublisher.publishNow(it, null);
+    await done;
+    const url = meta.calls.find((c) => c[0] === 'createIgContainer')[2].image_url;
+    expect(url).toMatch(/^https:\/\/api\.test\/api\/public-files\/[^/]+\/[0-9a-f-]+\.jpg$/);
+
+    const path = url.replace('https://api.test', '');
+    const res = await request(ctx.app).get(path);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/image\/jpeg/);
+    expect((await request(ctx.app).get(path.replace('/public-files/', '/public-files/x'))).status).toBe(404);
   });
 });

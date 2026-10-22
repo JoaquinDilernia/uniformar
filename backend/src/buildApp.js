@@ -12,7 +12,7 @@ import { createAuthenticate, requirePasswordChanged } from './middleware/authent
 import { createAuthRouter } from './routes/auth.js';
 import { createUsersRouter } from './routes/users.js';
 import { createSettingsRouter } from './routes/settings.js';
-import { createFilesRouter } from './routes/files.js';
+import { createFilesRouter, createPublicFilesRouter } from './routes/files.js';
 import { createIdeasRouter } from './routes/ideas.js';
 import { createCalendarRouter } from './routes/calendar.js';
 import { createProjectsRouter } from './routes/projects.js';
@@ -24,7 +24,7 @@ import { createReportAnalyst } from './ads/reportAnalysis.js';
 import { createIgPublisher } from './services/igPublisher.js';
 
 // ads (opcional): { meta, anthropic, config, model } — sin meta/anthropic la sección Pauta avisa qué falta
-export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginLimit = 10, ads = {} }) {
+export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, publicBaseUrl, loginLimit = 10, ads = {} }) {
   if (!jwtSecret) throw new Error('Falta jwtSecret');
   if (!storage) throw new Error('Falta storage');
 
@@ -42,11 +42,12 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   const startRun = ads.meta && ads.anthropic
     ? createAgentRunner({ anthropic: ads.anthropic, meta: ads.meta, repo: adsRepo, execute, model: ads.model, config: adsConfig })
     : null;
-  const igPublisher = ads.meta && adsConfig.igUserId ? createIgPublisher({ db, meta: ads.meta, files, igUserId: adsConfig.igUserId }) : null;
-  const analyzeReport =ads.meta && ads.anthropic ? createReportAnalyst({ anthropic: ads.anthropic, model: ads.model }) : null;
+  const igPublisher = ads.meta && adsConfig.igUserId ? createIgPublisher({ db, meta: ads.meta, files, igUserId: adsConfig.igUserId, publicBaseUrl }) : null;
+  const analyzeReport = ads.meta && ads.anthropic ? createReportAnalyst({ anthropic: ads.anthropic, model: ads.model }) : null;
 
   const api = Router();
   api.use('/auth', createAuthRouter({ usersRepo, secret: jwtSecret, authenticate, loginLimit }));
+  api.use(createPublicFilesRouter({ files }));
   // Todo lo que sigue requiere sesión y contraseña ya cambiada
   api.use(authenticate, requirePasswordChanged);
   api.use('/users', createUsersRouter({ usersRepo }));

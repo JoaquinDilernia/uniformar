@@ -18,3 +18,5 @@ export const insertCalendarItem = (db, o = {}) => insert(db, 'calendar_items', {
 
 // Encabezado mínimo de un MP4 (caja ftyp "isom"): alcanza para que file-type lo reconozca como video/mp4
 export const MP4_MIN = Buffer.concat([Buffer.from('000000186674797069736f6d0000020069736f6d6d703431', 'hex'), Buffer.alloc(200)]);
+// JPEG 1x1 mínimo (Instagram solo acepta JPEG)
+export const JPG_1x1 = Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=', 'base64');

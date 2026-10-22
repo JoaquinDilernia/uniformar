@@ -26,6 +26,8 @@ export function createLocalStorage({ dir }) {
     read: (key) => fs.readFile(full(key)),
     remove: (key) => fs.rm(full(key), { force: true }),
     urlFor: async (file) => `/api/files/${file.id}/raw`,
+    // Ruta en disco (para servir el archivo en streaming, p. ej. a Instagram)
+    pathFor: (key) => full(key),
     // Subida de videos sin cargarlos en memoria; corta si llegan más bytes de los declarados
     async putStream(key, stream, maxBytes) {
       const p = full(key);

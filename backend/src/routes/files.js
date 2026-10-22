@@ -24,6 +24,17 @@ function checkSection(user, ownerType, level) {
 // Subir puede pedir menos que editar (fotos del resultado de una idea: alcanza con "Decidir")
 const uploadLevel = (ownerType) => OWNER_TYPES[ownerType]?.uploadLevel ?? 'edit';
 
+// Sin sesión: links firmados y temporales para que Instagram descargue el archivo (storage local)
+export function createPublicFilesRouter({ files }) {
+  const r = Router();
+  r.get('/public-files/:token/:name', async (req, res) => {
+    const { row, path } = await files.resolvePublic(req.params.token);
+    if (!path) throw badRequest('Este archivo no se sirve desde acá.');
+    res.type(row.mime).sendFile(path);
+  });
+  return r;
+}
+
 export function createFilesRouter({ files }) {
   const r = Router();
 

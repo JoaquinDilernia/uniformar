@@ -12,12 +12,12 @@ import { createLocalStorage } from '../../src/services/storage.js';
 let seq = 0;
 
 // urlFor: para simular R2 (URLs https públicas, como las que Instagram necesita descargar)
-export async function createTestContext({ loginLimit = 1000, corsOrigin, ads, urlFor } = {}) {
+export async function createTestContext({ loginLimit = 1000, corsOrigin, ads, urlFor, publicBaseUrl } = {}) {
   const db = await createTestDb();
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'uf-files-'));
   const local = createLocalStorage({ dir });
   const storage = urlFor ? { ...local, urlFor } : local;
-  const app = buildApp({ db, jwtSecret: 'test-secret', storage, loginLimit, corsOrigin, ads });
+  const app = buildApp({ db, jwtSecret: 'test-secret', storage, loginLimit, corsOrigin, ads, publicBaseUrl });
   const usersRepo = createUsersRepo(db);
 
   async function createUser({ email, name = 'Test', password = 'password123', template = 'admin', mustChange = false, permissions, flags } = {}) {

@@ -63,6 +63,8 @@ const app = buildApp({
   jwtSecret,
   storage,
   corsOrigin: process.env.FRONTEND_URL,
+  // Para que Instagram descargue archivos del storage local (Railway expone RAILWAY_PUBLIC_DOMAIN)
+  publicBaseUrl: process.env.PUBLIC_API_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : undefined),
   staticDir: fs.existsSync(path.join(distDir, 'index.html')) ? distDir : undefined,
   ads: { meta, anthropic, config: adsConfig, model: process.env.ADS_AGENT_MODEL || undefined },
 });
