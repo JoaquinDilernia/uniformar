@@ -48,6 +48,7 @@ export function createMetaClient({ accessToken, accountId, fetchFn = fetch, retr
     ad: 'id,name,adset_id,campaign_id,status,effective_status,created_time,creative{id,body,title,thumbnail_url}',
     igMedia: 'id,caption,media_type,media_product_type,thumbnail_url,media_url,permalink,timestamp,like_count,comments_count',
     insights: 'campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name,spend,impressions,reach,frequency,clicks,ctr,cpm,actions,cost_per_action_type',
+    breakdown: 'spend,impressions,clicks,actions',
   };
   const list = async (path, fields, limit = 200) => (await req(path, { params: { fields, limit: String(limit) } })).data ?? [];
 
@@ -56,10 +57,12 @@ export function createMetaClient({ accessToken, accountId, fetchFn = fetch, retr
     getCampaigns: () => list(`${accountId}/campaigns`, FIELDS.campaign),
     getAdsets: () => list(`${accountId}/adsets`, FIELDS.adset),
     getAds: () => list(`${accountId}/ads`, FIELDS.ad, 500),
-    // since/until en YYYY-MM-DD (hora de la cuenta). daily=true parte por día.
-    async getInsights(level, since, until, { daily = false } = {}) {
-      const params = { level, fields: FIELDS.insights, time_range: { since, until }, limit: '500' };
+    // since/until en YYYY-MM-DD (hora de la cuenta). daily=true parte por día; breakdowns parte por
+    // ubicación, edad, etc. (con desglose no se pide alcance: Meta no lo da para todos, p. ej. por hora).
+    async getInsights(level, since, until, { daily = false, breakdowns } = {}) {
+      const params = { level, fields: breakdowns ? FIELDS.breakdown : FIELDS.insights, time_range: { since, until }, limit: '500' };
       if (daily) params.time_increment = '1';
+      if (breakdowns) params.breakdowns = breakdowns;
       return (await req(`${accountId}/insights`, { params })).data ?? [];
     },
     setStatus: (objectId, status) => req(objectId, { method: 'POST', body: { status } }),

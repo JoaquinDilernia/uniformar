@@ -20,6 +20,7 @@ import { createHomeRouter } from './routes/home.js';
 import { createAdsRepo } from './repo/ads.js';
 import { createAdsRouter } from './routes/ads.js';
 import { adsConfigFromEnv, createAgentRunner, createExecutor } from './ads/agent.js';
+import { createReportAnalyst } from './ads/reportAnalysis.js';
 
 // ads (opcional): { meta, anthropic, config, model } — sin meta/anthropic la sección Pauta avisa qué falta
 export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginLimit = 10, ads = {} }) {
@@ -40,6 +41,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   const startRun = ads.meta && ads.anthropic
     ? createAgentRunner({ anthropic: ads.anthropic, meta: ads.meta, repo: adsRepo, execute, model: ads.model, config: adsConfig })
     : null;
+  const analyzeReport = ads.meta && ads.anthropic ? createReportAnalyst({ anthropic: ads.anthropic, model: ads.model }) : null;
 
   const api = Router();
   api.use('/auth', createAuthRouter({ usersRepo, secret: jwtSecret, authenticate, loginLimit }));
@@ -52,7 +54,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   api.use(createCalendarRouter({ db, calendarRepo, files }));
   api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
   api.use(createHomeRouter({ homeRepo: createHomeRepo(db), storage }));
-  api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig, files }));
+  api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig, files, analyzeReport }));
 
   const app = createApp({
     apiRouter: api,

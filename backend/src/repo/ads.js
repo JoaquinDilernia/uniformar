@@ -183,6 +183,16 @@ export function createAdsRepo(db) {
       return rows;
     },
 
+    addReportAnalysis: ({ since, until, text, userId }) => one(
+      'INSERT INTO ad_report_analyses (since, until, text, created_by) VALUES ($1, $2, $3, $4) RETURNING *',
+      [since, until, text, userId ?? null],
+    ),
+    latestReportAnalysis: (since, until) => one(
+      `SELECT a.*, u.name AS created_by_name FROM ad_report_analyses a LEFT JOIN users u ON u.id = a.created_by
+       WHERE a.since = $1 AND a.until = $2 ORDER BY a.created_at DESC LIMIT 1`,
+      [since, until],
+    ),
+
     // Reserva antes de llamar a Meta: si el post ya está (o se está promocionando) en ese conjunto, 409
     async reserveIgPromotion(p) {
       const { rows } = await db.query(

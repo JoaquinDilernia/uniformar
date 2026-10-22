@@ -45,6 +45,15 @@ export function daysAgo(n, from = new Date()) {
   return artDate(new Date(from.getTime() - n * 86400_000));
 }
 
+// Aritmética de fechas YYYY-MM-DD sin zona horaria (son días de calendario de la cuenta)
+export function addDays(date, n) {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+export const daysBetween = (since, until) => Math.round((Date.parse(`${until}T00:00:00Z`) - Date.parse(`${since}T00:00:00Z`)) / 86400_000) + 1;
+
 export const monthStart = (from = new Date()) => `${artDate(from).slice(0, 8)}01`;
 
 // Presupuestos de Meta en la moneda de la cuenta (ARS) vienen en centavos

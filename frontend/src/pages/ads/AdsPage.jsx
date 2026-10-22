@@ -21,6 +21,8 @@ import { ars, when } from './format.js';
 import { ALLOW_MIXED_MEDIA, MEDIA_ACCEPT, mediaKind } from './media.js';
 import { AgentQuestions } from './Questions.jsx';
 import { IgPosts } from './IgPosts.jsx';
+import { ReportText } from './ReportText.jsx';
+import { Reports } from './Reports.jsx';
 import s from './ads.module.css';
 
 const STATUS_LABEL = {
@@ -35,18 +37,6 @@ const DECISION_LABEL = { pending: 'Pendiente', executed: 'Hecho', rejected: 'Rec
 
 function Badge({ status }) {
   return <span className={`${s.badge} ${TONE[status] ?? ''}`}>{STATUS_LABEL[status] ?? status}</span>;
-}
-
-// El informe del agente viene en texto con **negritas**: lo mostramos respetando saltos de línea
-function Report({ text }) {
-  return (
-    <div className={s.report}>
-      {text.split('\n').map((line, i) => (
-        <p key={i}>{line.split(/(\*\*[^*]+\*\*)/g).map((part, j) => (part.startsWith('**') && part.endsWith('**')
-          ? <strong key={j}>{part.slice(2, -2)}</strong> : part))}</p>
-      ))}
-    </div>
-  );
 }
 
 export function AdsPage() {
@@ -71,6 +61,7 @@ export function AdsPage() {
       <div className={s.page}>
         <Segmented label="Sección" value={tab} onChange={setTab} options={[
           { value: 'summary', label: `Resumen${data?.openQuestions ? ` (${data.openQuestions})` : ''}` },
+          { value: 'reports', label: 'Reportes' },
           { value: 'reco', label: `Recomendaciones${data?.pendingCount ? ` (${data.pendingCount})` : ''}` },
           { value: 'creatives', label: 'Anuncios' },
           { value: 'settings', label: 'Ajustes' },
@@ -84,7 +75,8 @@ export function AdsPage() {
         )}
         {data?.metaError && <div className={s.alert}><AlertTriangle size={18} aria-hidden /> Meta no respondió: {data.metaError}</div>}
         {data && tab === 'summary' && <Summary data={data} canEdit={canEdit} onRefresh={() => refreshMeta.mutate()} refreshing={refreshMeta.isPending} />}
-        {data && tab === 'reco' && <Recommendations canEdit={canEdit} />}
+        {data && tab === 'reports' && data.configured.meta && <Reports canEdit={canEdit} />}
+        {data && tab === 'reco' &&<Recommendations canEdit={canEdit} />}
         {data && tab === 'creatives' && <Creatives snapshot={data.snapshot} canEdit={canEdit} />}
         {data && tab === 'settings' && <Settings settings={data.settings} canEdit={canEdit} />}
       </div>
@@ -119,7 +111,7 @@ function Summary({ data, canEdit, onRefresh, refreshing }) {
         {!run && <p className="muted">Todavía no corrió. Corre solo todos los días a las 9:00, o tocá “Analizar ahora”.</p>}
         {run?.status === 'running' && <p className={s.inline}><Spinner size={16} /> El agente está mirando la cuenta. Tarda unos minutos.</p>}
         {run?.status === 'failed' && <p className={s.bad}>Falló el análisis: {run.error}</p>}
-        {run?.report && run.status !== 'running' && <Report text={run.report} />}
+        {run?.report && run.status !== 'running' && <ReportText text={run.report} />}
       </section>
 
       <AgentQuestions canEdit={canEdit} />

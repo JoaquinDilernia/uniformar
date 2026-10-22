@@ -144,3 +144,30 @@ export function usePromoteIgPost() {
     onSettled: refresh,
   });
 }
+
+// Reporte de un período: el backend lo arma con Meta y lo cachea 15 min
+export const useReport = ({ since, until }) => useQuery({
+  queryKey: ['ads', 'report', since, until],
+  queryFn: () => api.get(`/ads/report?since=${since}&until=${until}`),
+  enabled: Boolean(since && until),
+  meta: { silent: true },
+  retry: false,
+});
+
+export function useRefreshReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ since, until }) => api.get(`/ads/report?since=${since}&until=${until}&refresh=1`),
+    meta: { success: false },
+    onSuccess: (data, { since, until }) => qc.setQueryData(['ads', 'report', since, until], data),
+  });
+}
+
+export function useAnalyzeReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ since, until }) => api.post('/ads/report/analysis', { since, until }).then((r) => r.analysis),
+    meta: { success: 'El agente leyó el período ✓' },
+    onSuccess: (analysis, { since, until }) => qc.setQueryData(['ads', 'report', since, until], (old) => (old ? { ...old, analysis } : old)),
+  });
+}

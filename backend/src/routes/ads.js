@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { parse, uuid } from '../lib/validate.js';
-import { AppError } from '../lib/errors.js';
+import { dateStr, parse, uuid } from '../lib/validate.js';
+import { AppError, badRequest } from '../lib/errors.js';
 import { requirePermission } from '../services/permissions.js';
 import { buildSnapshot } from '../ads/snapshot.js';
+import { buildReport } from '../ads/report.js';
+import { artDate, daysBetween } from '../ads/metrics.js';
 import { loadIgPosts } from '../ads/igPosts.js';
 
 const metaId = z.string().regex(/^\d{1,30}$/, 'Id de Meta inválido');
@@ -29,10 +31,22 @@ const answerSchema = z.object({
   analyze: z.boolean().default(false),
 });
 
+const rangeSchema = z.object({ since: dateStr, until: dateStr });
+const MAX_REPORT_DAYS = 93;
+
 const LEVEL_LABEL = { campaign: 'la campaña', adset: 'el conjunto', ad: 'el anuncio' };
 const SNAPSHOT_TTL_MS = 5 * 60_000;
+const REPORT_TTL_MS = 15 * 60_000;
 
-export function createAdsRouter({ repo, meta, startRun, execute, config, files }) {
+function parseRange(data) {
+  const { since, until } = parse(rangeSchema, data);
+  if (since > until) throw badRequest('La fecha de inicio tiene que ser anterior a la de fin.');
+  if (until > artDate()) throw badRequest('El período no puede terminar en el futuro.');
+  if (daysBetween(since, until) > MAX_REPORT_DAYS) throw badRequest(`El período puede tener hasta ${MAX_REPORT_DAYS} días.`);
+  return { since, until };
+}
+
+export function createAdsRouter({ repo, meta, startRun, execute, config, files, analyzeReport }) {
   const r = Router();
   const view = requirePermission('ads', 'view');
   const edit = requirePermission('ads', 'edit');
@@ -53,7 +67,19 @@ export function createAdsRouter({ repo, meta, startRun, execute, config, files }
     cache = { at: Date.now(), data };
     return data;
   }
-  const invalidate = () => { cache = null; };
+  // Un reporte son ~12 consultas a Meta: se cachea por período
+  const reportCache = new Map();
+  async function report({ since, until }, force) {
+    const key = `${since}|${until}`;
+    const hit = reportCache.get(key);
+    if (!force && hit && Date.now() - hit.at < REPORT_TTL_MS) return hit.data;
+    const decisions = await repo.listDecisions({ status: 'executed', limit: 200 });
+    const data = await buildReport(meta, { since, until }, { decisions });
+    if (reportCache.size > 20) reportCache.clear();
+    reportCache.set(key, { at: Date.now(), data });
+    return data;
+  }
+  const invalidate = () => { cache = null; reportCache.clear(); };
 
   let igCache = null;
   async function igPosts(force) {
@@ -80,6 +106,32 @@ export function createAdsRouter({ repo, meta, startRun, execute, config, files }
       configured: { meta: Boolean(meta), agent: Boolean(startRun) },
       settings, lastRun: runs[0] ?? null, pendingCount: pending.length, openQuestions, snapshot: snap, metaError,
     });
+  });
+
+  r.get('/ads/report', view, needMeta, async (req, res) => {
+    const range = parseRange(req.query);
+    let data;
+    try {
+      data = await report(range, req.query.refresh === '1');
+    } catch (err) {
+      throw new AppError(502, 'META_ERROR', `Meta no respondió: ${err.message}`);
+    }
+    res.json({ report: data, analysis: (await repo.latestReportAnalysis(range.since, range.until)) ?? null, canAnalyze: Boolean(analyzeReport) });
+  });
+
+  // La lectura del agente sobre el período: tarda unos segundos y queda guardada
+  r.post('/ads/report/analysis', edit, needMeta, async (req, res) => {
+    if (!analyzeReport) throw new AppError(503, 'AGENT_NOT_CONFIGURED', 'Falta la clave de Claude (ANTHROPIC_API_KEY) en el servidor.');
+    const range = parseRange(req.body);
+    const [data, settings, learnings] = await Promise.all([report(range), repo.getSettings(), repo.listLearnings({ activeOnly: true })]);
+    let text;
+    try {
+      text = await analyzeReport(data, { businessNotes: settings.business_notes, learnings });
+    } catch (err) {
+      throw new AppError(502, 'AGENT_ERROR', `El agente no pudo analizar: ${err.message}`);
+    }
+    await repo.addReportAnalysis({ ...range, text, userId: req.user.id });
+    res.json({ analysis: await repo.latestReportAnalysis(range.since, range.until) });
   });
 
   r.post('/ads/objects/:id/status', edit, needMeta, async (req, res) => {
