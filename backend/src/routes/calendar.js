@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { parse, uuid, dateStr, optionalUrl, nullableText } from '../lib/validate.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { AppError, badRequest, notFound } from '../lib/errors.js';
 import { buildInsert, buildUpdate, pick } from '../lib/sql.js';
 import { CHANNELS } from '../lib/channels.js';
 import { requirePermission, requireFlag } from '../services/permissions.js';
@@ -17,6 +17,8 @@ const FIELDS = {
   refs: nullableText(5000),
   status: z.enum(['draft', 'ready', 'published']),
   sort: z.number().int().min(0).max(1000),
+  // Hora argentina en que se publica sola en Instagram (con la pieza "lista")
+  publish_time: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, 'Hora inválida').nullish(),
 };
 const createSchema = z.object({ ...FIELDS, title: FIELDS.title.default(''), channels: FIELDS.channels.default([]), status: FIELDS.status.default('draft') }).omit({ sort: true });
 const updateSchema = z.object(FIELDS).partial();
@@ -24,15 +26,18 @@ const rangeSchema = z.object({ from: dateStr, to: dateStr });
 const EDITABLE = Object.keys(FIELDS);
 const DAY = 86_400_000;
 
-export function createCalendarRouter({ db, calendarRepo, files }) {
+export function createCalendarRouter({ db, calendarRepo, files, igPublisher }) {
   const r = Router();
   const view = requirePermission('calendar', 'view');
   const edit = requirePermission('calendar', 'edit');
 
   async function withPreviews(items) {
-    const previews = await files.listFor(['calendar_preview'], items.map((i) => i.id));
-    return items.map((i) => ({ ...i, previews: previews.filter((p) => p.owner_id === i.id) }));
+    const all = await files.listFor(['calendar_preview', 'calendar_media'], items.map((i) => i.id));
+    const of = (type, id) => all.filter((p) => p.owner_type === type && p.owner_id === id);
+    return items.map((i) => ({ ...i, previews: of('calendar_preview', i.id), media: of('calendar_media', i.id) }));
   }
+
+  r.get('/calendar/publishing', view, (_req, res) => res.json({ instagram: Boolean(igPublisher) }));
 
   async function detail(id) {
     const item = await calendarRepo.get(id);
@@ -85,11 +90,21 @@ export function createCalendarRouter({ db, calendarRepo, files }) {
     res.json({ item: await detail(req.params.id) });
   });
 
+  // Publica ya en Instagram los canales que faltan (o fallaron). Responde enseguida: el video tarda minutos.
+  r.post('/calendar/:id/publish', edit, async (req, res) => {
+    if (!igPublisher) throw new AppError(503, 'IG_NOT_CONFIGURED', 'Falta conectar Meta (META_ACCESS_TOKEN) en el servidor.');
+    const item = await calendarRepo.get(parse(uuid, req.params.id));
+    if (!item) throw notFound('No existe esa pieza.');
+    const { done } = await igPublisher.publishNow(item, req.user.id);
+    done.catch((err) => console.error('[ig] publicación falló:', err));
+    res.status(202).json({ item: await detail(item.id) });
+  });
+
   r.delete('/calendar/:id', edit, requireFlag('can_delete'), async (req, res) => {
     const keys = await db.tx(async (q) => {
       const { rows } = await q.query('DELETE FROM calendar_items WHERE id = $1 RETURNING id, title', [req.params.id]);
       if (!rows[0]) throw notFound('No existe esa pieza.');
-      const k = await files.removeOwnerRows(q, ['calendar_preview'], rows[0].id);
+      const k = await files.removeOwnerRows(q, ['calendar_preview', 'calendar_media'], rows[0].id);
       await logActivity(q, { actorId: req.user.id, entityType: 'calendar_item', entityId: rows[0].id, action: 'delete', diff: { title: { from: rows[0].title, to: null } } });
       return k;
     });

@@ -11,6 +11,8 @@ export const OWNER_TYPES = {
   idea_ref: { table: 'ideas', section: 'ideas', kind: 'image', max: 20 },
   idea_result: { table: 'ideas', section: 'ideas', kind: 'image', max: 20, uploadLevel: 'decide' },
   calendar_preview: { table: 'calendar_items', section: 'calendar', kind: 'image', max: 10 },
+  // Lo que se publica en Instagram: IG solo acepta imágenes JPG (hasta 8 MB); el navegador convierte el resto
+  calendar_media: { table: 'calendar_items', section: 'calendar', kind: 'image', max: 10, accept: ['image/jpeg'], maxBytes: 8 * 1024 * 1024, video: VIDEO_DEF },
   project_photo: { table: 'projects', section: 'projects', kind: 'image', max: 50 },
   project_pdf: { table: 'projects', section: 'projects', kind: 'pdf', max: 20 },
   // Piezas de pauta: van tal cual a Meta, que no acepta WebP — solo JPG/PNG y sin comprimir
@@ -48,7 +50,8 @@ export function createFilesService({ db, storage, uploadSecret }) {
     const mime = (await fileTypeFromBuffer(buffer))?.mime;
     if (!mime || !(def.accept ?? ACCEPTED[def.kind]).includes(mime)) {
       throw new AppError(415, 'UNSUPPORTED_FILE', def.kind === 'pdf' ? 'Solo se aceptan archivos PDF.'
-        : def.accept ? 'Solo se aceptan imágenes JPG o PNG.' : 'Solo se aceptan imágenes JPG, PNG o WebP.');
+        : def.accept ? `Solo se aceptan imágenes ${def.accept.map((m) => m.split('/')[1].replace('jpeg', 'JPG').toUpperCase()).join(' o ')}.`
+          : 'Solo se aceptan imágenes JPG, PNG o WebP.');
     }
     const maxBytes = def.maxBytes ?? LIMITS[def.kind];
     if (buffer.length > maxBytes) {

@@ -15,9 +15,16 @@ describe('compresión de imágenes', () => {
       .mockResolvedValueOnce(blob(MAX_BYTES + 1))
       .mockResolvedValueOnce(blob(900_000));
     const out = await compressImage(fakeFile(), { decode: async () => ({ width: 4000, height: 3000 }), encode });
-    expect(encode).toHaveBeenNthCalledWith(1, expect.anything(), 2048, 1536, 0.82);
-    expect(encode).toHaveBeenNthCalledWith(2, expect.anything(), 2048, 1536, 0.75);
+    expect(encode).toHaveBeenNthCalledWith(1, expect.anything(), 2048, 1536, 0.82, false);
+    expect(encode).toHaveBeenNthCalledWith(2, expect.anything(), 2048, 1536, 0.75, false);
     expect(out).toMatchObject({ width: 2048, height: 1536, type: 'image/webp' });
+  });
+
+  it('para Instagram: JPEG, 1440 px y hasta 8 MB', async () => {
+    const encode = vi.fn().mockResolvedValue(new Blob([new Uint8Array(5 * 1024 * 1024)], { type: 'image/jpeg' }));
+    const out = await compressImage(fakeFile(), { decode: async () => ({ width: 4000, height: 3000 }), encode, jpeg: true, maxSide: 1440, maxBytes: 8 * 1024 * 1024 });
+    expect(encode).toHaveBeenCalledWith(expect.anything(), 1440, 1080, 0.82, true);
+    expect(out).toMatchObject({ width: 1440, height: 1080, type: 'image/jpeg' });
   });
 
   it('si no entra ni a calidad 0,6, error claro', async () => {

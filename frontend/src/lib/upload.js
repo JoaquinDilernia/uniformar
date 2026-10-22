@@ -19,8 +19,23 @@ async function uploadVideo({ ownerType, ownerId, file, onProgress }) {
   return (await api.post('/files/complete', { token })).file;
 }
 
+export const IG_IMAGE_MAX = 8 * 1024 * 1024;
+
 export async function uploadFile({ ownerType, ownerId, file, kind: requested, onProgress }) {
   let kind = requested;
+  // Para publicar en Instagram: video tal cual, JPG tal cual si entra; el resto se pasa a JPG (1440 px de lado como máximo)
+  if (kind === 'igmedia') {
+    if (VIDEO_TYPES.includes(file.type)) return uploadVideo({ ownerType, ownerId, file, onProgress });
+    const form = new FormData();
+    form.append('owner_type', ownerType);
+    form.append('owner_id', ownerId);
+    if (file.type === 'image/jpeg' && file.size <= IG_IMAGE_MAX) form.append('file', file, file.name);
+    else {
+      const { blob } = await compressImage(file, { jpeg: true, maxSide: 1440, maxBytes: IG_IMAGE_MAX });
+      form.append('file', blob, `${file.name.replace(/\.[^.]+$/, '')}.jpg`);
+    }
+    return (await api.upload('/files', form)).file;
+  }
   // Piezas de pauta: imagen JPG/PNG tal cual o video
   if (kind === 'media') {
     if (VIDEO_TYPES.includes(file.type)) return uploadVideo({ ownerType, ownerId, file, onProgress });

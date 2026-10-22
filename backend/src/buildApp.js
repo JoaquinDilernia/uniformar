@@ -21,6 +21,7 @@ import { createAdsRepo } from './repo/ads.js';
 import { createAdsRouter } from './routes/ads.js';
 import { adsConfigFromEnv, createAgentRunner, createExecutor } from './ads/agent.js';
 import { createReportAnalyst } from './ads/reportAnalysis.js';
+import { createIgPublisher } from './services/igPublisher.js';
 
 // ads (opcional): { meta, anthropic, config, model } — sin meta/anthropic la sección Pauta avisa qué falta
 export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginLimit = 10, ads = {} }) {
@@ -41,7 +42,8 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   const startRun = ads.meta && ads.anthropic
     ? createAgentRunner({ anthropic: ads.anthropic, meta: ads.meta, repo: adsRepo, execute, model: ads.model, config: adsConfig })
     : null;
-  const analyzeReport = ads.meta && ads.anthropic ? createReportAnalyst({ anthropic: ads.anthropic, model: ads.model }) : null;
+  const igPublisher = ads.meta && adsConfig.igUserId ? createIgPublisher({ db, meta: ads.meta, files, igUserId: adsConfig.igUserId }) : null;
+  const analyzeReport =ads.meta && ads.anthropic ? createReportAnalyst({ anthropic: ads.anthropic, model: ads.model }) : null;
 
   const api = Router();
   api.use('/auth', createAuthRouter({ usersRepo, secret: jwtSecret, authenticate, loginLimit }));
@@ -51,7 +53,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   api.use(createSettingsRouter({ db, clientsRepo }));
   api.use(createFilesRouter({ files }));
   api.use(createIdeasRouter({ db, ideasRepo, clientsRepo, activityRepo, files }));
-  api.use(createCalendarRouter({ db, calendarRepo, files }));
+  api.use(createCalendarRouter({ db, calendarRepo, files, igPublisher }));
   api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
   api.use(createHomeRouter({ homeRepo: createHomeRepo(db), storage }));
   api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig, files, analyzeReport }));
@@ -67,5 +69,6 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, loginL
   });
   app.locals.files = files;
   app.locals.startAdsRun = startRun;
+  app.locals.igPublisher = igPublisher;
   return app;
 }

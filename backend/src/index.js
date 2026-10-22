@@ -88,5 +88,12 @@ if (app.locals.startAdsRun) {
   }, { timezone: 'America/Argentina/Buenos_Aires' });
 }
 
+// Piezas del calendario que llegaron a su hora: se publican en Instagram (se revisa cada minuto)
+if (app.locals.igPublisher) {
+  cron.schedule('* * * * *', () => app.locals.igPublisher.runDue()
+    .then((n) => n && console.log(`[ig] ${n} publicaciones procesadas`))
+    .catch((err) => console.error('[ig] revisión de publicaciones falló:', err.message)), { timezone: 'America/Argentina/Buenos_Aires' });
+}
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`uniformar escuchando en :${port} (storage: ${storage.driver})`));

@@ -14,6 +14,7 @@ import { formatLong } from '../../lib/dates.js';
 import { presetForChannels } from '../../lib/sizes.js';
 import { ItemForm } from './ItemForm.jsx';
 import { PreviewMockup } from './PreviewMockup.jsx';
+import { PublishMedia, PublishStatus } from './PublishPanel.jsx';
 import { useDeleteItem } from './api.js';
 import s from './calendar.module.css';
 
@@ -27,7 +28,9 @@ function ItemCard({ item, open, onToggle, canEdit, canDelete }) {
       <button type="button" className={s.itemHead} onClick={onToggle} aria-expanded={open}>
         <span className={s.itemTitles}>
           <strong>{item.title || 'Sin título'}</strong>
-          <span className="muted">{item.channels.map((c) => CHANNEL_LABELS[c]).join(' · ') || 'Sin canales'}</span>
+          <span className="muted">
+            {item.channels.map((c) => CHANNEL_LABELS[c]).join(' · ') || 'Sin canales'}{item.publish_time ? ` · ${item.publish_time} h` : ''}
+          </span>
         </span>
         <StatusBadge kind="calendar" status={item.status} />
         <ChevronDown size={18} className={open ? s.rot : ''} aria-hidden />
@@ -37,6 +40,8 @@ function ItemCard({ item, open, onToggle, canEdit, canDelete }) {
           {item.previews.length > 0 && <PreviewMockup files={item.previews} channels={item.channels} copy={item.copy} />}
           <ImageUploader ownerType="calendar_preview" ownerId={item.id} files={item.previews} invalidate={[['calendar']]}
             canEdit={canEdit} canDelete={canDelete} preset={presetForChannels(item.channels)} label="Subir previsualización" max={10} />
+          <PublishMedia item={item} canEdit={canEdit} canDelete={canDelete} />
+          <PublishStatus item={item} canEdit={canEdit} />
           {item.piece_url && !canEdit && <EmbedPreview url={item.piece_url} />}
           {canEdit ? <ItemForm item={item} /> : (
             <div className={s.readonly}>
@@ -86,7 +91,7 @@ export function DaySheet({ date, items, rules, rulesReady = true, onClose }) {
         {canEdit && (adding ? (
           <div className={s.item}>
             <div className={s.itemBody}>
-              {!rulesReady ? <Spinner /> : <ItemForm date={date} defaultChannels={rules[0]?.channels ?? []} onDone={(saved) => { setAdding(false); setOpenId(saved.id); }} onCancel={items.length ? () => setAdding(false) : undefined} />}
+              {!rulesReady ? <Spinner /> : <ItemForm date={date} defaultChannels={rules[0]?.channels ?? []} defaultTime={rules[0]?.time ?? undefined}onDone={(saved) => { setAdding(false); setOpenId(saved.id); }} onCancel={items.length ? () => setAdding(false) : undefined} />}
             </div>
           </div>
         ) : (

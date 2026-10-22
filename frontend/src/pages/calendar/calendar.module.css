@@ -59,3 +59,22 @@
 .mockDots { display: flex; justify-content: center; gap: 4px; padding: 6px; }
 .mockDots span { width: 6px; height: 6px; border-radius: 50%; background: var(--c-border-strong); }
 .mockCopy { padding: 4px 10px 10px; font-size: var(--fs-s); }
+
+/* Publicación en Instagram */
+.timeInput { max-width: 160px; }
+.publishMedia, .publishBox { display: flex; flex-direction: column; gap: var(--sp-2); }
+.publishMedia small { font-size: var(--fs-xs); }
+.mediaGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--sp-2); }
+.mediaTile { position: relative; aspect-ratio: 4 / 5; border-radius: var(--radius-s); overflow: hidden; background: var(--c-surface-2); }
+.mediaTile img, .mediaTile video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mediaPlay { position: absolute; inset: 0; margin: auto; color: #fff; filter: drop-shadow(0 1px 4px rgb(0 0 0 / 0.5)); pointer-events: none; }
+.mediaNum { position: absolute; top: 4px; left: 4px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: rgb(0 0 0 / 0.6); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.mediaTools { position: absolute; bottom: 4px; right: 4px; display: flex; gap: 4px; }
+.mediaTools button { width: 26px; height: 26px; border: 0; border-radius: 50%; background: rgb(0 0 0 / 0.6); color: #fff; display: grid; place-items: center; cursor: pointer; }
+.mediaAdd { aspect-ratio: 4 / 5; border: 1px dashed var(--c-border-strong); border-radius: var(--radius-s); background: transparent; color: var(--c-text-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: var(--fs-xs); cursor: pointer; }
+.publishBox { padding: var(--sp-3); border-radius: var(--radius-m); background: var(--c-surface-2); }
+.pubRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); font-size: var(--fs-s); }
+.pubRow > span { display: inline-flex; align-items: center; gap: 4px; }
+.pubOk { color: var(--c-success); }
+.pubBad { color: var(--c-danger); overflow-wrap: anywhere; }
+.pubMuted { color: var(--c-text-2); }

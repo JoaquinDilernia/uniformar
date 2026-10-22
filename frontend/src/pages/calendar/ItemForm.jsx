@@ -10,13 +10,14 @@ import { useCreateItem, useUpdateItem } from './api.js';
 import s from './calendar.module.css';
 
 const IG_COPY_MAX = 2200;
-const toForm = (i) => ({ title: i.title, channels: i.channels, status: i.status, idea_id: i.idea_id ?? '', copy: i.copy ?? '', piece_url: i.piece_url ?? '', refs: i.refs ?? '' });
+const toForm = (i) => ({ title: i.title, channels: i.channels, status: i.status, idea_id: i.idea_id ?? '', copy: i.copy ?? '', piece_url: i.piece_url ?? '', refs: i.refs ?? '', publish_time: i.publish_time ?? '' });
+const IG = ['ig_post', 'ig_reel', 'ig_story'];
 
-export function ItemForm({ date, item, defaultChannels = [], onDone, onCancel }) {
+export function ItemForm({ date, item, defaultChannels = [], defaultTime, onDone, onCancel }) {
   const isNew = !item;
   const { data: ideas = [] } = useIdeas();
   const [form, setForm, clearDraft] = useDraft(isNew ? `cal-new-${date}` : `cal-${item.id}`,
-    isNew ? { title: '', channels: defaultChannels, status: 'draft', idea_id: '', copy: '', piece_url: '', refs: '' } : toForm(item));
+    isNew ? { title: '', channels: defaultChannels, status: 'draft', idea_id: '', copy: '', piece_url: '', refs: '', publish_time: defaultTime ?? '' } : toForm(item));
   const [errors, setErrors] = useState({});
   const create = useCreateItem();
   const update = useUpdateItem();
@@ -30,7 +31,7 @@ export function ItemForm({ date, item, defaultChannels = [], onDone, onCancel })
     e.preventDefault();
     if (pending || tooLong) return;
     const nul = (v) => (v.trim() === '' ? null : v);
-    const body = { title: form.title.trim(), channels: CHANNELS.filter((c) => form.channels.includes(c)), status: form.status, idea_id: form.idea_id || null, copy: nul(form.copy), piece_url: nul(form.piece_url.trim()), refs: nul(form.refs) };
+    const body = { title: form.title.trim(), channels: CHANNELS.filter((c) => form.channels.includes(c)), status: form.status, idea_id: form.idea_id || null, copy: nul(form.copy), piece_url: nul(form.piece_url.trim()), refs: nul(form.refs), publish_time: form.publish_time || null };
     const opts = { onError: (err) => setErrors(err.fields ?? {}), onSuccess: (saved) => { clearDraft(); onDone?.(saved); } };
     if (isNew) create.mutate({ date, ...body }, opts);
     else update.mutate({ id: item.id, patch: body }, opts);
@@ -51,6 +52,12 @@ export function ItemForm({ date, item, defaultChannels = [], onDone, onCancel })
         <p className={s.label}>Estado</p>
         <Segmented label="Estado" value={form.status} onChange={set('status')} options={Object.entries(CALENDAR_STATUS_LABELS).map(([value, label]) => ({ value, label }))} />
       </div>
+      {form.channels.some((c) => IG.includes(c)) && (
+        <Field label="Hora de publicación" error={errors.publish_time}
+          hint="Hora argentina. Con hora y en “Listo para publicar”, se publica sola en Instagram con los archivos para publicar.">
+          <Input type="time" value={form.publish_time ?? ''} onChange={set('publish_time')} className={s.timeInput} />
+        </Field>
+      )}
       <Field label="Idea vinculada">
         <Select value={form.idea_id} onChange={set('idea_id')}>
           <option value="">— Ninguna —</option>

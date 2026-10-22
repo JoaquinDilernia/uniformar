@@ -23,15 +23,16 @@ async function decodeImage(file) {
   return { width: bitmap.width, height: bitmap.height, source: bitmap };
 }
 
-function drawAndEncode(img, width, height, quality) {
+function drawAndEncode(img, width, height, quality, jpeg = false) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   canvas.getContext('2d').drawImage(img.source, 0, 0, width, height);
-  return encodeCanvas(canvas, quality);
+  return jpeg ? defaultToBlob(canvas, 'image/jpeg', quality) : encodeCanvas(canvas, quality);
 }
 
-export async function compressImage(file, { decode = decodeImage, encode = drawAndEncode } = {}) {
+// jpeg: fuerza JPEG (Instagram no acepta WebP ni PNG). maxSide/maxBytes cambian los límites por defecto.
+export async function compressImage(file, { decode = decodeImage, encode = drawAndEncode, jpeg = false, maxSide = MAX_SIDE, maxBytes = MAX_BYTES } = {}) {
   if (file.size > MAX_INPUT_BYTES) throw new Error('La imagen pesa más de 25 MB. Elegí una más liviana.');
   let img;
   try {
@@ -39,10 +40,10 @@ export async function compressImage(file, { decode = decodeImage, encode = drawA
   } catch {
     throw new Error('No pudimos leer esa imagen. Probá con una JPG o PNG.');
   }
-  const { width, height } = fitWithin(img.width, img.height);
+  const { width, height } = fitWithin(img.width, img.height, maxSide);
   for (const q of QUALITY_STEPS) {
-    const blob = await encode(img, width, height, q);
-    if (blob && blob.size <= MAX_BYTES) return { blob, width, height, type: blob.type };
+    const blob = await encode(img, width, height, q, jpeg);
+    if (blob && blob.size <= maxBytes) return { blob, width, height, type: blob.type };
   }
-  throw new Error('No pudimos achicar la imagen a menos de 2 MB. Probá con otra.');
+  throw new Error(`No pudimos achicar la imagen a menos de ${maxBytes / 1024 / 1024} MB. Probá con otra.`);
 }

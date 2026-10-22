@@ -2,7 +2,10 @@ import { deriveIdeaStatus } from '../lib/ideaStatus.js';
 
 const SELECT = `
   SELECT ci.*, i.text AS idea_text, i.kind AS idea_kind, i.decision AS idea_decision, i.done_at AS idea_done_at,
-    (SELECT count(*)::int FROM files f WHERE f.owner_type = 'calendar_preview' AND f.owner_id = ci.id) AS preview_count
+    (SELECT count(*)::int FROM files f WHERE f.owner_type = 'calendar_preview' AND f.owner_id = ci.id) AS preview_count,
+    (SELECT coalesce(json_agg(json_build_object('channel', p.channel, 'status', p.status, 'permalink', p.permalink, 'error', p.error,
+       'started_at', p.started_at, 'published_at', p.published_at) ORDER BY p.channel), '[]'::json)
+     FROM calendar_publications p WHERE p.item_id = ci.id) AS publications
   FROM calendar_items ci LEFT JOIN ideas i ON i.id = ci.idea_id`;
 
 function shape(r) {

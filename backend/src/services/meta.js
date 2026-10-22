@@ -99,6 +99,21 @@ export function createMetaClient({ accessToken, accountId, fetchFn = fetch, retr
     createCreative: (spec) => req(`${accountId}/adcreatives`, { method: 'POST', body: spec }),
     createAd: ({ name, adsetId, creativeId, status }) =>
       req(`${accountId}/ads`, { method: 'POST', body: { name, adset_id: adsetId, creative: { creative_id: creativeId }, status } }),
+    // Publicación orgánica en Instagram (necesita instagram_content_publish): se crea el contenedor,
+    // Meta descarga el archivo de la URL, y cuando terminó de procesarlo se publica.
+    createIgContainer: async (igUserId, params) => (await req(`${igUserId}/media`, { method: 'POST', body: params })).id,
+    async waitIgContainer(containerId, { timeoutMs = 10 * 60_000, intervalMs = 5_000 } = {}) {
+      const until = Date.now() + timeoutMs;
+      for (;;) {
+        const { status_code: code, status } = await req(containerId, { params: { fields: 'status_code,status' } });
+        if (code === 'FINISHED' || code === 'PUBLISHED') return;
+        if (code === 'ERROR' || code === 'EXPIRED') throw new Error(`Instagram no pudo procesar el archivo${status ? ` (${status})` : ''}.`);
+        if (Date.now() >= until) throw new Error('Instagram sigue procesando el archivo. Probá publicar de nuevo en unos minutos.');
+        await new Promise((r) => setTimeout(r, intervalMs));
+      }
+    },
+    publishIgContainer: async (igUserId, containerId) => (await req(`${igUserId}/media_publish`, { method: 'POST', body: { creation_id: containerId } })).id,
+    igPermalink: async (mediaId) => (await req(mediaId, { params: { fields: 'permalink' } })).permalink ?? null,
     async searchInterests(query) {
       // La búsqueda de segmentación NO va bajo la cuenta publicitaria
       const json = await req('search', { params: { type: 'adinterest', q: query, limit: '15' } });
