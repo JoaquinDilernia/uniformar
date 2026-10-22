@@ -82,6 +82,7 @@ export function Reports({ canEdit }) {
           <Ranking ads={data.ads} />
           <Adsets adsets={data.adsets.all} />
           <Breakdowns breakdowns={data.breakdowns} />
+          <Organic organic={data.organic} />
           <Actions actions={data.actions} />
         </>
       )}
@@ -260,6 +261,67 @@ function Breakdowns({ breakdowns }) {
       {Array.isArray(rows) && list.length === 0 && <p className="muted">Sin datos en este período.</p>}
       {best && list.length > 1 && <p className={s.highlight}>Más barato: <strong>{best.label}</strong> a {ars(best.costPerConversation)} por conversación.</p>}
       {list.map((r) => <ShareRow key={r.label} label={r.label} item={r} max={maxConv} />)}
+    </section>
+  );
+}
+
+const TYPE_NAME = { reel: 'Reel', post: 'Post', carousel: 'Carrusel' };
+
+function Organic({ organic }) {
+  if (!organic) return null;
+  if (organic.error) {
+    return <section className={s.card}><h2>Orgánico de Instagram</h2><p className="muted">Instagram no respondió: {organic.error}</p></section>;
+  }
+  const { current, previous, byType, top } = organic;
+  const stats = [
+    { label: 'Publicaciones', cur: current.posts, prev: previous.posts },
+    { label: 'Likes', cur: current.likes, prev: previous.likes },
+    { label: 'Comentarios', cur: current.comments, prev: previous.comments },
+    { label: 'Alcance promedio', cur: current.avgReach, prev: previous.avgReach },
+  ];
+  return (
+    <section className={s.card}>
+      <h2>Orgánico de Instagram</h2>
+      {current.posts === 0 && <p className="muted">No se publicó nada en Instagram en este período.</p>}
+      {current.posts > 0 && (
+        <>
+          <div className={s.tiles}>
+            {stats.map((x) => (
+              <div key={x.label} className={s.tile}><span>{x.label}</span><strong>{num(x.cur)}</strong><Delta cur={x.cur} prev={x.prev} /></div>
+            ))}
+          </div>
+          {byType.length > 1 && (
+            <div className={s.stackS}>
+              <h3 className={s.sub}>Por formato</h3>
+              {byType.map((t) => (
+                <div key={t.type} className={`${s.row} ${s.rankRow}`}>
+                  <div className={s.grow}><span>{t.label}</span><small>{t.posts} publicados</small></div>
+                  <div className={s.figures}>
+                    <strong>{num(t.avgEngagement)} interacciones c/u</strong>
+                    <small>{t.avgReach != null ? `alcance prom. ${num(t.avgReach)}` : 'sin dato de alcance'}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className={s.stackS}>
+            <h3 className={s.sub}><ThumbsUp size={16} aria-hidden /> Lo que más conectó</h3>
+            {top.map((p) => (
+              <a key={p.id} href={p.permalink} target="_blank" rel="noreferrer" className={`${s.row} ${s.rankRow} ${s.postLink}`}>
+                {p.thumbnail ? <img src={p.thumbnail} alt="" className={s.thumb} /> : <div className={`${s.thumb} ${s.noThumb}`} />}
+                <div className={s.grow}>
+                  <span className={s.clamp}>{p.caption || '(sin texto)'}</span>
+                  <small>{TYPE_NAME[p.type] ?? p.type} · {shortDate(p.date)}</small>
+                </div>
+                <div className={s.figures}>
+                  <strong>{num(p.likes + p.comments)} interacciones</strong>
+                  <small>{p.reach != null ? `${num(p.reach)} alcance · ${p.engagementRate}%` : `${p.likes} likes · ${p.comments} coment.`}</small>
+                </div>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

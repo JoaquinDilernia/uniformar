@@ -25,6 +25,11 @@ const report = {
     ],
     age: [], gender: [], region: { error: 'no soportado' }, hour: [],
   },
+  organic: {
+    current: { posts: 2, likes: 60, comments: 6, reach: 2200, avgReach: 1100 }, previous: { posts: 1, likes: 5, comments: 0, reach: 300, avgReach: 300 },
+    byType: [{ type: 'reel', label: 'Reels', posts: 2, likes: 60, comments: 6, avgReach: 1100, avgEngagement: 33 }],
+    top: [{ id: 'm1', type: 'reel', caption: 'Equipo de Panadería Maná', thumbnail: null, permalink: 'https://ig/1', date: '2026-10-20', likes: 40, comments: 5, reach: 1500, engagementRate: 3 }],
+  },
   actions: [{
     id: 'd1', title: 'Pausar anuncio caro', tool: 'pause_ad', date: '2026-10-18', byAgent: true, decidedBy: null, scope: 'Toda la cuenta', outcome: 'Bajó el costo',
     before: { days: 7, spend: 14000, conversations: 2, costPerConversation: 7000 }, after: { days: 3, spend: 6000, conversations: 3, costPerConversation: 2000 },
@@ -58,12 +63,14 @@ describe('Reportes', () => {
     expect(await screen.findByText('$3.000')).toBeInTheDocument();
     // el costo bajó: es bueno
     expect(screen.getByText('-60% vs. antes')).toBeInTheDocument();
-    expect(screen.getByText('+100% vs. antes')).toBeInTheDocument();
+    expect(screen.getAllByText('+100% vs. antes').length).toBeGreaterThan(0);
     expect(screen.getByText('Barato')).toBeInTheDocument();
     expect(screen.getByText('Sin nada')).toBeInTheDocument();
     expect(screen.getByText(/Más barato:/)).toHaveTextContent('Instagram · reels a $1.500');
     expect(screen.getByText('Pausar anuncio caro')).toBeInTheDocument();
     expect(screen.getByText('$2.000 c/conv.')).toBeInTheDocument();
+    expect(screen.getByText('Equipo de Panadería Maná').closest('a')).toHaveAttribute('href', 'https://ig/1');
+    expect(screen.getByText('1.500 alcance · 3%')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Pedir lectura al agente' }));
     expect(await screen.findByText('Cómo nos fue')).toBeInTheDocument();

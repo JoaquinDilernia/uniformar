@@ -103,3 +103,6 @@ p.bad { background: none; margin: 0; }
 .window span, .window small { font-size: var(--fs-xs); color: var(--c-text-3); }
 .window strong { font-variant-numeric: tabular-nums; }
 .kind { display: inline-flex; align-items: center; gap: 4px; }
+.postLink { color: inherit; text-decoration: none; }
+.postLink:hover span { text-decoration: underline; }
+.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

@@ -99,7 +99,44 @@ export function decisionImpact(decisions, { accountDays, adsetSeries, adsetNames
   });
 }
 
-export async function buildReport(meta, { since, until }, { decisions = [], now = new Date() } = {}) {
+const TYPE_LABEL = { reel: 'Reels', post: 'Posts', carousel: 'Carruseles' };
+
+function organicTotals(posts) {
+  const withReach = posts.filter((p) => p.reach != null);
+  const sum = (list, k) => list.reduce((a, p) => a + (p[k] ?? 0), 0);
+  return {
+    posts: posts.length, likes: sum(posts, 'likes'), comments: sum(posts, 'comments'),
+    // alcance solo de los que lo tienen (sin instagram_manage_insights viene null)
+    reach: withReach.length ? sum(withReach, 'reach') : null,
+    avgReach: withReach.length ? Math.round(sum(withReach, 'reach') / withReach.length) : null,
+  };
+}
+
+// Orgánico de Instagram del período: posts publicados en esas fechas, comparados con el período anterior
+export function organicSummary(posts, { since, until }, previousRange) {
+  const inRange = (r) => (p) => {
+    const d = artDate(new Date(p.timestamp));
+    return d >= r.since && d <= r.until;
+  };
+  const current = posts.filter(inRange({ since, until }));
+  const engagement = (p) => p.likes + p.comments;
+  const byType = Object.entries(TYPE_LABEL).map(([type, label]) => {
+    const list = current.filter((p) => p.type === type);
+    return { type, label, ...organicTotals(list), avgEngagement: list.length ? Math.round(list.reduce((a, p) => a + engagement(p), 0) / list.length) : null };
+  }).filter((t) => t.posts > 0);
+  return {
+    current: organicTotals(current),
+    previous: organicTotals(posts.filter(inRange(previousRange))),
+    byType,
+    top: [...current].sort((a, b) => engagement(b) - engagement(a) || (b.reach ?? 0) - (a.reach ?? 0)).slice(0, 5).map((p) => ({
+      id: p.id, type: p.type, caption: p.caption.slice(0, 140), thumbnail: p.thumbnail, permalink: p.permalink, date: artDate(new Date(p.timestamp)),
+      likes: p.likes, comments: p.comments, reach: p.reach,
+      engagementRate: p.reach ? Number(((engagement(p) / p.reach) * 100).toFixed(1)) : null,
+    })),
+  };
+}
+
+export async function buildReport(meta, { since, until }, { decisions = [], igUserId, now = new Date() } = {}) {
   const today = artDate(now);
   const days = daysBetween(since, until);
   const prevUntil = addDays(since, -1);
@@ -121,6 +158,15 @@ export async function buildReport(meta, { since, until }, { decisions = [], now 
     meta.getInsights('adset', since, until),
     meta.getAds(),
   ]);
+  // Si Instagram falla (permisos), el resto del reporte sale igual
+  let organic = null;
+  if (igUserId && meta.getIgMedia) {
+    try {
+      organic = organicSummary(await meta.getIgMedia(igUserId, 50), { since, until }, { since: prevSince, until: prevUntil });
+    } catch (err) {
+      organic = { error: String(err.message || err) };
+    }
+  }
   // Un desglose que Meta no da no tira el reporte entero
   const breakdowns = Object.fromEntries(await Promise.all(Object.entries(BREAKDOWNS).map(async ([kind, b]) => {
     try {
@@ -158,5 +204,6 @@ export async function buildReport(meta, { since, until }, { decisions = [], now 
     adsets: { ...rank(adsetItems, cur.costPerConversation), all: adsetItems.sort((a, b) => b.conversations - a.conversations || b.spend - a.spend) },
     breakdowns,
     actions: decisionImpact(executed, { accountDays, adsetSeries, adsetNames, today }),
+    organic,
   };
 }

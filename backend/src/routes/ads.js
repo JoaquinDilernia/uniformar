@@ -74,7 +74,7 @@ export function createAdsRouter({ repo, meta, startRun, execute, config, files, 
     const hit = reportCache.get(key);
     if (!force && hit && Date.now() - hit.at < REPORT_TTL_MS) return hit.data;
     const decisions = await repo.listDecisions({ status: 'executed', limit: 200 });
-    const data = await buildReport(meta, { since, until }, { decisions });
+    const data = await buildReport(meta, { since, until }, { decisions, igUserId: config.igUserId });
     if (reportCache.size > 20) reportCache.clear();
     reportCache.set(key, { at: Date.now(), data });
     return data;

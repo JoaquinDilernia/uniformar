@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestContext } from './helpers/testApp.js';
 import { config, fakeMeta, fakeAnthropic } from './helpers/adsFakes.js';
 import { CONVERSATION, addDays, artDate, daysAgo } from '../src/ads/metrics.js';
-import { buildReport, decisionImpact, groupBreakdown, rank } from '../src/ads/report.js';
+import { buildReport, decisionImpact, groupBreakdown, organicSummary, rank } from '../src/ads/report.js';
 
 const conv = (n) => [{ action_type: CONVERSATION, value: String(n) }];
 
@@ -93,6 +93,25 @@ describe('cálculos del reporte', () => {
     });
   });
 
+  it('resume el orgánico de Instagram del período contra el anterior', () => {
+    const p = (id, type, timestamp, likes, comments, reach) => ({ id, type, caption: `post ${id}`, thumbnail: null, permalink: `https://ig/${id}`, timestamp, likes, comments, reach });
+    const posts = [
+      p('1', 'reel', '2026-10-20T15:00:00+0000', 40, 5, 1500),
+      p('2', 'post', '2026-10-19T15:00:00+0000', 10, 0, null),
+      p('3', 'reel', '2026-10-18T15:00:00+0000', 20, 1, 700),
+      p('4', 'post', '2026-10-10T15:00:00+0000', 5, 0, 300),
+    ];
+    const o = organicSummary(posts, { since: '2026-10-16', until: '2026-10-22' }, { since: '2026-10-09', until: '2026-10-15' });
+    expect(o.current).toEqual({ posts: 3, likes: 70, comments: 6, reach: 2200, avgReach: 1100 });
+    expect(o.previous).toMatchObject({ posts: 1, likes: 5 });
+    expect(o.byType).toEqual([
+      { type: 'reel', label: 'Reels', posts: 2, likes: 60, comments: 6, reach: 2200, avgReach: 1100, avgEngagement: 33 },
+      { type: 'post', label: 'Posts', posts: 1, likes: 10, comments: 0, reach: null, avgReach: null, avgEngagement: 10 },
+    ]);
+    expect(o.top[0]).toMatchObject({ id: '1', date: '2026-10-20', engagementRate: 3 });
+    expect(o.top.map((x) => x.id)).toEqual(['1', '3', '2']);
+  });
+
   it('arma el reporte con el período anterior, el día a día y el ranking', async () => {
     const meta = reportMeta({ failBreakdown: 'region' });
     const since = daysAgo(6);
@@ -110,6 +129,8 @@ describe('cálculos del reporte', () => {
     // un desglose que falla no rompe el resto
     expect(r.breakdowns.region.error).toMatch(/no soportado/);
     expect(r.actions).toEqual([]);
+    // sin igUserId no se consulta Instagram
+    expect(r.organic).toBeNull();
   });
 });
 
@@ -135,6 +156,7 @@ describe('rutas del reporte', () => {
     expect(body.report.actions[0]).toMatchObject({ title: 'Activar conjunto', scope: 'Conjunto Conjunto 1', after: null, byAgent: false });
     expect(body.report.actions[0].before).toMatchObject({ days: 7, conversations: 7 });
     expect(body.analysis).toBeNull();
+    expect(body.report.organic.current.posts).toBe(0);
     expect(body.canAnalyze).toBe(true);
   });
 
