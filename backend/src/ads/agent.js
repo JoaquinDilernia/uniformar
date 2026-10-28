@@ -17,7 +17,7 @@ export function adsConfigFromEnv(env = process.env) {
     igUserId: env.META_IG_USER_ID || '17841446936578488',
     // Cuenta de Instagram "de la página" (page-backed): respaldo si la de @uniform.ar no está autorizada
     pageBackedIgId: env.META_PAGE_BACKED_IG_ID || '17841432527012368',
-    whatsappNumber: env.META_WHATSAPP_NUMBER || '5491130430035',
+    whatsappNumber: env.META_WHATSAPP_NUMBER || '5491173542234',
   };
 }
 
