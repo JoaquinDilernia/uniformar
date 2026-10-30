@@ -2,7 +2,7 @@
 //   node web/build.mjs --site https://www.uniformar.ar            → web/dist/ (index.html + assets + robots + sitemap), lista para subir
 //   node web/build.mjs --site https://x.techdi.com.ar --noindex   → igual, pero sin indexar (demo en un subdominio)
 //   node web/build.mjs --fragment out.html                        → un solo archivo con imágenes embebidas (para publicarlo como Artifact)
-import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,11 +25,11 @@ const noindex = process.argv.includes('--noindex');
 const today = new Date().toISOString().slice(0, 10);
 
 const TITLE = 'Ropa de trabajo y uniformes con tu logo | Uniform.AR';
-const DESC = 'Uniformes y ropa de trabajo personalizada para empresas: camisas de grafa, pantalones cargo, chombas, buzos y camperas con tu logo bordado o estampado. Desde 30 prendas, envío gratis a todo el país.';
+const DESC = 'Uniformes y ropa de trabajo con el logo de tu empresa: remeras, camisas de grafa, buzos polares, chalecos, camperas y pantalones ripstop, con tu logo bordado o estampado. Desde 30 prendas, envío gratis a todo el país.';
 
 // Prendas y preguntas salen del mismo HTML, así el marcado estructurado no se desfasa del contenido.
-const products = [...src.matchAll(/\{id:'(\w+)', art:'(\d+)', name:'([^']+)', type:'([^']+)'.*?fabric:'([^']+)'.*?desc:'([^']+)'/g)]
-  .map(([, id, art, name, type, fabric, desc]) => ({ id, art, name, type, fabric, desc }));
+const products = [...src.matchAll(/\{id:'(\w+)', name:'([^']+)'.*?short:'([^']+)', desc:'([^']+)'.*?f:'([\w-]+)'/g)]
+  .map(([, id, name, short, desc, photo]) => ({ id, name, short, desc, photo }));
 const faqs = [...src.matchAll(/<details[^>]*><summary>([^<]+)<i><\/i><\/summary><p>([^<]+)<\/p><\/details>/g)]
   .map(([, q, a]) => ({ q, a }));
 
@@ -44,7 +44,7 @@ const jsonld = [
     url: `${site}/`,
     logo: `${site}/assets/apple-touch-icon.png`,
     image: `${site}/assets/og.jpg`,
-    telephone: '+54 9 11 3800-5433',
+    telephone: '+54 9 11 7354-2234',
     email: 'uniformarindumentaria@gmail.com',
     address: { '@type': 'PostalAddress', addressLocality: 'Buenos Aires', addressCountry: 'AR' },
     areaServed: { '@type': 'Country', name: 'Argentina' },
@@ -64,16 +64,16 @@ const jsonld = [
   {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Menú de prendas de trabajo',
+    name: 'Catálogo de ropa de trabajo',
     itemListElement: products.map((p, i) => ({
       '@type': 'ListItem',
       position: i + 1,
       item: {
         '@type': 'Product',
-        name: `${p.type} ${p.name}`,
-        sku: `ART-${p.art}`,
-        description: `${p.desc} Tela: ${p.fabric}. Personalizable con bordado o estampado.`,
-        image: `${site}/assets/og.jpg`,
+        name: p.name,
+        sku: p.id,
+        description: `${p.desc} ${p.short}.`,
+        image: `${site}/assets/fotos/${p.photo}.jpg`,
         brand: { '@type': 'Brand', name: 'Uniform.AR' },
         category: 'Ropa de trabajo'
       }
@@ -95,12 +95,12 @@ const head = `<!doctype html>
 <meta name="description" content="${DESC}">
 <meta name="robots" content="${noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'}">
 <link rel="canonical" href="${noindex ? 'https://www.uniformar.ar' : site}/">
-<meta name="theme-color" content="#3a2a31">
+<meta name="theme-color" content="#F7EFD9">
 <meta name="geo.region" content="AR-B">
 <meta name="geo.placename" content="Buenos Aires">
 <link rel="icon" href="assets/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="preload" as="image" href="assets/nosotros.jpg" fetchpriority="high">
+<link rel="preload" as="image" href="assets/fotos/hero.jpg" fetchpriority="high">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_AR">
 <meta property="og:site_name" content="Uniform.AR">
@@ -110,7 +110,7 @@ const head = `<!doctype html>
 <meta property="og:image" content="${site}/assets/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Operario con camisa de grafa con el logo bordado de Uniform.AR">
+<meta property="og:image:alt" content="Operario de Grupo B en la obra con camisa de grafa y el logo de la constructora estampado en la espalda">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Vestí a tu equipo con tu marca | Uniform.AR">
 <meta name="twitter:description" content="${DESC}">
@@ -127,8 +127,9 @@ const styleEnd = body.indexOf('</style>') + '</style>'.length;
 const doc = `${head}${body.slice(0, styleEnd)}\n</head>\n<body>\n${body.slice(styleEnd).trim()}\n</body>\n</html>\n`;
 
 const out = join(here, 'dist');
-rmSync(out, { recursive: true, force: true });
+// Se vacía en lugar de borrarse; si Dropbox tiene tomada una carpeta, se deja y cpSync la pisa.
 mkdirSync(out, { recursive: true });
+for (const f of readdirSync(out)) { try { rmSync(join(out, f), { recursive: true, force: true }); } catch (e) {} }
 writeFileSync(join(out, 'index.html'), doc);
 cpSync(join(here, 'assets'), join(out, 'assets'), { recursive: true });
 writeFileSync(join(out, 'robots.txt'), noindex ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n\nSitemap: ${site}/sitemap.xml\n`);
