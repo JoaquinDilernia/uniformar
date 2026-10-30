@@ -5,7 +5,7 @@ import { toastBus } from '../../state/toastBus.js';
 
 export const adsKeys = {
   overview: ['ads', 'overview'], runs: ['ads', 'runs'], decisions: ['ads', 'decisions'], creatives: ['ads', 'creatives'],
-  requests: ['ads', 'requests'], learnings: ['ads', 'learnings'], questions: ['ads', 'questions'], igPosts: ['ads', 'ig-posts'],
+  requests: ['ads', 'requests'], learnings: ['ads', 'learnings'], questions: ['ads', 'questions'], igPosts: ['ads', 'ig-posts'], chats: ['ads', 'chats'],
 };
 
 function useRefreshAds() {
@@ -169,5 +169,31 @@ export function useAnalyzeReport() {
     mutationFn: ({ since, until }) => api.post('/ads/report/analysis', { since, until }).then((r) => r.analysis),
     meta: { success: 'El agente leyó el período ✓' },
     onSuccess: (analysis, { since, until }) => qc.setQueryData(['ads', 'report', since, until], (old) => (old ? { ...old, analysis } : old)),
+  });
+}
+
+// Consultas al agente: el chat contesta en el mismo pedido (tarda unos segundos)
+export const useChats = () => useQuery({ queryKey: [...adsKeys.chats], queryFn: () => api.get('/ads/chats').then((r) => r.chats) });
+export const useChat = (id) => useQuery({ queryKey: [...adsKeys.chats, id], queryFn: () => api.get(`/ads/chats/${id}`), enabled: !!id });
+
+function useChatMutation(mutationFn) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn,
+    meta: { success: false },
+    onSuccess: (data) => qc.setQueryData([...adsKeys.chats, data.chat.id], data),
+    // Lo que propuso el agente aparece en Recomendaciones; si falló, la consulta quedó guardada igual
+    onSettled: () => qc.invalidateQueries({ queryKey: ['ads'], predicate: (q) => q.queryKey[1] !== 'report' }),
+  });
+}
+export const useStartChat = () => useChatMutation(({ message }) => api.post('/ads/chats', { message }));
+export const useSendChat = () => useChatMutation(({ id, message }) => api.post(`/ads/chats/${id}/messages`, { message }));
+export const useRetryChat = () => useChatMutation(({ id }) => api.post(`/ads/chats/${id}/reply`));
+export function useDeleteChat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.del(`/ads/chats/${id}`),
+    meta: { success: 'Conversación borrada' },
+    onSettled: () => qc.invalidateQueries({ queryKey: adsKeys.chats }),
   });
 }

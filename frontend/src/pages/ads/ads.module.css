@@ -106,3 +106,17 @@ p.bad { background: none; margin: 0; }
 .postLink { color: inherit; text-decoration: none; }
 .postLink:hover span { text-decoration: underline; }
 .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Consultas al agente */
+.composer { display: flex; flex-direction: column; gap: var(--sp-2); }
+.composer button { align-self: flex-end; }
+.chatRow { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: var(--sp-3); border: 1px solid var(--c-border); border-radius: var(--radius-m, 10px); background: none; color: inherit; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.chatRow:hover { background: var(--c-surface-2); }
+.chatRow small { color: var(--c-text-3); font-size: var(--fs-xs); }
+.thread { display: flex; flex-direction: column; gap: var(--sp-3); }
+.bubble { align-self: flex-start; max-width: min(100%, 720px); display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); border-radius: var(--radius-l); background: var(--c-surface-2); overflow-wrap: anywhere; white-space: pre-wrap; }
+.bubble .report { white-space: normal; }
+.bubble small { color: var(--c-text-3); font-size: var(--fs-xs); }
+.mine { align-self: flex-end; background: var(--c-accent-soft); }
+.chatActions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.chatActions .kind { display: inline-flex; align-items: center; gap: 4px; }

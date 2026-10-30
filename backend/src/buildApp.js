@@ -20,6 +20,7 @@ import { createHomeRouter } from './routes/home.js';
 import { createAdsRepo } from './repo/ads.js';
 import { createAdsRouter } from './routes/ads.js';
 import { adsConfigFromEnv, createAgentRunner, createExecutor } from './ads/agent.js';
+import { createAdsChat } from './ads/chat.js';
 import { createReportAnalyst } from './ads/reportAnalysis.js';
 import { createIgPublisher } from './services/igPublisher.js';
 
@@ -44,6 +45,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
     : null;
   const igPublisher = ads.meta && adsConfig.igUserId ? createIgPublisher({ db, meta: ads.meta, files, igUserId: adsConfig.igUserId, publicBaseUrl }) : null;
   const analyzeReport = ads.meta && ads.anthropic ? createReportAnalyst({ anthropic: ads.anthropic, model: ads.model }) : null;
+  const chatReply = ads.meta && ads.anthropic ? createAdsChat({ anthropic: ads.anthropic, meta: ads.meta, repo: adsRepo, model: ads.model, config: adsConfig }) : null;
 
   const api = Router();
   api.use('/auth', createAuthRouter({ usersRepo, secret: jwtSecret, authenticate, loginLimit }));
@@ -57,7 +59,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
   api.use(createCalendarRouter({ db, calendarRepo, files, igPublisher }));
   api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
   api.use(createHomeRouter({ homeRepo: createHomeRepo(db), storage }));
-  api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig, files, analyzeReport }));
+  api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig, files, analyzeReport, chatReply }));
 
   const app = createApp({
     apiRouter: api,

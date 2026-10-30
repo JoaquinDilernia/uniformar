@@ -1,6 +1,6 @@
 import { conflict, notFound } from '../lib/errors.js';
 
-const DECISION_COLS = `d.id, d.run_id, d.tool, d.input, d.title, d.reason, d.expected_impact, d.status, d.result, d.error,
+const DECISION_COLS = `d.id, d.run_id, d.chat_id, d.tool, d.input, d.title, d.reason, d.expected_impact, d.status, d.result, d.error,
   d.outcome, d.created_at, d.decided_at, u.name AS decided_by_name`;
 const QUESTION_SELECT = 'SELECT q.*, u.name AS answered_by_name FROM ad_questions q LEFT JOIN users u ON u.id = q.answered_by';
 
@@ -36,9 +36,9 @@ export function createAdsRepo(db) {
     },
 
     addDecision: (d) => one(
-      `INSERT INTO ad_decisions (run_id, tool, input, title, reason, expected_impact, status, result, error)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [d.runId ?? null, d.tool, d.input ?? {}, d.title ?? '', d.reason ?? '', d.expectedImpact ?? '', d.status, d.result ?? null, d.error ?? null],
+      `INSERT INTO ad_decisions (run_id, chat_id, tool, input, title, reason, expected_impact, status, result, error)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [d.runId ?? null, d.chatId ?? null, d.tool, d.input ?? {}, d.title ?? '', d.reason ?? '', d.expectedImpact ?? '', d.status, d.result ?? null, d.error ?? null],
     ),
     getDecision: (id) => one(`SELECT ${DECISION_COLS} FROM ad_decisions d LEFT JOIN users u ON u.id = d.decided_by WHERE d.id = $1`, [id], 'No existe esa recomendación.'),
     async listDecisions({ status, limit = 50 } = {}) {
@@ -205,6 +205,50 @@ export function createAdsRepo(db) {
     },
     completeIgPromotion: (id, adId) => one('UPDATE ad_ig_promotions SET meta_ad_id = $2 WHERE id = $1 RETURNING *', [id, adId]),
     releaseIgPromotion: (id) => db.query('DELETE FROM ad_ig_promotions WHERE id = $1 AND meta_ad_id IS NULL', [id]),
+    // Consultas del equipo al agente
+    createChat: (title, userId) => one('INSERT INTO ad_chats (title, created_by) VALUES ($1, $2) RETURNING *', [title, userId ?? null]),
+    getChat: (id) => one(
+      'SELECT c.*, u.name AS created_by_name FROM ad_chats c LEFT JOIN users u ON u.id = c.created_by WHERE c.id = $1',
+      [id], 'No existe esa conversación.',
+    ),
+    async listChats(limit = 30) {
+      const { rows } = await db.query(
+        `SELECT c.*, u.name AS created_by_name, (SELECT count(*)::int FROM ad_chat_messages m WHERE m.chat_id = c.id) AS message_count
+         FROM ad_chats c LEFT JOIN users u ON u.id = c.created_by ORDER BY c.updated_at DESC LIMIT $1`,
+        [limit],
+      );
+      return rows;
+    },
+    deleteChat: (id) => one('DELETE FROM ad_chats WHERE id = $1 RETURNING id', [id], 'No existe esa conversación.'),
+    // actions es jsonb: el array va serializado
+    async addChatMessage({ chatId, role, content, actions = [], authorId = null }) {
+      const msg = await one(
+        'INSERT INTO ad_chat_messages (chat_id, role, content, actions, author_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [chatId, role, content, JSON.stringify(actions), authorId],
+      );
+      await db.query('UPDATE ad_chats SET updated_at = now() WHERE id = $1', [chatId]);
+      return msg;
+    },
+    async listChatMessages(chatId) {
+      const { rows } = await db.query(
+        `SELECT m.*, u.name AS author_name FROM ad_chat_messages m LEFT JOIN users u ON u.id = m.author_id
+         WHERE m.chat_id = $1 ORDER BY m.created_at, m.id`,
+        [chatId],
+      );
+      return rows;
+    },
+    // Lo que el equipo escribió en el chat desde que ARRANCÓ la última corrida terminada (igual que las respuestas)
+    async chatSinceLastRun() {
+      const { rows } = await db.query(
+        `SELECT m.content, m.created_at, u.name AS author_name, c.title AS chat
+         FROM ad_chat_messages m JOIN ad_chats c ON c.id = m.chat_id LEFT JOIN users u ON u.id = m.author_id
+         WHERE m.role = 'user'
+           AND m.created_at > coalesce((SELECT max(started_at) FROM ad_runs WHERE status = 'done'), '-infinity'::timestamptz)
+         ORDER BY m.created_at LIMIT 40`,
+      );
+      return rows;
+    },
+
     async listIgPromotions() {
       const { rows } = await db.query('SELECT * FROM ad_ig_promotions WHERE meta_ad_id IS NOT NULL ORDER BY created_at DESC LIMIT 500');
       return rows;

@@ -136,8 +136,8 @@ export function createExecutor({ meta, repo, files, config }) {
 
 // Atiende cada tool_use del modelo durante una corrida
 export function createDispatcher({ meta, repo, execute }) {
-  return async function dispatch(name, input, { runId, settings }) {
-    const base = { runId, tool: name, input, title: input.title ?? '', reason: input.reason ?? '', expectedImpact: input.expected_impact ?? '' };
+  return async function dispatch(name, input, { runId, chatId, settings }) {
+    const base = { runId, chatId, tool: name, input, title: input.title ?? '', reason: input.reason ?? '', expectedImpact: input.expected_impact ?? '' };
     try {
       if (name === 'search_interest') return { results: await meta.searchInterests(input.query) };
       if (name === 'request_creative') {
@@ -189,7 +189,7 @@ async function igPostsForContext({ meta, repo, config }) {
 }
 
 export async function buildContext({ meta, repo, config }) {
-  const [snapshot, settings, unusedCreatives, openRequests, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions, igPosts] = await Promise.all([
+  const [snapshot, settings, unusedCreatives, openRequests, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions, teamChat, igPosts] = await Promise.all([
     buildSnapshot(meta),
     repo.getSettings(),
     repo.listCreatives({ status: 'unused' }),
@@ -200,6 +200,7 @@ export async function buildContext({ meta, repo, config }) {
     repo.executedWithoutOutcome(48),
     repo.listQuestions({ status: 'open', limit: 30 }),
     repo.answeredSinceLastRun(),
+    repo.chatSinceLastRun(),
     igPostsForContext({ meta, repo, config }),
   ]);
   const sections = {
@@ -219,6 +220,7 @@ export async function buildContext({ meta, repo, config }) {
     decisionsToEvaluate: toEvaluate,
     openQuestions: openQuestions.map((q) => ({ id: q.id, question: q.question, created_at: q.created_at })),
     answeredQuestions: answeredQuestions.map((q) => ({ question: q.question, answer: q.answer, answered_by: q.answered_by_name, answered_at: q.answered_at })),
+    teamChat: teamChat.map((m) => ({ said: m.content.slice(0, 600), by: m.author_name, at: m.created_at, chat: m.chat })),
   };
   return Object.entries(sections).map(([k, v]) => `## ${k}\n${JSON.stringify(v)}`).join('\n\n');
 }

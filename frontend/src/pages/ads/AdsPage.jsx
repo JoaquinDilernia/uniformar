@@ -21,6 +21,7 @@ import { ars, when } from './format.js';
 import { ALLOW_MIXED_MEDIA, MEDIA_ACCEPT, mediaKind } from './media.js';
 import { countAds, filterTree } from './statusView.js';
 import { AgentQuestions } from './Questions.jsx';
+import { Chat } from './Chat.jsx';
 import { IgPosts } from './IgPosts.jsx';
 import { ReportText } from './ReportText.jsx';
 import { Reports } from './Reports.jsx';
@@ -62,6 +63,7 @@ export function AdsPage() {
       <div className={s.page}>
         <Segmented label="Sección" value={tab} onChange={setTab} options={[
           { value: 'summary', label: `Resumen${data?.openQuestions ? ` (${data.openQuestions})` : ''}` },
+          { value: 'chat', label: 'Consultas' },
           { value: 'reports', label: 'Reportes' },
           { value: 'reco', label: `Recomendaciones${data?.pendingCount ? ` (${data.pendingCount})` : ''}` },
           { value: 'creatives', label: 'Anuncios' },
@@ -76,6 +78,9 @@ export function AdsPage() {
         )}
         {data?.metaError && <div className={s.alert}><AlertTriangle size={18} aria-hidden /> Meta no respondió: {data.metaError}</div>}
         {data && tab === 'summary' && <Summary data={data} canEdit={canEdit} onRefresh={() => refreshMeta.mutate()} refreshing={refreshMeta.isPending} />}
+        {data && tab === 'chat' && (data.configured.agent
+          ? <Chat canEdit={canEdit} onGoToRecommendations={() => setTab('reco')} />
+          : <p className="muted">Las consultas necesitan a Meta y a Claude conectados en el servidor.</p>)}
         {data && tab === 'reports' && data.configured.meta && <Reports canEdit={canEdit} />}
         {data && tab === 'reco' &&<Recommendations canEdit={canEdit} />}
         {data && tab === 'creatives' && <Creatives snapshot={data.snapshot} canEdit={canEdit} />}
@@ -236,7 +241,7 @@ function Recommendations({ canEdit }) {
         {!decisions.isLoading && pending.length === 0 && <p className="muted">No hay recomendaciones pendientes.</p>}
         {pending.map((d) => (
           <article key={d.id} className={s.reco}>
-            <div className={s.recoHead}><span className={s.kind}>{TOOL_LABEL[d.tool] ?? d.tool}</span><small>{when(d.created_at)}</small></div>
+            <div className={s.recoHead}><span className={s.kind}>{TOOL_LABEL[d.tool] ?? d.tool}</span><small>{d.chat_id ? 'Desde Consultas · ' : ''}{when(d.created_at)}</small></div>
             <h3>{d.title || TOOL_LABEL[d.tool]}</h3>
             {d.tool === 'promote_ig_post' && (() => {
               const post = igPosts.data?.find((p) => p.id === d.input.ig_media_id);
