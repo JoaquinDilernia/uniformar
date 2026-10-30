@@ -19,6 +19,7 @@ import {
 } from './api.js';
 import { ars, when } from './format.js';
 import { ALLOW_MIXED_MEDIA, MEDIA_ACCEPT, mediaKind } from './media.js';
+import { countAds, filterTree } from './statusView.js';
 import { AgentQuestions } from './Questions.jsx';
 import { IgPosts } from './IgPosts.jsx';
 import { ReportText } from './ReportText.jsx';
@@ -116,19 +117,31 @@ function Summary({ data, canEdit, onRefresh, refreshing }) {
 
       <AgentQuestions canEdit={canEdit} />
 
-      {snap && (
-        <section className={s.card}>
-          <div className={s.cardHead}>
-            <h2>Campañas</h2>
-            <Button variant="ghost" size="sm" icon={RefreshCw} loading={refreshing} onClick={onRefresh}>Actualizar</Button>
-          </div>
-          {snap.campaigns.length === 0 && <p className="muted">No hay campañas en la cuenta.</p>}
-          {snap.campaigns.map((c) => (
-            <Campaign key={c.id} c={c} snap={snap} canEdit={canEdit} />
-          ))}
-        </section>
-      )}
+      {snap && <Campaigns snap={snap} canEdit={canEdit} onRefresh={onRefresh} refreshing={refreshing} />}
     </div>
+  );
+}
+
+const EMPTY_VIEW = { active: 'No hay nada corriendo.', paused: 'No hay nada pausado.', all: 'No hay campañas en la cuenta.' };
+
+function Campaigns({ snap, canEdit, onRefresh, refreshing }) {
+  const [view, setView] = usePersistentState('ads-status-view', 'active');
+  const tree = filterTree(snap, view);
+  const n = countAds(snap);
+  return (
+    <section className={s.card}>
+      <div className={s.cardHead}>
+        <h2>Campañas</h2>
+        <Button variant="ghost" size="sm" icon={RefreshCw} loading={refreshing} onClick={onRefresh}>Actualizar</Button>
+      </div>
+      <Segmented label="Mostrar" value={view} onChange={setView} options={[
+        { value: 'active', label: `Activos (${n.active})` },
+        { value: 'paused', label: `Pausados (${n.paused})` },
+        { value: 'all', label: 'Todos' },
+      ]} />
+      {tree.length === 0 && <p className="muted">{EMPTY_VIEW[view]}</p>}
+      {tree.map((c) => <Campaign key={c.id} c={c} canEdit={canEdit} />)}
+    </section>
   );
 }
 
@@ -150,8 +163,8 @@ function StatusToggle({ level, obj, canEdit }) {
   );
 }
 
-function Campaign({ c, snap, canEdit }) {
-  const adsets = snap.adsets.filter((a) => a.campaignId === c.id);
+function Campaign({ c, canEdit }) {
+  const { adsets } = c;
   return (
     <div className={s.campaign}>
       <div className={s.row}>
@@ -163,7 +176,7 @@ function Campaign({ c, snap, canEdit }) {
         <StatusToggle level="campaign" obj={c} canEdit={canEdit} />
       </div>
       {adsets.map((a) => {
-        const ads = snap.ads.filter((ad) => ad.adsetId === a.id);
+        const { ads } = a;
         return (
           <div key={a.id} className={s.adset}>
             <div className={s.row}>
@@ -177,7 +190,7 @@ function Campaign({ c, snap, canEdit }) {
               <Badge status={a.effectiveStatus} />
               <StatusToggle level="adset" obj={a} canEdit={canEdit} />
             </div>
-            {ads.length === 0 && <p className={s.warnLine}>Sin anuncios: cargá una pieza en “Anuncios” y publicala acá.</p>}
+            {a.empty && <p className={s.warnLine}>Sin anuncios: cargá una pieza en “Anuncios” y publicala acá.</p>}
             {ads.map((ad) => (
               <div key={ad.id} className={`${s.row} ${s.ad}`}>
                 {ad.thumbnail && <img src={ad.thumbnail} alt="" className={s.thumb} />}
