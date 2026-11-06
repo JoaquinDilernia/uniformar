@@ -132,14 +132,15 @@ header.solid .nav .btn{background:var(--ink);color:#fff;border-color:var(--ink)}
 .b-media .cap{position:absolute;left:18px;bottom:18px;background:rgba(255,255,255,.92);border-radius:999px;padding:9px 15px;font-size:14px;font-weight:600}
 .b-stat{background:var(--accent-soft)}
 .b-stat strong{font-size:clamp(64px,7vw,110px);font-weight:900;letter-spacing:-.05em;line-height:.85}
-#svcb{grid-template-areas:"a a a a a a a b b b b b" "c c c c c c c b b b b b" "d d d d e e e e f f f f"}
-.s1{grid-area:a}.s2{grid-area:b}.s3{grid-area:c}.s4{grid-area:d}.s5{grid-area:e}.s6{grid-area:f}
-.s4,.s5{min-height:240px}
+#svcb{grid-template-areas:"a a a a a a a b b b b b" "c c c c c c c b b b b b" "d d d d d f f f f f f f"}
+.s1{grid-area:a}.s2{grid-area:b}.s3{grid-area:c}.s4{grid-area:d}.s6{grid-area:f}
+/* 30+: el número y el texto juntos, sin aire de más */
+.s4{min-height:0;flex-direction:row;align-items:center;justify-content:flex-start;gap:22px}
+.s4 p{max-width:220px}
 .s6{justify-content:flex-start;gap:14px;min-height:0}
 .s1,.s3{min-height:0;justify-content:flex-start;gap:18px;padding:32px 34px}
 .s1 h3,.s3 h3{font-size:clamp(32px,3.6vw,52px)}
-@media(max-width:900px){#svcb{grid-template-columns:1fr 1fr;grid-template-areas:"a a" "b b" "c c" "d e" "f f"}.s2{min-height:480px}}
-@media(max-width:560px){#svcb{grid-template-areas:"a a" "b b" "c c" "d d" "e e" "f f"}}
+@media(max-width:900px){#svcb{grid-template-columns:1fr 1fr;grid-template-areas:"a a" "b b" "c c" "d d" "f f"}.s2{min-height:480px}}
 
 /* RUBROS */
 .rub-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:44px}
@@ -148,6 +149,8 @@ header.solid .nav .btn{background:var(--ink);color:#fff;border-color:var(--ink)}
 .rub{flex:none;width:clamp(270px,26vw,360px);aspect-ratio:9/14;border-radius:var(--r);overflow:hidden;position:relative;color:#fff;scroll-snap-align:start;text-decoration:none}
 .rub img,.rub video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s}
 .rub:hover img,.rub:hover video{transform:scale(1.05)}
+/* Videos con subtítulos quemados abajo: se encuadra desde arriba y los subtítulos quedan fuera de la tarjeta */
+.rub.top video{height:170%;bottom:auto;object-position:50% 0;transform-origin:50% 0}
 .rub::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,17,19,0) 45%,rgba(20,17,19,.85) 100%)}
 .rub .tx{position:absolute;left:24px;right:24px;bottom:24px;z-index:2}
 .rub h3{font-size:34px}
@@ -332,7 +335,6 @@ html.has-intro{--intro-d:1.65s}
       <div class="b b-media s2 rv"><video style="object-position:50% 15%" autoplay muted loop playsinline poster="assets/video/costura.jpg"><source src="assets/video/costura.mp4" type="video/mp4"></video><span class="cap">Bordamos tu logo</span></div>
       <div class="b b-white s3 rv"><span class="num">02</span><div><h3>Nos amoldamos a lo que tenés</h3><p style="margin-top:14px">¿Ya tenés uniforme? Respetamos tu línea, mismo estilo y colores, y te mejoramos el precio.</p></div></div>
       <div class="b b-stat s4 rv"><strong>30+</strong><p>prendas mínimo, combinando modelos y talles.</p></div>
-      <div class="b b-media s5 rv"><img src="assets/fotos/camisa-logo.jpg" alt="Operario de Grupo B con remera con logo en obra" loading="lazy"><span class="cap">Grupo B · Obra</span></div>
       <div class="b b-accent s6 rv"><h3>Te acompañamos siempre</h3><p>Reposición cada vez que se suma gente. ¿No está lo que tenés en mente? Lo hacemos igual.</p></div>
     </div>
   </div>
@@ -360,8 +362,7 @@ html.has-intro{--intro-d:1.65s}
       <div class="reel"><video autoplay muted loop playsinline preload="metadata" poster="assets/video/parmegiano.jpg"><source src="assets/video/parmegiano.mp4" type="video/mp4"></video><span class="cap">El Parmegiano</span></div>
       <div class="reel"><video autoplay muted loop playsinline preload="metadata" poster="assets/video/mega.jpg"><source src="assets/video/mega.mp4" type="video/mp4"></video><span class="cap">Mega</span></div>
       <div class="reel"><img src="assets/fotos/fontana.jpg" alt="Equipo de Fontana con remeras con logo" loading="lazy" style="width:100%;height:100%;object-fit:cover"><span class="cap">Fontana · Gastronomía</span></div>
-      <div class="reel"><video autoplay muted loop playsinline preload="metadata" poster="assets/video/gorras.jpg"><source src="assets/video/gorras.mp4" type="video/mp4"></video><span class="cap">Gorras con tu logo</span></div>
-      <div class="reel"><video autoplay muted loop playsinline preload="metadata" poster="assets/video/ripstop.jpg"><source src="assets/video/ripstop.mp4" type="video/mp4"></video><span class="cap">Tela anti desgarro</span></div>
+      <div class="reel"><img src="assets/fotos/camisa-logo.jpg" alt="Operario de Grupo B con remera con logo en obra" loading="lazy" style="width:100%;height:100%;object-fit:cover"><span class="cap">Grupo B · Obra</span></div>
     </div>
 </section>
 
@@ -464,7 +465,7 @@ const RACK = [
 ];
 
 const CLIENTES = [
-  ['parme','El Parmegiano'],['weber','Weber'],['sanantonio','San Antonio'],['moreno','Moreno Materiales'],
+  ['parme','El Parmegiano'],['pisos','Pisos Alemanes'],['weber','Weber'],['sanantonio','San Antonio'],['moreno','Moreno Materiales'],
   ['ctibor','Ctibor'],['tubofusion','Tubofusión'],['elmana','El Maná'],['aberturas','Del Pilar Aberturas'],
   ['deco','Decoglass'],['growing','Growing']
 ];
@@ -475,7 +476,9 @@ const RUBROS_CARDS = [
   ['Gastronomía','video','assets/video/gastronomia',['Chaqueta','Delantal','Gorro']],
   ['Industria y campo','video','assets/video/camisas',['Camisa de trabajo','Pantalón cargo','Mameluco']],
   ['Oficina y comercio','video','assets/video/polares',['Buzo polar','Chaleco','Remera']],
-  ['Obra y seguridad','foto','assets/fotos/obra-chaleco.jpg',['Chaleco polar','Campera','Calzado']]
+  ['Obra y seguridad','foto','assets/fotos/obra-chaleco.jpg',['Chaleco polar','Campera','Calzado']],
+  ['Gorras con tu logo','video','assets/video/gorras',['Gorra trucker','Gorra vintage','Gorro de lana']],
+  ['Tela anti desgarro','video','assets/video/ripstop',['Pantalón cargo','Camisa de trabajo','Campera'],'top']
 ];
 
 const RUBROS = ['Todo','Construcción','Gastronomía','Industria','Comercio','Oficina','Salud','Seguridad','Campo','Ignífugo','Accesorios'];
@@ -524,10 +527,10 @@ document.getElementById('rack').insertAdjacentHTML('beforeend', RACK.map(([f,n,w
 const logos = CLIENTES.map(([f,n])=>`<div class="logo-c"><img src="../assets/clientes/${f}.png" alt="${n}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${n}'.toUpperCase()}))"></div>`).join('');
 document.getElementById('marquee').innerHTML = logos + logos;
 
-document.getElementById('rubs').innerHTML = RUBROS_CARDS.map(([n,t,src,ps])=>{
+document.getElementById('rubs').innerHTML = RUBROS_CARDS.map(([n,t,src,ps,crop])=>{
   const media = t==='video' ? `<video autoplay muted loop playsinline poster="${src}.jpg"><source src="${src}.mp4" type="video/mp4"></video>`
               : `<img src="${src}" alt="${n}" loading="lazy">`;
-  return `<a class="rub ${t==='prenda'?'prod':''}" href="#catalogo" data-r="${n}">${media}<div class="tx"><h3>${n}</h3><ul>${ps.map(p=>`<li>${p}</li>`).join('')}</ul></div></a>`;
+  return `<a class="rub ${t==='prenda'?'prod':''} ${crop||''}" href="#catalogo" data-r="${n}">${media}<div class="tx"><h3>${n}</h3><ul>${ps.map(p=>`<li>${p}</li>`).join('')}</ul></div></a>`;
 }).join('');
 const rubs = document.getElementById('rubs');
 document.querySelectorAll('.ctrls button').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.t||'rubs').scrollBy({left:+b.dataset.dir*320,behavior:'smooth'})));
