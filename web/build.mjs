@@ -132,6 +132,10 @@ mkdirSync(out, { recursive: true });
 for (const f of readdirSync(out)) { try { rmSync(join(out, f), { recursive: true, force: true }); } catch (e) {} }
 writeFileSync(join(out, 'index.html'), doc);
 cpSync(join(here, 'assets'), join(out, 'assets'), { recursive: true });
+// Versiones en revisión (v2, v3…): se copian tal cual, sin sus notas internas (.md). Usan ../assets.
+for (const v of readdirSync(here).filter(d => /^v\d+$/.test(d))) {
+  cpSync(join(here, v), join(out, v), { recursive: true, filter: p => !p.endsWith('.md') });
+}
 writeFileSync(join(out, 'robots.txt'), noindex ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n\nSitemap: ${site}/sitemap.xml\n`);
 writeFileSync(join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${site}/</loc><lastmod>${today}</lastmod><changefreq>monthly</changefreq><priority>1.0</priority></url>\n</urlset>\n`);
 writeFileSync(join(out, '.htaccess'), `DirectoryIndex index.html
