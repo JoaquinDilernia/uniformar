@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ropa de trabajo y uniformes con tu logo | Uniform.AR</title>
+<meta name="description" content="Ropa de trabajo con el logo de tu empresa, bordado o estampado. Desde 30 prendas, con envío gratis a todo el país.">
+<!-- v2 en revisión: no se indexa hasta que reemplace a la web actual. -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://www.uniformar.ar/">
+<meta name="theme-color" content="#faf8f3">
+<link rel="icon" href="../assets/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="preload" as="image" href="../assets/video/portada.jpg" fetchpriority="high">
+<script>/* La intro bordada va solo en la primera visita de la sesión y nunca con movimiento reducido. */try{if(!sessionStorage.getItem('ua_intro')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('has-intro')}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap">
+<style>
+/* v2 minimalista: una tipografía, mucho aire, líneas finas, el bordó solo como acento. Las fotos reales hacen el trabajo. */
+:root{
+  --bg:#faf8f3; --surface:#ffffff; --tint:#f2eee6;
+  --ink:#141113; --muted:#6a6266; --faint:#9a9195; --line:rgba(20,17,19,.1); --line-2:rgba(20,17,19,.18);
+  --accent:#765E6E; --accent-ink:#5b4555; --accent-soft:#eee7ea;
+  --ok:#2f7a55; --err:#b23a3c;
+  --f:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --gut:clamp(16px,4vw,40px); --header-h:64px; --r:14px;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:calc(var(--header-h) + 12px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{display:block;max-width:100%}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+[hidden]{display:none!important}
+.wrap{max-width:1200px;margin-inline:auto;padding-inline:var(--gut)}
+
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.03em;line-height:1.05;text-wrap:balance}
+h1{font-size:clamp(2.6rem,6vw,4.8rem);letter-spacing:-.045em;line-height:.98}
+h2{font-size:clamp(1.9rem,3.6vw,2.9rem)}
+h3{font-size:1.05rem;letter-spacing:-.01em;line-height:1.3}
+p{margin:0}
+.label{font-size:.8rem;font-weight:500;color:var(--muted);letter-spacing:.01em}
+.muted{color:var(--muted)}
+.note{font-size:.86rem;color:var(--muted)}
+.sec{padding-block:clamp(72px,10vw,128px)}
+.sec + .sec{border-top:1px solid var(--line)}
+.head{display:flex;justify-content:space-between;align-items:end;gap:16px 40px;flex-wrap:wrap;margin-bottom:clamp(28px,4vw,48px)}
+.head p{max-width:42ch;color:var(--muted)}
+
+/* Botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;min-height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--ink);background:var(--ink);color:#fff;font-weight:500;font-size:.95rem;text-decoration:none;transition:background .2s,border-color .2s,color .2s,transform .15s}
+.btn:hover{background:#2b2629;border-color:#2b2629}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-2)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn.sm{min-height:38px;padding:0 15px;font-size:.88rem}
+.btn svg{width:16px;height:16px;flex:none}
+.link{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;color:var(--ink);font-weight:500;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px;transition:text-decoration-color .2s}
+.link:hover{text-decoration-color:var(--ink)}
+.chip{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:transparent;font-size:.88rem;transition:all .15s}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Header */
+.site-header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .2s}
+.site-header.scrolled{border-bottom-color:var(--line)}
+.site-header .wrap{display:flex;align-items:center;gap:28px;height:var(--header-h)}
+.brand{display:flex;align-items:center;gap:9px;color:var(--ink);text-decoration:none;flex:none}
+.brand i{display:block;background:currentColor;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+.brand .mk{--m:url("../assets/mark.png");width:26px;height:28px}
+.brand .wm{--m:url("../assets/word.png");width:112px;height:22px}
+.nav{display:flex;gap:22px;margin-left:auto}
+.nav a{text-decoration:none;font-size:.9rem;color:var(--muted);transition:color .15s;white-space:nowrap}
+.nav a:hover{color:var(--ink)}
+.site-header .btn{min-height:38px;padding:0 16px;font-size:.88rem;white-space:nowrap}
+.site-header .btn .short{display:none}
+.menu-btn{display:none;flex:none;width:40px;height:40px;border:1px solid var(--line-2);border-radius:10px;background:none;color:var(--ink);place-items:center;padding:0}
+.menu-btn svg{width:18px;height:18px}
+.menu-btn .i-x{display:none}
+.menu-btn[aria-expanded="true"] .i-x{display:block}
+.menu-btn[aria-expanded="true"] .i-bars{display:none}
+/* Con 6 accesos no entra todo en una línea: debajo de 1180px el menú se abre con un botón. */
+@media (max-width:1180px){
+  .menu-btn{display:grid}
+  .site-header .wrap{gap:12px}
+  .site-header .btn{margin-left:auto}
+  .nav{position:absolute;top:var(--header-h);left:0;right:0;display:none;flex-direction:column;gap:0;margin:0;padding:4px var(--gut) 16px;background:var(--bg);border-bottom:1px solid var(--line);box-shadow:0 18px 30px -24px rgba(20,17,19,.35)}
+  .nav.open{display:flex}
+  .nav a{padding:14px 0;font-size:1.02rem;color:var(--ink);border-bottom:1px solid var(--line)}
+  .nav a:last-child{border-bottom:0}
+}
+@media (max-width:420px){.site-header .btn .long{display:none}.site-header .btn .short{display:inline}}
+
+/* Hero */
+/* Video a pantalla completa con el texto encima, abajo a la izquierda. Un degradé oscuro desde abajo y desde la izquierda
+   asegura que el texto blanco se lea sobre cualquier cuadro del video. En celular el recorte deja ver el video del medio. */
+.hero{position:relative;isolation:isolate;overflow:hidden;min-height:calc(100svh - var(--header-h));display:grid;align-items:end;color:#fff;padding-block:clamp(40px,8vw,96px) clamp(36px,6vw,72px)}
+.hero>.wrap{width:100%}
+.hero-photo{position:absolute;inset:0;margin:0;z-index:-1;background:#141113}
+.hero-photo .ph{position:absolute;inset:0}
+.hero-photo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to top,rgba(14,11,13,.86) 0%,rgba(14,11,13,.5) 38%,rgba(14,11,13,.08) 72%),linear-gradient(to right,rgba(14,11,13,.5),rgba(14,11,13,0) 62%)}
+.hero-photo img,.hero-photo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* El video entra encima de la foto recién cuando ya se está reproduciendo: si no hay video, queda la foto. */
+.hero-photo video{opacity:0;transition:opacity .8s var(--ease)}
+.hero-photo video.on{opacity:1}
+.hero-copy{display:grid;gap:22px;justify-items:start;max-width:700px}
+.hero .label{color:rgba(255,255,255,.78)}
+.hero h1{color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.25)}
+.hero h1 em{font-style:normal;color:#e3c6d6}
+.hero-lede{font-size:clamp(1.05rem,1.5vw,1.22rem);color:rgba(255,255,255,.86);max-width:40ch}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.hero .btn{background:#fff;border-color:#fff;color:var(--ink)}
+.hero .btn:hover{background:#ece8e4;border-color:#ece8e4}
+.hero .btn.ghost{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.55);color:#fff;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hero .btn.ghost:hover{background:rgba(255,255,255,.16);border-color:#fff}
+.facts{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:.88rem;color:rgba(255,255,255,.8);padding:0;margin:4px 0 0;list-style:none}
+.facts li{display:flex;align-items:center;gap:8px}
+.facts li::before{content:"";width:5px;height:5px;border-radius:50%;background:#e3c6d6}
+.vid-toggle{position:absolute;z-index:1;right:max(16px,var(--gut));top:16px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(20,17,19,.55);color:#fff;display:grid;place-items:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .3s}
+.vid-toggle.on{opacity:1}
+.vid-toggle svg{width:14px;height:14px}
+
+/* Clientes: cinta que corre sola, así entran todos los logos sin apretarse. */
+.clients{padding-bottom:clamp(48px,6vw,80px)}
+.clients .wrap{display:grid;gap:18px}
+.marquee{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.marquee{padding-block:clamp(18px,2.4vw,28px);border-block:1px solid var(--line)}
+.logos{--gap:clamp(44px,5.5vw,84px);--k:1;display:flex;width:max-content;animation:marquee var(--dur,40s) linear infinite;will-change:transform}
+.logos .set{display:flex;align-items:center;gap:var(--gap);padding-right:var(--gap);flex:none}
+.marquee:hover .logos{animation-play-state:paused}
+@keyframes marquee{to{transform:translate3d(-50%,0,0)}}
+.logos img{height:calc(var(--h,40) * var(--k) * 1px);width:auto;flex:none;filter:grayscale(1) contrast(1.15);opacity:.62;mix-blend-mode:multiply;transition:opacity .25s,filter .25s}
+.logos img:hover{opacity:1;filter:none}
+@media (max-width:700px){.logos{--k:.78}}
+@media (prefers-reduced-motion:reduce){.marquee{-webkit-mask:none;mask:none}.logos{animation:none;width:auto}.logos .set{flex-wrap:wrap;justify-content:center;gap:20px 36px;padding:0}.logos .set[aria-hidden],.logos .set img[aria-hidden]{display:none}}
+
+/* Catálogo */
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(24px,3vw,36px) clamp(14px,2vw,24px)}
+@media (max-width:980px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.card{display:grid;gap:12px;align-content:start;text-align:left;border:0;background:none;padding:0;color:inherit}
+.show-all{display:flex;justify-content:center;margin-top:clamp(28px,4vw,44px)}
+.card .ph{position:relative;aspect-ratio:3/4;border-radius:var(--r);overflow:hidden;background:var(--tint)}
+.card .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .5s var(--ease),transform .8s var(--ease)}
+.card .ph .b{opacity:0}
+@media (hover:hover){.card:hover .ph .b{opacity:1}.card:hover .ph img{transform:scale(1.03)}}
+.card .meta{display:grid;gap:2px}
+.card .meta>span{font-size:.86rem;color:var(--muted)}
+.card .meta>.name{font-size:1.05rem;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
+.dots{display:flex;gap:5px;margin-top:6px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+.more{margin-top:clamp(40px,5vw,56px);padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:16px 32px;flex-wrap:wrap}
+.more p{max-width:62ch;color:var(--muted)}
+.more b{color:var(--ink);font-weight:500}
+
+/* Boceto con tu logo: lo arma una persona y se manda por WhatsApp. */
+.mock{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(28px,6vw,96px);align-items:center}
+@media (max-width:860px){.mock{grid-template-columns:1fr}}
+.mock-copy{display:grid;gap:clamp(22px,3vw,32px);align-content:start}
+.mock-copy h2{max-width:16ch}
+.mock-copy>p{max-width:46ch;color:var(--muted)}
+.mock-steps{list-style:none;margin:0;padding:0;display:grid;border-top:1px solid var(--line)}
+.mock-steps li{display:grid;grid-template-columns:36px 1fr;gap:4px 14px;padding:16px 0;border-bottom:1px solid var(--line)}
+.mock-steps li>span{grid-row:span 2;font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem;padding-top:2px}
+.mock-steps b{font-weight:500}
+.mock-steps p{color:var(--muted);font-size:.95rem}
+.mock-actions{display:flex;flex-wrap:wrap;gap:12px}
+.mock-photo{position:relative;margin:0;border-radius:var(--r);overflow:hidden;background:var(--tint);aspect-ratio:4/5}
+.mock-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.mock-tag{position:absolute;left:16px;bottom:16px;right:16px;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);font-size:.92rem;box-shadow:0 8px 30px rgba(20,17,19,.12)}
+.mock-tag svg{width:20px;height:20px;flex:none;color:#1faa59}
+.mock-tag b{font-weight:500}
+@media (max-width:860px){.mock-photo{max-width:520px;width:100%;justify-self:center}}
+
+.controls{display:grid;gap:26px}
+.ctl{display:grid;gap:10px}
+.ctl>.label{display:flex;justify-content:space-between;gap:8px}
+.field{width:100%;min-height:46px;padding:0 14px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);font-size:1rem;transition:border-color .15s}
+.field:focus{outline:none;border-color:var(--ink)}
+textarea.field{min-height:92px;padding:12px 14px;resize:vertical}
+select.field{appearance:none;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236a6266' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 12px center/16px no-repeat;padding-right:36px}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.sw{width:28px;height:28px;border-radius:50%;border:0;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.14);position:relative}
+.sw[aria-pressed="true"]::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--ink)}
+
+/* Trabajos */
+.works{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(14px,2vw,24px)}
+@media (max-width:900px){.works{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.work{margin:0;display:grid;gap:10px}
+.work .ph{position:relative;aspect-ratio:3/4;border-radius:var(--r);overflow:hidden;background:var(--tint)}
+/* Hasta 2 fotos o videos por trabajo: se alternan solos mientras están en pantalla (y al pasar el mouse). */
+.work .ph>img,.work .ph>video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .7s var(--ease)}
+.work .ph>.b{opacity:0}
+.work.alt .ph>.b{opacity:1}
+.work-dots{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:6px;pointer-events:none}
+.work-dots i{width:6px;height:6px;border-radius:50%;background:#fff;opacity:.5;transition:opacity .3s}
+.work:not(.alt) .work-dots i:first-child,.work.alt .work-dots i:last-child{opacity:1}
+.work-play{position:absolute;right:10px;top:10px;width:26px;height:26px;border-radius:50%;background:rgba(20,17,19,.55);color:#fff;display:grid;place-items:center;pointer-events:none}
+.work-play svg{width:10px;height:10px}
+.work figcaption{display:grid;gap:0}
+.work figcaption span{font-size:.86rem;color:var(--muted)}
+
+/* Catálogo: tarjeta de prenda a pedido */
+.card.ask{text-decoration:none}
+.card.ask .ph{display:grid;align-content:space-between;padding:20px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.card.ask .ph b{font-size:1.15rem;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+.card.ask .ph small{font-size:.86rem;color:var(--muted);line-height:1.45}
+.card.ask .ph em{font-style:normal;font-size:.75rem;color:var(--accent);font-weight:500}
+.cat-chips{margin-bottom:clamp(28px,4vw,44px)}
+
+/* Franquicias */
+.red{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(28px,6vw,88px);align-items:start}
+@media (max-width:860px){.red{grid-template-columns:1fr}}
+.red-copy{display:grid;gap:20px;justify-items:start}
+.red-copy p{color:var(--muted);max-width:40ch}
+.red-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 32px;list-style:none;margin:0;padding:0}
+@media (max-width:520px){.red-list{grid-template-columns:1fr}}
+.red-list li{display:grid;gap:6px;padding-top:18px;border-top:1px solid var(--line-2)}
+.red-list p{color:var(--muted);font-size:.95rem}
+
+/* Pasos */
+.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(20px,4vw,56px);list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{display:grid;gap:8px;align-content:start;padding-top:20px;border-top:1px solid var(--line-2);counter-increment:s}
+.steps li::before{content:counter(s,decimal-leading-zero);font-size:.82rem;color:var(--accent);font-weight:500;font-variant-numeric:tabular-nums}
+.steps p{color:var(--muted);font-size:.95rem}
+@media (max-width:980px){.steps{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:32px}}
+@media (max-width:640px){.steps{grid-template-columns:1fr}}
+
+/* Preguntas */
+.faq{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(24px,5vw,72px);align-items:start}
+@media (max-width:860px){.faq{grid-template-columns:1fr}}
+.faq .head{margin:0;display:grid;gap:16px}
+.qa{border-top:1px solid var(--line-2)}
+.qa details{border-bottom:1px solid var(--line-2)}
+.qa summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-weight:500;font-size:1.05rem}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{content:"";width:12px;height:12px;flex:none;background:linear-gradient(currentColor,currentColor) center/12px 1.5px no-repeat,linear-gradient(currentColor,currentColor) center/1.5px 12px no-repeat;transition:transform .25s var(--ease)}
+.qa details[open] summary::after{transform:rotate(45deg)}
+.qa .a{padding:0 0 22px;color:var(--muted);max-width:60ch;display:grid;gap:14px}
+.talles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:560px){.talles{grid-template-columns:1fr}}
+.talles table{border-collapse:collapse;width:100%;font-size:.85rem;font-variant-numeric:tabular-nums}
+.talles caption{text-align:left;font-weight:500;color:var(--ink);padding-bottom:6px}
+.talles th,.talles td{padding:5px 0;text-align:left;border-bottom:1px solid var(--line)}
+.talles th{font-weight:400;color:var(--faint)}
+
+/* Pedido */
+.order{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,5vw,72px);align-items:start}
+@media (max-width:860px){.order{grid-template-columns:1fr}}
+.panel{display:grid;gap:22px;align-content:start}
+.meter{display:grid;gap:10px}
+.meter-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:.9rem;color:var(--muted)}
+.meter-row b{font-size:1.8rem;font-weight:600;color:var(--ink);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.meter-bar{height:3px;border-radius:3px;background:var(--line);overflow:hidden}
+.meter-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .5s var(--ease)}
+.meter-bar.ok i{background:var(--ok)}
+.line{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.line img{width:52px;height:64px;object-fit:cover;border-radius:8px;background:var(--tint)}
+.line .det{font-size:.85rem;color:var(--muted);line-height:1.4;min-width:0}
+.line .det b{display:block;color:var(--ink);font-weight:500;font-size:.95rem}
+.line .qty{font-weight:600;font-size:1.1rem;text-align:right;font-variant-numeric:tabular-nums}
+.line .acts{display:flex;gap:10px;justify-content:flex-end}
+.iconbtn{border:0;background:none;padding:2px 0;color:var(--muted);font-size:.8rem}
+.iconbtn:hover{color:var(--ink);text-decoration:underline}
+.empty-cart{display:grid;justify-items:start;gap:14px;padding:24px;border:1px dashed var(--line-2);border-radius:var(--r);color:var(--muted)}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.form .full{grid-column:1/-1}
+@media (max-width:520px){.form{grid-template-columns:1fr}}
+.form .err{color:var(--err);font-size:.86rem}
+.result{display:grid;gap:14px;padding:22px;border-radius:var(--r);background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.result pre{margin:0;white-space:pre-wrap;font:400 .8rem/1.5 ui-monospace,Consolas,monospace;max-height:220px;overflow:auto;background:var(--bg);padding:14px;border-radius:10px}
+.result .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Footer */
+.footer{border-top:1px solid var(--line);padding-block:48px calc(40px + env(safe-area-inset-bottom,0px))}
+.footer .wrap{display:flex;justify-content:space-between;gap:28px 48px;flex-wrap:wrap;align-items:start}
+.footer ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:.92rem}
+.footer a{text-decoration:none;color:var(--muted)}
+.footer a:hover{color:var(--ink)}
+.footer .brand{margin-bottom:12px}
+.footer small{display:block;color:var(--faint);font-size:.8rem}
+
+/* Flotantes */
+.floaters{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;gap:10px;align-items:center}
+.cart-pill{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 8px 0 18px;border-radius:999px;background:var(--ink);color:#fff;text-decoration:none;font-size:.9rem;font-weight:500;box-shadow:0 8px 24px rgba(20,17,19,.18)}
+.cart-pill b{background:#fff;color:var(--ink);border-radius:999px;min-width:32px;height:32px;display:grid;place-items:center;font-size:.85rem;padding:0 8px;font-variant-numeric:tabular-nums}
+.cart-pill.bump{animation:bump .45s var(--ease)}
+@keyframes bump{40%{transform:scale(1.06)}}
+.wa{width:52px;height:52px;border-radius:50%;background:#1faa59;color:#fff;display:grid;place-items:center;box-shadow:0 8px 24px rgba(20,17,19,.18)}
+.wa svg{width:26px;height:26px}
+
+/* Ficha */
+dialog{border:0;padding:0;border-radius:18px;width:min(920px,calc(100% - 24px));max-height:calc(100dvh - 24px);background:var(--surface);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(20,17,19,.45);backdrop-filter:blur(2px)}
+dialog[open]{animation:dlgIn .35s var(--ease)}
+@keyframes dlgIn{from{opacity:0;transform:translateY(12px)}}
+.x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);display:grid;place-items:center;box-shadow:0 0 0 1px var(--line);z-index:2}
+.x svg{width:18px;height:18px}
+.ficha-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.ficha-media{background:var(--tint);padding:20px;display:grid;gap:10px;align-content:start}
+.ficha-main{aspect-ratio:3/4;border-radius:10px;overflow:hidden}
+.ficha-main img{width:100%;height:100%;object-fit:cover}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap}
+.thumb{width:48px;aspect-ratio:3/4;padding:0;border:1px solid transparent;border-radius:6px;overflow:hidden;background:none}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb[aria-pressed="true"]{border-color:var(--ink)}
+.ficha-body{padding:clamp(22px,3vw,32px);display:grid;gap:22px;align-content:start;min-width:0}
+.ficha-body h3{font-size:clamp(1.6rem,3vw,2.1rem);letter-spacing:-.035em;line-height:1.05;padding-right:40px}
+.sizes{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px}
+.size{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:6px;border:1px solid var(--line-2);border-radius:10px;padding:5px 5px 5px 10px;font-size:.85rem;font-weight:500}
+.size input{width:100%;min-width:0;border:0;background:var(--bg);border-radius:6px;text-align:center;padding:6px 2px;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.size input::-webkit-inner-spin-button{-webkit-appearance:none}
+.ficha-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:18px;border-top:1px solid var(--line)}
+.ficha-foot .tot{color:var(--muted);font-size:.9rem}
+.ficha-foot .tot b{color:var(--ink);font-size:1.3rem;font-weight:600;font-variant-numeric:tabular-nums}
+@media (max-width:720px){.ficha-grid{grid-template-columns:1fr}.ficha-main{aspect-ratio:4/3}}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);opacity:0;background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:.9rem;z-index:70;transition:all .3s var(--ease);pointer-events:none;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Intro: el logo se cose y la tela se levanta. Solo la primera visita de la sesión. */
+.intro{display:none}
+html.has-intro .intro{display:grid}
+.intro{position:fixed;inset:0;z-index:100;place-items:center;background:var(--bg);cursor:pointer;animation:lift .55s cubic-bezier(.7,0,.2,1) 1.45s forwards}
+.intro::after{content:"";position:absolute;left:0;right:0;bottom:14px;height:2px;background:repeating-linear-gradient(90deg,var(--accent) 0 12px,transparent 12px 20px);opacity:.5}
+.intro.skip{animation:lift .45s cubic-bezier(.7,0,.2,1) forwards}
+.intro.done{display:none!important}
+@keyframes lift{to{transform:translateY(-100%);border-radius:0 0 50% 50%/0 0 90px 90px}}
+.intro-inner{display:grid;justify-items:center;gap:22px}
+.intro-mark{width:clamp(110px,16vw,160px);height:auto;overflow:visible}
+.im-fill{fill:var(--accent);opacity:0;animation:imfill .3s ease-out .95s forwards}
+.im-stitch{fill:none;stroke:var(--accent);stroke-width:9;stroke-dasharray:16 11;stroke-linecap:round;animation:imthread .3s ease-out .95s forwards}
+.im-reveal{fill:none;stroke-dasharray:1;stroke-dashoffset:1;animation:imdraw .9s cubic-bezier(.45,0,.3,1) .05s forwards}
+@keyframes imdraw{to{stroke-dashoffset:0}}
+@keyframes imfill{to{opacity:1}}
+@keyframes imthread{to{stroke:var(--bg)}}
+.intro-word{margin:0;display:flex;align-items:center;font:700 clamp(1.3rem,2.6vw,1.8rem)/1 var(--f);letter-spacing:.12em}
+.intro-word span{display:inline-block;opacity:0;transform:translateY(12px);animation:letter .35s var(--ease) forwards;animation-delay:calc(1s + var(--i)*35ms)}
+.intro-word .ar{background:var(--ink);color:var(--bg);padding:.1em .08em}
+@keyframes letter{to{opacity:1;transform:none}}
+.intro-skip{position:absolute;left:0;right:0;bottom:34px;text-align:center;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+html.has-intro{--intro-d:1650ms}
+@media (prefers-reduced-motion:no-preference){
+  .hero-copy>*{animation:heroIn 1s var(--ease) both;animation-delay:calc(var(--i,0)*90ms + var(--intro-d,0ms))}
+  @keyframes heroIn{from{opacity:0;transform:translateY(18px)}}
+}
+
+/* Movimiento: entradas suaves al scrollear, nada más */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.rv.in{opacity:1;transform:none}
+@keyframes fadeIn{from{opacity:0}}
+
+/* Celular: menos aire entre secciones, rubros en una sola fila deslizable y bloques más compactos. */
+@media (max-width:640px){
+  .sec{padding-block:56px}
+  .head{margin-bottom:24px}
+  .head p{font-size:.98rem}
+  .clients{padding-bottom:4px}
+  .clients .wrap{gap:12px}
+  .marquee{padding-block:16px}
+  /* Hero: botones del mismo ancho, uno abajo del otro. */
+  .hero-copy{justify-items:stretch;gap:18px}
+  .hero-copy>.label{justify-self:start}
+  .hero-actions{display:grid;grid-template-columns:1fr;gap:10px;width:100%}
+  .hero-actions .btn{min-height:50px}
+  .red .hero-actions{grid-template-columns:1fr 1fr}
+  .red .hero-actions .btn{padding-inline:12px}
+  .facts{gap:6px 16px;font-size:.84rem}
+  /* Rubros: una fila que se desliza con el dedo en vez de 5 renglones de chips. */
+  .cat-chips{flex-wrap:nowrap;overflow-x:auto;margin-inline:calc(var(--gut) * -1);padding-inline:var(--gut);scroll-padding-inline:var(--gut);scroll-snap-type:x proximity;scrollbar-width:none;margin-bottom:22px;-webkit-mask:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+  .cat-chips::-webkit-scrollbar{display:none}
+  .cat-chips .chip{flex:none;scroll-snap-align:start;min-height:40px}
+  .grid{gap:22px 12px}
+  .card{gap:10px}
+  .card .meta>.name{font-size:.98rem}
+  .card .meta>span{font-size:.8rem}
+  .show-all .btn{width:100%}
+  .more{margin-top:32px}
+  /* Boceto: foto más baja para que no ocupe toda la pantalla. */
+  .mock{gap:28px}
+  .mock-steps li{padding:13px 0}
+  .mock-actions{display:grid;grid-template-columns:1fr 1fr}
+  .mock-photo{aspect-ratio:4/3}
+  .mock-photo img{object-position:50% 22%}
+  .mock-tag{left:10px;right:10px;bottom:10px;padding:10px 12px;font-size:.85rem}
+  /* Proceso: número al costado del título, como una lista. */
+  .steps{gap:0}
+  .steps li{grid-template-columns:34px 1fr;column-gap:6px;row-gap:4px;padding:16px 0;border-top:1px solid var(--line)}
+  .steps li::before{grid-row:span 2;padding-top:3px}
+  .steps li:last-child{border-bottom:1px solid var(--line)}
+  /* Ficha: sube desde abajo como en una app y el botón de agregar queda siempre a mano. */
+  dialog#ficha{width:100%;max-width:none;margin:auto 0 0;border-radius:20px 20px 0 0;max-height:92dvh}
+  dialog#ficha[open]{animation:sheetIn .4s var(--ease)}
+  .ficha-media{padding:14px 14px 12px}
+  .ficha-body{gap:18px;padding:20px 18px 0}
+  .ficha-foot{position:sticky;bottom:0;z-index:1;margin-inline:-18px;padding:12px 18px calc(12px + env(safe-area-inset-bottom));background:var(--surface);box-shadow:0 -10px 20px -14px rgba(20,17,19,.25)}
+  .ficha-foot .btn{flex:1;max-width:240px}
+}
+@keyframes sheetIn{from{transform:translateY(40%);opacity:.4}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro-inner">
+    <svg class="intro-mark" viewBox="110 -20 475 510"><defs><mask id="im-mask" maskUnits="userSpaceOnUse" x="80" y="-60" width="540" height="600"><path class="im-reveal" d="M130 0H200V300Q200 405 305 405H395Q500 405 500 300V85L423 170L340 85V300Q340 345 280 345V0H360L423 85L490 0H565V350Q565 470 445 470H250Q130 470 130 350Z" stroke="#fff" stroke-width="44" pathLength="1"/></mask></defs><path class="im-fill" d="M130 0H200V300Q200 405 305 405H395Q500 405 500 300V85L423 170L340 85V300Q340 345 280 345V0H360L423 85L490 0H565V350Q565 470 445 470H250Q130 470 130 350Z"/><path class="im-stitch" d="M130 0H200V300Q200 405 305 405H395Q500 405 500 300V85L423 170L340 85V300Q340 345 280 345V0H360L423 85L490 0H565V350Q565 470 445 470H250Q130 470 130 350Z" mask="url(#im-mask)"/></svg>
+    <p class="intro-word"><span style="--i:0">U</span><span style="--i:1">N</span><span style="--i:2">I</span><span style="--i:3">F</span><span style="--i:4">O</span><span style="--i:5">R</span><span style="--i:6">M</span><span style="--i:7">.</span><span class="ar" style="--i:8">A</span><span class="ar" style="--i:9">R</span></p>
+  </div>
+  <span class="intro-skip">Tocá para entrar</span>
+</div>
+
+<header class="site-header" id="header">
+  <div class="wrap">
+    <a class="brand" href="#inicio" aria-label="Uniform.AR, ir al inicio"><i class="mk"></i><i class="wm"></i></a>
+    <nav class="nav" id="nav" aria-label="Secciones">
+      <a href="#catalogo">Catálogo</a>
+      <a href="#franquicias">Franquicias</a>
+      <a href="#trabajos">Nuestros clientes</a>
+      <a href="#proceso">Asesoramiento de cero</a>
+      <a href="#preguntas">Preguntas frecuentes</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <a class="btn" href="#pedido"><span class="long">Pedí tu presupuesto</span><span class="short">Presupuesto</span></a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Menú"><svg class="i-bars" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="inicio">
+  <figure class="hero-photo">
+    <div class="ph" id="hero-media"><img src="../assets/video/portada.jpg" alt="Equipos de clientes de Uniform.AR trabajando con su ropa: operarios de Grupo B en la obra, camisas de grafa con logo bordado y remeras de Banco Nación Tenis y Padel" width="1920" height="1080" fetchpriority="high"></div>
+  </figure>
+  <div class="wrap">
+    <div class="hero-copy">
+      <span class="label" style="--i:0">Ropa de trabajo con tu logo</span>
+      <h1 style="--i:1">Vestí a tu equipo con <em>tu marca.</em></h1>
+      <p class="hero-lede" style="--i:2">Remeras, camisas, buzos, camperas y pantalones con tu logo bordado o estampado.</p>
+      <div class="hero-actions" style="--i:3">
+        <a class="btn" href="#catalogo">Ver catálogo</a>
+        <a class="btn ghost" data-wa href="https://wa.me/5491173538181?text=Hola!%20Quisiera%20hacer%20una%20consulta" target="_blank" rel="noopener">Escribinos por WhatsApp</a>
+      </div>
+      <ul class="facts" style="--i:4">
+        <li>Desde 30 prendas</li>
+        <li>Envío gratis a todo el país</li>
+        <li>Asesoramiento de cero</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="clients" aria-label="Clientes">
+  <div class="wrap">
+    <span class="label">Empresas que ya visten su marca con nosotros</span>
+    <div class="marquee"><div class="logos" id="logos"></div></div>
+  </div>
+</section>
+
+<section class="sec" id="catalogo" aria-labelledby="catalogo-t">
+  <div class="wrap">
+    <div class="head rv">
+      <h2 id="catalogo-t">Catálogo</h2>
+      <p>Elegí tu rubro y mirá las prendas que más se usan. Tocá una para ver la ficha y sumarla al pedido.</p>
+    </div>
+    <div class="chips cat-chips rv" id="fam-chips" role="group" aria-label="Rubro"></div>
+    <div class="grid" id="grid"></div>
+    <div class="show-all" id="show-all" hidden><button class="btn ghost" type="button" id="show-all-btn"></button></div>
+    <div class="more rv">
+      <p><b>¿No está lo que buscás?</b> También hacemos ropa de alta visibilidad, guardapolvos, calzado de seguridad, muchos modelos más de gorras y prendas a medida en el color de tu marca.</p>
+      <a class="btn ghost" data-wa href="https://wa.me/5491173538181?text=%C2%A1Hola%20Uniform.AR!%20Busco%20una%20prenda%20que%20no%20est%C3%A1%20en%20el%20cat%C3%A1logo." target="_blank" rel="noopener">Consultanos</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="boceto" aria-labelledby="boceto-t">
+  <div class="wrap mock">
+    <div class="mock-copy rv">
+      <span class="label">Boceto sin cargo</span>
+      <h2 id="boceto-t">Mirá tu logo en la prenda antes de pedir.</h2>
+      <p>Mandanos tu logo por WhatsApp y te armamos un boceto con tu marca en las prendas que elijas: dónde va, de qué tamaño y si conviene bordado o estampado.</p>
+      <ol class="mock-steps">
+        <li><span>01</span><b>Mandanos tu logo</b><p>En la calidad que lo tengas: PNG, PDF, una foto o el link de tu Instagram.</p></li>
+        <li><span>02</span><b>Contanos qué prendas querés</b><p>Si todavía no sabés, te recomendamos según tu rubro.</p></li>
+        <li><span>03</span><b>Te mandamos el boceto</b><p>Lo ajustamos hasta que te guste. Recién ahí pasamos a la cotización.</p></li>
+      </ol>
+      <div class="mock-actions">
+        <a class="btn" data-wa href="https://wa.me/5491173538181?text=%C2%A1Hola%20Uniform.AR!%20Quiero%20un%20boceto%20con%20mi%20logo.%20Te%20lo%20mando%20por%20ac%C3%A1." target="_blank" rel="noopener">Mandar mi logo</a>
+        <a class="btn ghost" href="#catalogo">Elegir prendas</a>
+      </div>
+    </div>
+    <figure class="mock-photo rv">
+      <img src="../assets/fotos/u-16.jpg" alt="Buzo polar azul marino con un logo bordado en el pecho" width="1200" height="1798" loading="lazy">
+      <figcaption class="mock-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Sin cargo y sin compromiso.</b> Te lo mandamos por WhatsApp.</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="sec" id="trabajos" aria-labelledby="trabajos-t">
+  <div class="wrap">
+    <div class="head rv">
+      <h2 id="trabajos-t">Equipos que ya visten su marca</h2>
+      <p>Clientes reales, en su trabajo y con su ropa.</p>
+    </div>
+    <div class="works" id="works"></div>
+  </div>
+</section>
+
+<section class="sec" id="franquicias" aria-labelledby="franquicias-t">
+  <div class="wrap red">
+    <div class="red-copy rv">
+      <span class="label">Franquicias y cadenas</span>
+      <h2 id="franquicias-t">Uniformes para toda tu red</h2>
+      <p>Que cada local se vea como tu marca, esté donde esté. Un solo proveedor para toda la red.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#pedido" data-rubro="Franquicia o cadena">Cotizá para tu red</a>
+        <a class="btn ghost" data-wa href="https://wa.me/5491173538181?text=%C2%A1Hola%20Uniform.AR!%20Quiero%20uniformes%20para%20mi%20red%20de%20franquicias." target="_blank" rel="noopener">Consultanos</a>
+      </div>
+    </div>
+    <ul class="red-list rv">
+      <li><h3>El mismo uniforme en cada local</h3><p>Misma prenda, mismo color y el mismo logo en todas las sucursales.</p></li>
+      <li><h3>Un pedido para toda la red</h3><p>Armamos el pedido completo con los talles de cada local, todo separado.</p></li>
+      <li><h3>Envío a cada sucursal</h3><p>Lo mandamos sin cargo a cualquier punto del país.</p></li>
+      <li><h3>Reposiciones iguales</h3><p>Guardamos tu diseño para que cada nueva tanda salga igual a la primera.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec" id="proceso" aria-labelledby="proceso-t">
+  <div class="wrap">
+    <div class="head rv"><h2 id="proceso-t">De la idea a tu equipo</h2><p>Te asesoramos de cero, aunque nunca hayas hecho uniformes, y te acompañamos en cada paso hasta que tu equipo sale a trabajar con tu marca.</p></div>
+    <ol class="steps rv">
+      <li><h3>Tu idea</h3><p>Contanos qué hace tu equipo, cuántos son y cómo querés que se vea. Mandanos tu logo como lo tengas.</p></li>
+      <li><h3>Asesoramiento</h3><p>Te recomendamos prendas, telas y colores según el trabajo, el clima y el uso diario.</p></li>
+      <li><h3>Técnica a medida</h3><p>Bordado o estampado, con el tamaño y la ubicación que mejor le quedan a tu marca.</p></li>
+      <li><h3>Muestra física</h3><p>En pedidos de gran volumen, te hacemos una muestra antes de producir para que la veas y la toques. Con tu OK, arrancamos.</p></li>
+      <li><h3>Entrega</h3><p>En 20 a 30 días hábiles desde que recibimos la seña, con envío gratis a todo el país y cada prenda separada por talle.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="sec" id="preguntas" aria-labelledby="preguntas-t">
+  <div class="wrap faq">
+    <div class="head rv"><h2 id="preguntas-t">Preguntas frecuentes</h2><p>¿Te queda alguna? <a class="link" data-wa href="https://wa.me/5491173538181?text=Hola!%20Tengo%20una%20consulta" target="_blank" rel="noopener">Escribinos</a>.</p></div>
+    <div class="qa rv">
+      <details><summary>¿Cuál es el pedido mínimo?</summary><div class="a"><p>30 prendas en total. Podés combinar modelos, colores y talles: por ejemplo, 15 remeras y 15 camisas.</p></div></details>
+      <details><summary>¿Hacen envíos a todo el país?</summary><div class="a"><p>Sí, enviamos gratis a cualquier punto de la Argentina.</p></div></details>
+      <details><summary>¿En cuánto tiempo recibo mi pedido?</summary><div class="a"><p>Entre 20 y 30 días hábiles, según el volumen. El plazo empieza a correr una vez que recibimos la seña.</p></div></details>
+      <details><summary>¿Bordado o estampado?</summary><div class="a"><p>El bordado es el clásico para camisas, buzos y camperas: no se despega y dura lo mismo que la prenda. El estampado va mejor en remeras, espaldas y logos grandes o con mucho detalle. Te recomendamos según la prenda y tu logo.</p></div></details>
+      <details><summary>¿Hacen ropa ignífuga?</summary><div class="a"><p>Sí. Hacemos camisas, pantalones y mamelucos ignífugos para soldadura, fundición, electricidad y cualquier trabajo con fuego o chispas, con tu logo. Contanos la tarea y la norma que te piden, y te asesoramos.</p></div></details>
+      <details><summary>¿Cómo les mando el logo?</summary><div class="a"><p>Por WhatsApp o por mail, en PNG, PDF o vector (AI, SVG). Si solo lo tenés en una foto, mandalo igual y lo vemos juntos.</p></div></details>
+      <details id="talles"><summary>Guía de talles</summary><div class="a">
+        <p>Medidas de referencia en centímetros, con la prenda apoyada sobre una mesa. Con el presupuesto te pasamos la tabla exacta de cada modelo.</p>
+        <div class="talles">
+          <table><caption>Remeras y chombas</caption><thead><tr><th scope="col">Talle</th><th scope="col">Pecho</th><th scope="col">Largo</th></tr></thead><tbody><tr><td>S</td><td>50</td><td>70</td></tr><tr><td>M</td><td>53</td><td>72</td></tr><tr><td>L</td><td>56</td><td>74</td></tr><tr><td>XL</td><td>59</td><td>76</td></tr><tr><td>XXL</td><td>62</td><td>78</td></tr><tr><td>XXXL</td><td>65</td><td>80</td></tr></tbody></table>
+          <table><caption>Camisas y abrigo</caption><thead><tr><th scope="col">Talle</th><th scope="col">Pecho</th><th scope="col">Largo</th></tr></thead><tbody><tr><td>S</td><td>54</td><td>72</td></tr><tr><td>M</td><td>57</td><td>74</td></tr><tr><td>L</td><td>60</td><td>76</td></tr><tr><td>XL</td><td>63</td><td>78</td></tr><tr><td>XXL</td><td>66</td><td>80</td></tr><tr><td>XXXL</td><td>69</td><td>82</td></tr></tbody></table>
+          <table><caption>Pantalones</caption><thead><tr><th scope="col">Talle</th><th scope="col">Cintura</th><th scope="col">Entrep.</th></tr></thead><tbody><tr><td>38</td><td>76</td><td>80</td></tr><tr><td>40</td><td>80</td><td>80</td></tr><tr><td>42</td><td>84</td><td>80</td></tr><tr><td>44</td><td>88</td><td>82</td></tr><tr><td>46</td><td>92</td><td>82</td></tr><tr><td>48</td><td>96</td><td>82</td></tr><tr><td>50</td><td>100</td><td>82</td></tr><tr><td>52</td><td>104</td><td>84</td></tr><tr><td>54</td><td>108</td><td>84</td></tr><tr><td>56</td><td>112</td><td>84</td></tr></tbody></table>
+        </div>
+      </div></details>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="pedido" aria-labelledby="pedido-t">
+  <div class="wrap">
+    <div class="head rv">
+      <h2 id="pedido-t">Pedí tu presupuesto</h2>
+      <p>Sumá prendas del catálogo, dejanos tus datos y mandalo por WhatsApp. Respondemos de lunes a viernes, de 9 a 18 h.</p>
+    </div>
+    <div class="order">
+      <div class="panel rv">
+        <div class="meter">
+          <div class="meter-row"><span><b id="tot-n">0</b> / 30 prendas</span><span id="tot-msg">Faltan 30 para el mínimo</span></div>
+          <div class="meter-bar" id="meter"><i></i></div>
+        </div>
+        <div id="lines"></div>
+      </div>
+      <div class="panel rv">
+        <form class="form" id="quote-form" novalidate>
+          <div class="ctl"><label class="label" for="f-empresa">Empresa</label><input class="field" id="f-empresa" required autocomplete="organization"></div>
+          <div class="ctl"><label class="label" for="f-nombre">Tu nombre</label><input class="field" id="f-nombre" required autocomplete="name"></div>
+          <div class="ctl"><label class="label" for="f-tel">WhatsApp o teléfono</label><input class="field" id="f-tel" type="tel" autocomplete="tel" placeholder="11 2345-6789"></div>
+          <div class="ctl"><label class="label" for="f-mail">Email</label><input class="field" id="f-mail" type="email" autocomplete="email"></div>
+          <div class="ctl full"><label class="label" for="f-rubro">Rubro</label><select class="field" id="f-rubro"><option>Construcción y obra</option><option>Gastronomía</option><option>Logística e industria</option><option>Comercio y atención</option><option>Campo y agro</option><option>Salud</option><option>Limpieza y mantenimiento</option><option>Seguridad</option><option>Oficina y corporativo</option><option>Franquicia o cadena</option><option>Club o deporte</option><option>Otro</option></select></div>
+          <div class="ctl full"><label class="label" for="f-msg">Comentarios <span class="muted">(opcional)</span></label><textarea class="field" id="f-msg" placeholder="Para cuándo lo necesitás, talles especiales, logo en la espalda…"></textarea></div>
+          <p class="err full" id="f-err" hidden></p>
+          <div class="full" style="display:grid;gap:8px"><button class="btn" id="f-send" type="submit">Enviar por WhatsApp</button><span class="note" id="f-note"></span></div>
+        </form>
+        <div class="result" id="result" hidden>
+          <h3>Tu pedido está listo</h3>
+          <p class="note">Abrí WhatsApp para enviarlo. Si preferís mail, copialo y mandalo a <b>uniformarindumentaria@gmail.com</b>.</p>
+          <pre id="result-text"></pre>
+          <div class="row"><a class="btn" id="result-wa" target="_blank" rel="noopener">Abrir WhatsApp</a><button class="btn ghost" id="result-copy" type="button">Copiar</button><button class="iconbtn" id="result-edit" type="button">Editar datos</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer" id="contacto">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="#inicio" aria-label="Uniform.AR"><i class="mk"></i><i class="wm"></i></a>
+      <small>© <span id="year">2026</span> Uniform.AR · Buenos Aires</small>
+    </div>
+    <ul>
+      <li><a data-wa href="https://wa.me/5491173538181" target="_blank" rel="noopener">WhatsApp +54 9 11 7353-8181</a></li>
+      <li><a href="mailto:uniformarindumentaria@gmail.com">uniformarindumentaria@gmail.com</a></li>
+      <li><a href="https://www.instagram.com/uniform.ar/" target="_blank" rel="noopener">Instagram @uniform.ar</a></li>
+    </ul>
+    <ul>
+      <li><a href="#catalogo">Catálogo</a></li>
+      <li><a href="#boceto">Boceto con tu logo</a></li>
+      <li><a href="#talles" data-open-talles>Guía de talles</a></li>
+    </ul>
+  </div>
+</footer>
+
+<div class="floaters">
+  <a class="cart-pill" href="#pedido" id="cart-pill" hidden>Tu pedido <b id="cart-n">0</b></a>
+  <a class="wa" data-wa href="https://wa.me/5491173538181?text=Hola!%20Quisiera%20hacer%20una%20consulta" target="_blank" rel="noopener" aria-label="Escribinos por WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.8 14.08c-.24.68-1.42 1.3-1.96 1.35-.5.05-.97.23-3.27-.68-2.76-1.09-4.5-3.92-4.64-4.1-.13-.18-1.1-1.47-1.1-2.8 0-1.33.7-1.98.95-2.25.24-.27.53-.34.71-.34l.51.01c.16.01.38-.06.6.46.23.55.77 1.88.84 2.02.07.13.11.29.02.47-.09.18-.13.29-.27.45-.13.16-.28.35-.4.47-.13.13-.27.28-.12.55.16.27.7 1.15 1.5 1.86 1.03.92 1.9 1.2 2.17 1.34.27.13.42.11.58-.07.16-.18.67-.78.85-1.05.18-.27.36-.22.6-.13.25.09 1.57.74 1.84.88.27.13.45.2.51.31.07.11.07.65-.17 1.32z"/></svg></a>
+</div>
+
+<dialog id="ficha" aria-labelledby="ficha-t"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+const WA = '5491173538181', PHONE = '+54 9 11 7353-8181', MIN = 30;
+const A = '../assets/';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+// Eventos para el píxel de Meta: si la página carga fbq, cada paso del embudo queda medido.
+const track = (ev, data) => { try { if (window.fbq) window.fbq('track', ev, data); } catch (e) {} };
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const IMG = c => `${A}fotos/${c}.jpg`;
+const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+const CLOSE = '<button class="x" type="button" aria-label="Cerrar" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+$$('[data-wa]').forEach(a => a.href = a.href.replace(/wa\.me\/\d+/, 'wa.me/' + WA));
+
+// ── Datos (los mismos de la web actual) ─────────────────────────────
+const COL = { blanco:['Blanco','#f5f4f0'], negro:['Negro','#1b1a1a'], beige:['Beige','#b9a58a'], marino:['Azul marino','#1f2b45'], rojo:['Rojo','#b3262e'], verde:['Verde oliva','#4b5337'], azul:['Azul','#34496b'], francia:['Azul francia','#2e3f94'], bordo:['Bordó','#7b2132'], jean:['Jean','#4f5d7a'], arena:['Arena','#ddcbb0'], celeste:['Celeste','#9fc4e8'], rosa:['Rosa','#e8609e'],
+  combinado:['Azul, beige y marrón','linear-gradient(135deg,#2a44b0 0 40%,#ddcba4 40% 70%,#6b4a32 70%)'], blancoAzul:['Blanco y azul','linear-gradient(135deg,#f5f4f0 0 50%,#2541b8 50%)'] };
+const TOP = ['S','M','L','XL','XXL','XXXL'];
+const BOT = ['38','40','42','44','46','48','50','52','54','56'];
+const ONE = ['Único'];
+const UP = ['Pecho','Espalda','Manga'], DN = ['Cadera','Bolsillo'];
+// v: colores con foto real. f = foto de estudio, h = la que aparece al pasar el mouse, m = otras fotos de la ficha.
+const P = [
+  {id:'remera', name:'Remera de algodón', fam:['remeras','gastro'], short:'Algodón, cuello redondo', desc:'La base de cualquier equipo. Logo chico en el pecho o grande en la espalda, como la de Fontana.', sizes:TOP, places:UP, v:{blanco:{f:'u-12', h:'u-03', m:['u-13','u-18','u-04']}, negro:{f:'u-22', h:'fontana-07', m:['u-23','fontana-03']}}},
+  {id:'chomba', name:'Chomba', fam:['remeras','gastro'], short:'Cuello y tapa con botones', desc:'Prolija y cómoda para la atención al público. El logo bordado en el pecho, como la de Moreno Materiales.', sizes:TOP, places:UP, v:{negro:{f:'chomba-negra', h:'chomba-negra-2'}, marino:{f:'moreno'}}},
+  {id:'camisa', name:'Camisa de grafa', fam:['remeras'], short:'Grafa, dos bolsillos con tapa', desc:'La camisa de trabajo de siempre: dos bolsillos con tapa, puños con botón y costuras reforzadas.', sizes:TOP, places:UP, v:{beige:{f:'u-20', h:'u-10', m:['u-21','u-11','u-09']}, marino:{f:'uso-11', h:'uso-07'}}},
+  {id:'buzoPolar', name:'Buzo polar medio cierre', fam:['abrigo'], short:'Polar, cuello alto', desc:'Medio cierre y cuello alto. Liviano, abriga y va perfecto arriba de la camisa.', sizes:TOP, places:UP, v:{marino:{f:'u-16', h:'buzo-polar-2', m:['buzo-polar-3']}}},
+  {id:'canguro', name:'Buzo canguro', fam:['abrigo'], short:'Con capucha y bolsillo', desc:'Con capucha y bolsillo adelante. Abriga sin molestar y lleva el logo en el pecho o grande en la espalda.', sizes:TOP, places:UP, v:{negro:{f:'canguro', h:'canguro-2'}}},
+  {id:'chalecoPolar', name:'Chaleco polar', fam:['abrigo'], short:'Polar, cierre entero', desc:'Abriga el torso y deja los brazos libres. Con bolsillo con cierre en el pecho.', sizes:TOP, places:['Pecho','Espalda'], v:{rojo:{f:'u-14', h:'chaleco-polar', m:['chaleco-polar-2']}, marino:{f:'uso-04', h:'uso-05', m:['buzo-polar']}}},
+  {id:'chalecoTrucker', name:'Chaleco trucker reflectivo', fam:['abrigo'], short:'Acolchado, banda reflectiva', desc:'Acolchado y con banda reflectiva, para que al equipo se lo vea en la obra y en la calle.', sizes:TOP, places:['Pecho','Espalda'], v:{marino:{f:'chaleco-trucker', h:'uso-20', m:['uso-22']}}},
+  {id:'camperaTrucker', name:'Campera trucker', fam:['abrigo'], short:'Acolchada, con capucha', desc:'Acolchada, con capucha y cierre entero. Abriga en serio sin pesar.', sizes:TOP, places:UP, v:{azul:{f:'campera-trucker'}}},
+  {id:'camperaPremium', name:'Campera premium', fam:['abrigo'], short:'La más abrigada', desc:'Acolchada, con capucha y cierre entero. Para el frío de verdad y con lugar para el logo grande en la espalda.', sizes:TOP, places:UP, v:{azul:{f:'u-24', h:'u-27', m:['u-25']}}},
+  {id:'rompeviento', name:'Campera neoprene impermeable', fam:['abrigo'], short:'Impermeable, cierre entero', desc:'De neoprene, impermeable y con cierre entero: frena el agua y el viento. Para trabajar afuera con lluvia o frío.', sizes:TOP, places:UP, v:{negro:{f:'rompeviento', h:'rompeviento-2', m:['rompeviento-3']}}},
+  {id:'ripstop', name:'Pantalón ripstop', fam:['pantalones'], short:'Anti desgarro', desc:'La trama ripstop frena los desgarros: si se engancha, no se abre. Para obra, taller y campo.', sizes:BOT, places:DN, v:{verde:{f:'ripstop', h:'uso-16'}}},
+  {id:'cargo', name:'Pantalón cargo de grafa', fam:['pantalones'], short:'Bolsillos cargo con tapa', desc:'Bolsillos cargo con tapa y presillas para el cinturón. El logo va sobre el bolsillo, como el de Grupo B.', sizes:BOT, places:DN, v:{beige:{f:'grupob-12', h:'grupob-08'}}},
+  {id:'pantalonGrafa', name:'Pantalón de grafa', fam:['pantalones'], short:'Corte recto', desc:'Corte recto y tela resistente. Con la camisa del mismo color arma el conjunto de trabajo completo.', sizes:BOT, places:DN, v:{marino:{f:'uso-08', h:'uso-07'}}},
+  {id:'gabardina', name:'Pantalón de gabardina', fam:['pantalones'], short:'Corte clásico', desc:'Prolijo y resistente, para atención, oficina y mantenimiento. Combina con la chomba o la camisa.', sizes:BOT, places:DN, v:{beige:{f:'gabardina', h:'gabardina-2', m:['gabardina-3']}}},
+  {id:'mameluco', name:'Mameluco', fam:['pantalones'], short:'Enterizo de manga larga', desc:'Cubre de pies a cabeza y no se sale de lugar. Para taller, mantenimiento, limpieza e industria.', sizes:TOP, places:['Pecho','Espalda'], v:{francia:{f:'mameluco', h:'mameluco-2', m:['mameluco-3','mameluco-4','mameluco-5']}}},
+  {id:'chaqueta', name:'Chaqueta de cocina', fam:['gastro'], short:'Cruzada, botones a la vista', desc:'La chaqueta del chef, en negro o en blanco. El logo bordado en el pecho le da el toque de marca a la cocina.', sizes:TOP, places:['Pecho','Manga'], v:{negro:{f:'chaqueta-negra', h:'chaqueta-negra-2'}, blanco:{f:'chaqueta-blanca', h:'chaqueta-blanca-2'}}},
+  {id:'delantalPechera', name:'Delantal de pechera', fam:['gastro'], short:'Largo, con pechera', desc:'Cubre de pecho a rodilla. El logo va en la pechera, bien a la vista.', sizes:ONE, places:['Pecho'], v:{bordo:{f:'delantal-pechera', h:'delantal-pechera-2', m:['delantal-pechera-3']}}},
+  {id:'delantalJean', name:'Delantal de jean', fam:['gastro'], short:'Jean, tiras símil cuero', desc:'El delantal con más onda para barra y cafetería, con detalles en marrón.', sizes:ONE, places:['Pecho'], v:{jean:{f:'delantal-jean', h:'delantal-jean-2', m:['delantal-jean-3']}}},
+  {id:'delantalCintura', name:'Delantal de cintura', fam:['gastro'], short:'Corto, se ata a la cintura', desc:'Práctico para el salón: deja libre el torso y lleva el logo adelante.', sizes:ONE, places:['Frente'], v:{bordo:{f:'delantal-cintura', h:'delantal-cintura-2'}}},
+  // Nuevos (nov. 2026). Fotos de producto provisorias hasta que Santi saque las propias.
+  {id:'camisaTrabajo', name:'Camisa de trabajo', fam:['remeras'], short:'Manga larga, dos bolsillos', desc:'Manga larga con dos bolsillos con tapa. Cómoda para todo el día y con lugar para el logo en el pecho y la manga.', sizes:TOP, places:UP, v:{beige:{f:'camisa-trabajo'}}},
+  {id:'cargoGabardina', name:'Pantalón cargo de gabardina', fam:['pantalones'], short:'Gabardina, bolsillos cargo', desc:'La prolijidad de la gabardina con bolsillos cargo a los costados. Para depósito, logística y mantenimiento.', sizes:BOT, places:DN, v:{beige:{f:'cargo-gabardina'}}},
+  {id:'chalecoInflable', name:'Chaleco inflable', fam:['abrigo'], short:'Acolchado, cuello alto', desc:'Acolchado, liviano y con cuello alto. Abriga el torso sin trabar los brazos y lleva el logo en el pecho.', sizes:TOP, places:['Pecho','Espalda'], v:{negro:{f:'chaleco-inflable'}}},
+  {id:'amboEstampado', name:'Ambo con interior estampado', fam:['salud'], short:'Chaqueta y pantalón', desc:'Ambo de chaqueta y pantalón con el interior del cuello estampado. Para consultorios, clínicas y laboratorios.', sizes:TOP, places:['Pecho','Manga'], v:{arena:{f:'ambo-estampado'}}},
+  {id:'amboVivos', name:'Ambo con vivos', fam:['salud'], short:'Chaqueta y pantalón, con vivos', desc:'Ambo clásico con vivos en contraste en el cuello y las mangas. Con el logo de tu institución bordado.', sizes:TOP, places:['Pecho','Manga'], v:{celeste:{f:'ambo-vivos'}}},
+  {id:'amboEntallado', name:'Ambo entallado con vivos', fam:['salud'], short:'Corte entallado', desc:'Ambo de corte entallado con vivos en contraste. Prolijo para la atención al público.', sizes:TOP, places:['Pecho','Manga'], v:{arena:{f:'ambo-entallado'}}},
+  {id:'camperaIgnifuga', name:'Campera ignífuga térmica', fam:['ignifugo'], short:'Térmica, con bandas reflectivas', desc:'Ignífuga y térmica, con capucha y bandas reflectivas. Para trabajos con fuego o chispas en el frío.', sizes:TOP, places:UP, v:{marino:{f:'campera-ignifuga'}}},
+  {id:'mamelucoIgnifugo', name:'Mameluco ignífugo', fam:['ignifugo'], short:'Enterizo, bandas reflectivas', desc:'Enterizo ignífugo con bandas reflectivas, para soldadura, fundición, electricidad y petróleo.', sizes:TOP, places:['Pecho','Espalda'], v:{marino:{f:'mameluco-ignifugo'}}},
+  {id:'remeraIgnifuga', name:'Remera ignífuga manga larga', fam:['ignifugo'], short:'Primera capa ignífuga', desc:'Remera de manga larga ignífuga, para usar sola o abajo del mameluco o la campera.', sizes:TOP, places:UP, v:{marino:{f:'remera-ignifuga'}}},
+  {id:'monja', name:'Monja ignífuga', fam:['ignifugo'], short:'Protege cabeza y cuello', desc:'Pasamontañas ignífugo que cubre cabeza y cuello, para abajo del casco o la máscara de soldar.', sizes:ONE, places:['Frente'], v:{marino:{f:'monja-ignifuga'}}},
+  {id:'gorraFive', name:'Gorra five panel', fam:['gorras'], short:'Corderoy, cinco paneles', desc:'Cinco paneles en corderoy combinado, con tu logo en parche o bordado al frente.', sizes:ONE, places:['Frente','Costado'], v:{combinado:{f:'gorra-five-panel'}}},
+  {id:'gorraTrucker', name:'Gorra trucker de poliéster', fam:['gorras'], short:'Frente liso, red atrás', desc:'Frente liso para el logo y red atrás para que respire. La gorra más pedida para equipos y eventos.', sizes:ONE, places:['Frente','Costado'], v:{blancoAzul:{f:'gorra-trucker'}}},
+  {id:'gorraVintage', name:'Gorra vintage washed', fam:['gorras'], short:'Algodón lavado', desc:'Algodón lavado con efecto gastado. Con el logo bordado al frente queda prolija y con onda.', sizes:ONE, places:['Frente','Costado'], v:{bordo:{f:'gorra-vintage'}}},
+  {id:'gorroRocky', name:'Gorro de lana Rocky', fam:['gorras'], short:'Tejido, con doblez', desc:'Gorro tejido con doblez, ideal para el frío. El logo va en parche o bordado sobre el doblez.', sizes:ONE, places:['Frente'], v:{rosa:{f:'gorro-rocky'}}},
+  {id:'piluso', name:'Piluso vintage', fam:['gorras'], short:'Algodón lavado', desc:'Piluso de algodón lavado, para trabajar al sol. Con tu logo bordado al frente.', sizes:ONE, places:['Frente','Costado'], v:{beige:{f:'piluso'}}},
+  {id:'casco', name:'Casco de seguridad', fam:['accesorios'], short:'Con tu logo al frente', desc:'Casco de seguridad para obra e industria, con el logo de tu empresa al frente.', sizes:ONE, places:['Frente','Costado'], v:{blanco:{f:'casco'}}},
+  {id:'sombrero', name:'Sombrero australiano', fam:['accesorios'], short:'Ala ancha, con cordón', desc:'Ala ancha y cordón ajustable, para trabajar al sol en el campo o la obra.', sizes:ONE, places:['Frente','Costado'], v:{marino:{f:'sombrero-australiano'}}}
+];
+const byId = Object.fromEntries(P.map(p => [p.id, p]));
+// Lo que se hace a pedido y todavía no tiene foto propia: se consulta por WhatsApp.
+const ASK = {
+  ignifugo: { name:'Más ropa ignífuga', text:'Camisas, pantalones y otras prendas ignífugas para soldadura, fundición, electricidad y trabajos con fuego o chispas. Te asesoramos según la tarea y la norma que te piden.' },
+  altaVis: { name:'Alta visibilidad', text:'Chalecos, camperas y prendas con bandas reflectivas, para que al equipo se lo vea de día y de noche.' },
+  accesorios: { name:'Accesorios de protección', text:'Guantes, anteojos, fajas y más, para completar el equipo.' },
+  gorrasMas: { name:'Más modelos de gorras', text:'Tenemos muchos modelos más de gorras, gorros y viseras. Contanos qué buscás y te mandamos opciones.' },
+  calzado: { name:'Calzado de seguridad', text:'Botines y zapatos de seguridad, de caña alta o deportivos.' },
+  termico: { name:'Térmico primera piel', text:'Remera, calza y medias primera piel, para abajo del uniforme cuando hace frío de verdad.' },
+  chaquetaMedica: { name:'Chaqueta médica', text:'Para médicos, odontólogos y profesionales de la salud, con tu logo bordado.' },
+  guardapolvo: { name:'Guardapolvo', text:'Para limpieza, mantenimiento, depósito y laboratorio, en el color que necesites.' },
+  tactica: { name:'Campera táctica', text:'Para equipos de seguridad y vigilancia, con lugar para el logo y la identificación.' },
+  oxford: { name:'Camisa Oxford', text:'La camisa para oficina y atención, con el logo bordado en el pecho.' }
+};
+const askHref = a => `https://wa.me/${WA}?text=${encodeURIComponent(`¡Hola Uniform.AR! Quiero consultar por ${a.name.toLowerCase()}.`)}`;
+// Filtros por rubro: [chip, nombre del rubro en el formulario, prendas]. "Todo" muestra el catálogo con foto.
+const RUBROS = {
+  todo: ['Todo', null, P.map(p => p.id)],
+  obra: ['Construcción', 'Construcción y obra', ['camisa','camisaTrabajo','cargo','cargoGabardina','ripstop','chalecoTrucker','chalecoInflable','camperaTrucker','casco','altaVis','accesorios','calzado']],
+  industria: ['Industria', 'Logística e industria', ['mameluco','cargo','cargoGabardina','pantalonGrafa','camisa','camisaTrabajo','camperaTrucker','chalecoInflable','casco','altaVis','accesorios','calzado']],
+  ignifugo: ['Ignífugo', 'Logística e industria', ['camperaIgnifuga','mamelucoIgnifugo','remeraIgnifuga','monja','ignifugo','casco','accesorios','calzado']],
+  gastro: ['Gastronomía', 'Gastronomía', ['chaqueta','delantalPechera','delantalJean','delantalCintura','remera','chomba','gorraVintage']],
+  comercio: ['Comercio', 'Comercio y atención', ['chomba','remera','camisa','gabardina','canguro','buzoPolar','gorraTrucker']],
+  campo: ['Campo', 'Campo y agro', ['camisa','camisaTrabajo','ripstop','cargoGabardina','rompeviento','chalecoPolar','chalecoInflable','camperaPremium','sombrero','piluso','termico']],
+  salud: ['Salud y limpieza', 'Salud', ['amboEstampado','amboVivos','amboEntallado','chaquetaMedica','guardapolvo','mameluco']],
+  seguridad: ['Seguridad', 'Seguridad', ['tactica','camperaPremium','chalecoInflable','altaVis','calzado']],
+  oficina: ['Oficina', 'Oficina y corporativo', ['oxford','chomba','gabardina','camisaTrabajo']],
+  gorras: ['Gorras y accesorios', null, ['gorraFive','gorraTrucker','gorraVintage','gorroRocky','piluso','gorrasMas','casco','sombrero','accesorios']]
+};
+const colorsOf = p => Object.keys(p.v);
+const shots = (p, c) => { const v = p.v[c]; return [v.f, v.h, ...(v.m || [])].filter(Boolean); };
+const swatch = (k, on) => `<button type="button" class="sw" style="--c:${COL[k][1]}" data-c="${k}" aria-pressed="${on}" aria-label="${COL[k][0]}" title="${COL[k][0]}"></button>`;
+const photoAlt = (p, c, code) => `${p.name} ${COL[c][0].toLowerCase()}${code === p.v[c].f ? '' : ', foto en uso'}`;
+
+const state = {
+  fam: 'todo',
+  cart: store.get('ua_cart', []).filter(l => byId[l.id] && byId[l.id].v[l.color]),
+  brand: { name: store.get('ua_brand', ''), logo: null },
+  tech: 'Bordado'
+};
+const save = () => { store.set('ua_cart', state.cart); store.set('ua_brand', state.brand.name); };
+
+// ── Clientes y trabajos ─────────────────────────────
+// Para sumar un cliente: dejá su logo en assets/clientes/<clave>.png y agregalo acá. Si el archivo todavía no está, no se muestra.
+const CLIENTS = [['grupob','Grupo B'],['moreno','Moreno Materiales'],['parme','Parme'],['sanantonio','Panadería San Antonio'],['weber','Weber'],['yaguar','Yaguar'],['ctibor','Ctibor'],['tubofusion','Tubofusión'],['elmana','Panificadora Maná'],['aberturas','Aberturas'],['deco','Deco'],['growing','Growing']];
+// La cinta lleva la lista dos veces para que el loop no tenga salto; la copia es solo visual.
+// Cada logo ocupa la misma superficie (no la misma altura): así uno cuadrado y uno alargado pesan parecido.
+// Si los logos no llegan a llenar la pantalla, la tanda se repite hasta cubrirla.
+Promise.all(CLIENTS.map(([k, n]) => loadImg(`${A}clientes/${k}.png`).then(i => [k, n, i.naturalWidth / i.naturalHeight], () => null))).then(ok => {
+  const list = ok.filter(Boolean), box = $('#logos');
+  if (!list.length) return;
+  const item = ([k, n, r], hidden) => `<img src="${A}clientes/${k}.png" alt="${hidden ? '' : n}" style="--h:${Math.min(64, Math.sqrt(3400 / r)).toFixed(1)}"${hidden ? ' aria-hidden="true"' : ''}>`;
+  const shown = list.map(c => item(c, false)).join(''), copy = list.map(c => item(c, true)).join('');
+  box.innerHTML = `<div class="set">${shown}</div>`;
+  const w = box.firstElementChild.offsetWidth || 1, reps = Math.max(1, Math.ceil(innerWidth * 1.1 / w));
+  // Dos mitades idénticas: la cinta corre una mitad y vuelve a empezar sin que se note.
+  box.innerHTML = `<div class="set">${shown + copy.repeat(reps - 1)}</div><div class="set" aria-hidden="true">${copy.repeat(reps)}</div>`;
+  box.style.setProperty('--dur', Math.round(w * reps / 45) + 's');
+});
+
+// ── Portada con video ─────────────────────────────
+// assets/video/portada.mp4 es el armado horizontal con 3 videos verticales de trabajos (1920×1080, sin sonido);
+// en pantallas chicas va la versión de 720p. La foto de base es el primer cuadro (portada.jpg).
+// No se carga con "reducir movimiento" ni con ahorro de datos: ahí queda la foto.
+const HERO_VIDEO = { src: `${A}video/${innerWidth < 900 ? 'portada-720' : 'portada'}.mp4`, poster: `${A}video/portada.jpg` };
+(() => {
+  const saveData = navigator.connection && navigator.connection.saveData;
+  if (!HERO_VIDEO.src || calm || saveData) return;
+  const box = $('#hero-media'), v = document.createElement('video');
+  Object.assign(v, { muted: true, loop: true, playsInline: true, autoplay: true, preload: 'auto', poster: HERO_VIDEO.poster });
+  v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'vid-toggle';
+  const icon = paused => paused ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l14 8-14 8z"/></svg>' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>';
+  const sync = () => { btn.innerHTML = icon(v.paused); btn.setAttribute('aria-label', v.paused ? 'Reproducir video' : 'Pausar video'); };
+  btn.addEventListener('click', () => { v.paused ? v.play() : v.pause(); sync(); });
+  v.addEventListener('playing', () => { v.classList.add('on'); btn.classList.add('on'); sync(); }, { once: true });
+  v.addEventListener('error', () => { v.remove(); btn.remove(); });
+  v.src = HERO_VIDEO.src;
+  box.append(v, btn);
+  // Fuera de pantalla no gasta batería.
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { if (!v.classList.contains('on') || btn.dataset.user) return; e.isIntersecting ? v.play().catch(() => {}) : v.pause(); }).observe(box);
+  btn.addEventListener('click', () => { btn.dataset.user = '1'; });
+})();
+// Cada trabajo lleva como máximo 2 piezas: una foto (código de assets/fotos) o un video ('video/<archivo>.mp4', vertical, sin sonido).
+// Para sumar un cliente, agregá una línea; para sumar un video: ['video/fontana.mp4', 'Descripción'].
+const WORKS = [
+  { n: 'Grupo B', r: 'Construcción', m: [
+    ['grupob-04', 'Operario de Grupo B de espaldas con casco amarillo y camisa de grafa beige con el logo estampado en verde'],
+    ['grupob-12', 'Operario de Grupo B en la obra con arnés, camisa y pantalón cargo beige con el logo en el bolsillo'] ] },
+  { n: 'Fontana', r: 'Gastronomía', m: [
+    ['fontana-portada', 'Moza de Fontana de espaldas en el patio del restaurante, con remera negra y el logo de Fontana en blanco'],
+    ['fontana-07', 'Moza de Fontana sirviendo una bandeja, con remera negra y el logo bordado en el pecho'] ] },
+  { n: 'Banco Nación Tenis & Padel', r: 'Club', m: [
+    ['u-04', 'Jugador de espaldas en la cancha de padel con remera blanca y el logo grande de Banco Nación Tenis y Padel'],
+    ['u-03', 'Jugador de frente con remera blanca y los logos de Uniform.AR y Banco Nación Tenis y Padel en el pecho'] ] },
+  { n: 'Moreno Materiales', r: 'Corralón', m: [
+    ['moreno', 'Empleada de Moreno Materiales de espaldas en el mostrador, con chomba azul marino y el logo bordado'] ] }
+];
+const isVid = s => /\.mp4$/.test(s);
+const PLAY = '<span class="work-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l14 8-14 8z"/></svg></span>';
+$('#works').innerHTML = WORKS.map(w => {
+  const m = w.m.slice(0, 2);
+  const media = m.map(([src, alt], i) => isVid(src)
+    ? `<video class="${i ? 'b' : 'a'}" src="${A}${src}" muted loop playsinline preload="none" aria-label="${esc(alt)}"></video>`
+    : `<img class="${i ? 'b' : 'a'}" src="${IMG(src)}" alt="${esc(alt)}" loading="lazy" width="1200" height="1800">`).join('');
+  return `<figure class="work rv"${m.length > 1 ? ' data-two' : ''}><div class="ph">${media}${m.some(([s]) => isVid(s)) ? PLAY : ''}${m.length > 1 ? '<span class="work-dots" aria-hidden="true"><i></i><i></i></span>' : ''}</div><figcaption><h3>${w.n}</h3><span>${w.r}</span></figcaption></figure>`;
+}).join('');
+// Las dos piezas se alternan solas mientras el trabajo está en pantalla; los videos solo corren cuando se ven.
+(() => {
+  const cards = $$('#works .work');
+  const sync = c => c.querySelectorAll('video').forEach(v => {
+    const show = c.dataset.vis && (v.classList.contains('a') ? !c.classList.contains('alt') : c.classList.contains('alt'));
+    if (show) { v.preload = 'auto'; v.play().catch(() => {}); } else v.pause();
+  });
+  if ('IntersectionObserver' in window) {
+    const wio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.dataset.vis = '1'; else delete e.target.dataset.vis; sync(e.target); }), { threshold: .35 });
+    cards.forEach(c => wio.observe(c));
+  }
+  if (calm) return;
+  cards.filter(c => c.hasAttribute('data-two')).forEach((c, i) => {
+    let hover = false;
+    c.addEventListener('mouseenter', () => { hover = true; c.classList.toggle('alt'); sync(c); });
+    c.addEventListener('mouseleave', () => { hover = false; });
+    setTimeout(() => setInterval(() => { if (c.dataset.vis && !hover && !document.hidden) { c.classList.toggle('alt'); sync(c); } }, 4200), i * 700);
+  });
+})();
+
+// ── Catálogo ─────────────────────────────
+function renderFilters() {
+  $('#fam-chips').innerHTML = Object.entries(RUBROS).map(([k, [v]]) => `<button type="button" class="chip" data-fam="${k}" aria-pressed="${k === state.fam}">${v}</button>`).join('');
+}
+const askCard = a => `<a class="card ask" href="${askHref(a)}" target="_blank" rel="noopener"><span class="ph"><em>A pedido</em><span style="display:grid;gap:8px"><b>${a.name}</b><small>${a.text}</small></span><em>Consultanos por WhatsApp →</em></span></a>`;
+// En "Todo" se ven las primeras prendas y el resto con un botón, así lo que sigue no queda lejísimos.
+const FIRST = 8;
+function renderGrid() {
+  const all = RUBROS[state.fam][2], cut = state.fam === 'todo' && !state.all && all.length > FIRST + 2;
+  const ids = cut ? all.slice(0, FIRST) : all;
+  $('#show-all').hidden = !cut;
+  if (cut) $('#show-all-btn').textContent = `Ver las ${all.length} prendas`;
+  $('#grid').innerHTML = ids.map(id => {
+    if (ASK[id]) return askCard(ASK[id]);
+    const p = byId[id];
+    const c = colorsOf(p)[0], v = p.v[c];
+    return `<button type="button" class="card" data-open="${p.id}" aria-label="Ver ${esc(p.name)}">
+      <span class="ph"><img class="a" src="${IMG(v.f)}" alt="${esc(photoAlt(p, c, v.f))}" loading="lazy" width="1200" height="1800">${v.h ? `<img class="b" src="${IMG(v.h)}" alt="" loading="lazy" width="1200" height="1800">` : ''}</span>
+      <span class="meta"><span class="name">${p.name}</span><span>${p.short}</span>${colorsOf(p).length > 1 ? `<span class="dots" aria-label="${colorsOf(p).length} colores">${colorsOf(p).map(k => `<i style="--c:${COL[k][1]}"></i>`).join('')}</span>` : ''}</span>
+    </button>`;
+  }).join('');
+  reveal($$('#grid .card'));
+}
+$('#fam-chips').addEventListener('click', e => {
+  const b = e.target.closest('[data-fam]'); if (!b) return;
+  state.fam = b.dataset.fam; renderFilters(); renderGrid();
+  // El rubro elegido ya queda cargado en el formulario del presupuesto.
+  if (RUBROS[state.fam][1]) $('#f-rubro').value = RUBROS[state.fam][1];
+});
+$('#show-all-btn').addEventListener('click', () => {
+  state.all = true; renderGrid();
+  // El foco pasa a la primera prenda nueva, para que con teclado no se vuelva al principio.
+  const next = $$('#grid .card')[FIRST]; if (next) next.focus({ preventScroll: true });
+});
+document.addEventListener('click', e => { const r = e.target.closest('[data-rubro]'); if (r) $('#f-rubro').value = r.dataset.rubro; });
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-open]'); if (!o) return;
+  openFicha(o.dataset.open, colorsOf(byId[o.dataset.open])[0]);
+});
+
+// ── Ficha (modal) ─────────────────────────────
+const dlg = $('#ficha'); let fic = null;
+function openFicha(id, color, editIdx, place) {
+  const p = byId[id];
+  const ex = editIdx != null ? state.cart[editIdx] : null;
+  fic = { id, color: ex ? ex.color : color, tech: ex ? ex.tech : state.tech, place: ex ? ex.place : (p.places.includes(place) ? place : p.places[0]), sizes: ex ? { ...ex.sizes } : {}, editIdx, shot: 0 };
+  dlg.innerHTML = `${CLOSE}<div class="ficha-grid"><div class="ficha-media" id="ficha-media"></div>
+  <div class="ficha-body">
+    <div style="display:grid;gap:8px"><h3 id="ficha-t">${p.name}</h3><p class="muted">${p.desc}</p></div>
+    <div class="ctl"><span class="label">Color <span id="fc-name" style="color:var(--ink)"></span></span><div class="swatches" id="fc-sw"></div></div>
+    <div class="ctl"><span class="label">Técnica</span><div class="chips" id="fc-tech">${['Bordado','Estampado'].map(t => `<button type="button" class="chip" data-v="${t}">${t}</button>`).join('')}</div></div>
+    <div class="ctl"><span class="label">Logo en</span><div class="chips" id="fc-place">${p.places.map(t => `<button type="button" class="chip" data-v="${t}">${t}</button>`).join('')}</div></div>
+    <div class="ctl"><span class="label">Cantidad por talle</span><div class="sizes">${p.sizes.map(s => `<label class="size"><span>${s}</span><input type="number" min="0" max="999" inputmode="numeric" data-s="${s}" value="${fic.sizes[s] || ''}" placeholder="0" aria-label="Talle ${s}"></label>`).join('')}</div></div>
+    <div class="ficha-foot"><span class="tot"><b id="fc-tot">0</b> prendas</span><button class="btn" type="button" id="fc-add">${ex ? 'Guardar cambios' : 'Agregar al pedido'}</button></div>
+  </div></div>`;
+  fichaSync();
+  if (!dlg.open) dlg.showModal();
+}
+function fichaSync() {
+  const p = byId[fic.id], ph = shots(p, fic.color);
+  if (!ph[fic.shot]) fic.shot = 0;
+  $('#ficha-media').innerHTML = `<div class="ficha-main"><img src="${IMG(ph[fic.shot])}" alt="${esc(photoAlt(p, fic.color, ph[fic.shot]))}"></div>
+    ${ph.length > 1 ? `<div class="thumbs">${ph.map((f, i) => `<button type="button" class="thumb" data-shot="${i}" aria-pressed="${fic.shot === i}" aria-label="Foto ${i + 1}"><img src="${IMG(f)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}`;
+  $('#fc-sw').innerHTML = colorsOf(p).map(c => swatch(c, c === fic.color)).join('');
+  $('#fc-name').textContent = COL[fic.color][0];
+  $$('#fc-tech .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === fic.tech));
+  $$('#fc-place .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === fic.place));
+  const n = Object.values(fic.sizes).reduce((a, b) => a + b, 0);
+  $('#fc-tot').textContent = n; $('#fc-add').disabled = n === 0;
+}
+dlg.addEventListener('click', e => {
+  if (e.target === dlg || e.target.closest('[data-close]')) return dlg.close();
+  const sw = e.target.closest('#fc-sw [data-c]'); if (sw) { fic.color = sw.dataset.c; fic.shot = 0; return fichaSync(); }
+  const t = e.target.closest('#fc-tech [data-v]'); if (t) { fic.tech = t.dataset.v; return fichaSync(); }
+  const pl = e.target.closest('#fc-place [data-v]'); if (pl) { fic.place = pl.dataset.v; return fichaSync(); }
+  const sh = e.target.closest('[data-shot]'); if (sh) { fic.shot = +sh.dataset.shot; return fichaSync(); }
+  if (e.target.closest('#fc-add')) addToCart();
+});
+dlg.addEventListener('input', e => {
+  const i = e.target.closest('[data-s]'); if (!i) return;
+  const v = Math.max(0, Math.min(999, parseInt(i.value, 10) || 0));
+  if (v) fic.sizes[i.dataset.s] = v; else delete fic.sizes[i.dataset.s];
+  const n = Object.values(fic.sizes).reduce((a, b) => a + b, 0);
+  $('#fc-tot').textContent = n; $('#fc-add').disabled = n === 0;
+});
+function addToCart() {
+  const p = byId[fic.id];
+  const line = { id: fic.id, color: fic.color, tech: fic.tech, place: fic.place, sizes: { ...fic.sizes } };
+  const n = lineQty(line);
+  if (fic.editIdx != null) state.cart[fic.editIdx] = line;
+  else {
+    const same = state.cart.find(l => l.id === line.id && l.color === line.color && l.tech === line.tech && l.place === line.place);
+    if (same) for (const [s, q] of Object.entries(line.sizes)) same.sizes[s] = (same.sizes[s] || 0) + q;
+    else state.cart.push(line);
+  }
+  save(); renderCart(); dlg.close();
+  toast(fic.editIdx != null ? 'Pedido actualizado' : `Sumaste ${n} × ${p.name.toLowerCase()} ${COL[line.color][0].toLowerCase()}`);
+  track('AddToCart', { content_name: p.name, num_items: n });
+  const pill = $('#cart-pill'); pill.classList.remove('bump'); void pill.offsetWidth; pill.classList.add('bump');
+}
+
+// ── Pedido ─────────────────────────────
+const lineQty = l => Object.values(l.sizes).reduce((a, b) => a + b, 0);
+const total = () => state.cart.reduce((a, l) => a + lineQty(l), 0);
+const sizeTxt = l => byId[l.id].sizes.filter(s => l.sizes[s]).map(s => `${s}×${l.sizes[s]}`).join('  ');
+function renderCart() {
+  const n = total();
+  $('#tot-n').textContent = n; $('#cart-n').textContent = n;
+  $('#cart-pill').hidden = n === 0;
+  $('#meter i').style.width = Math.min(100, n / MIN * 100) + '%';
+  $('#meter').classList.toggle('ok', n >= MIN);
+  $('#tot-msg').textContent = n >= MIN ? 'Llegaste al mínimo' : `Faltan ${MIN - n} para el mínimo`;
+  $('#lines').innerHTML = state.cart.length ? state.cart.map((l, i) => {
+    const p = byId[l.id];
+    return `<div class="line"><img src="${IMG(p.v[l.color].f)}" alt="" loading="lazy"><div class="det"><b>${p.name}</b>${COL[l.color][0]} · ${l.tech} en ${l.place.toLowerCase()}<br>${sizeTxt(l)}</div>
+      <div><div class="qty">${lineQty(l)}</div><div class="acts"><button class="iconbtn" type="button" data-edit="${i}">Editar</button><button class="iconbtn" type="button" data-del="${i}" aria-label="Quitar ${esc(p.name)}">Quitar</button></div></div></div>`;
+  }).join('') : `<div class="empty-cart"><p>Todavía no sumaste prendas. Elegilas en el catálogo y aparecen acá.</p><a class="btn ghost sm" href="#catalogo">Ver catálogo</a></div>`;
+  // Se puede mandar siempre: el mínimo se aclara, pero no frena la consulta.
+  $('#f-note').textContent = n === 0 ? 'Podés mandarlo sin elegir prendas: contanos qué necesitás y lo armamos juntos.'
+    : n < MIN ? `El mínimo es ${MIN} prendas en total. Mandalo igual y lo completamos juntos.` : '';
+}
+$('#lines').addEventListener('click', e => {
+  const d = e.target.closest('[data-del]'); if (d) { state.cart.splice(+d.dataset.del, 1); save(); renderCart(); return; }
+  const ed = e.target.closest('[data-edit]'); if (ed) { const l = state.cart[+ed.dataset.edit]; openFicha(l.id, l.color, +ed.dataset.edit); }
+});
+let lastMsg = '';
+$('#quote-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = id => $('#' + id).value.trim();
+  const err = $('#f-err');
+  if (!v('f-empresa') || !v('f-nombre')) { err.textContent = 'Completá el nombre de la empresa y tu nombre.'; err.hidden = false; return; }
+  if (!v('f-tel') && !v('f-mail')) { err.textContent = 'Dejanos un teléfono o un email para poder responderte.'; err.hidden = false; return; }
+  if (v('f-mail') && !/^\S+@\S+\.\S+$/.test(v('f-mail'))) { err.textContent = 'Revisá el email: parece incompleto.'; err.hidden = false; return; }
+  err.hidden = true;
+  const brandLine = !state.brand.logo && state.brand.name.trim() ? `Texto a bordar/estampar: ${state.brand.name.trim()}` : 'Logo: lo envío por este chat.';
+  lastMsg = [
+    '¡Hola Uniform.AR! Quiero pedir un presupuesto.', '',
+    `Empresa: ${v('f-empresa')} (${v('f-rubro')})`,
+    `Contacto: ${v('f-nombre')}${v('f-tel') ? ' · ' + v('f-tel') : ''}${v('f-mail') ? ' · ' + v('f-mail') : ''}`, '',
+    total() === 0 ? 'PEDIDO: todavía no elegí prendas, quiero que me asesoren.'
+      : `PEDIDO (${total()} prendas${total() < MIN ? `, todavía no llego al mínimo de ${MIN}` : ''})`,
+    ...state.cart.map(l => { const p = byId[l.id]; return `• ${lineQty(l)} × ${p.name}, ${COL[l.color][0].toLowerCase()}, ${l.tech.toLowerCase()} en ${l.place.toLowerCase()}. Talles: ${sizeTxt(l)}`; }),
+    '', brandLine,
+    ...(v('f-msg') ? ['', `Comentarios: ${v('f-msg')}`] : [])
+  ].join('\n');
+  $('#result-text').textContent = lastMsg;
+  $('#result-wa').href = `https://wa.me/${WA}?text=${encodeURIComponent(lastMsg)}`;
+  $('#quote-form').hidden = true; $('#result').hidden = false;
+  track('Lead', { num_items: total() });
+});
+$('#result-copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(lastMsg); toast('Pedido copiado'); } catch (e) { const r = document.createRange(); r.selectNodeContents($('#result-text')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Pedido seleccionado: copialo con Ctrl+C'); } });
+$('#result-edit').addEventListener('click', () => { $('#quote-form').hidden = false; $('#result').hidden = true; });
+
+// ── Varios ─────────────────────────────
+let toastT;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+$('#year').textContent = new Date().getFullYear();
+const header = $('#header');
+const onScroll = () => header.classList.toggle('scrolled', scrollY > 8);
+addEventListener('scroll', onScroll, { passive: true }); onScroll();
+// Menú: en pantallas chicas se abre con el botón y se cierra al elegir una sección, con Escape o tocando afuera.
+const menuBtn = $('#menu-btn'), nav = $('#nav');
+const setMenu = open => { nav.classList.toggle('open', open); menuBtn.setAttribute('aria-expanded', open); menuBtn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Menú'); };
+menuBtn.addEventListener('click', () => setMenu(!nav.classList.contains('open')));
+nav.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('open')) { setMenu(false); menuBtn.focus(); } });
+document.addEventListener('click', e => { if (nav.classList.contains('open') && !e.target.closest('#nav, #menu-btn')) setMenu(false); });
+$$('[data-open-talles]').forEach(a => a.addEventListener('click', () => { $('#talles').open = true; }));
+// Entradas suaves: cada bloque aparece una sola vez cuando entra en pantalla.
+const io = 'IntersectionObserver' in window && !calm ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' }) : null;
+function reveal(els) { els.forEach((el, i) => { if (!io) return el.classList.add('in'); el.classList.add('rv'); el.style.transitionDelay = (i % 4) * 60 + 'ms'; io.observe(el); }); }
+reveal($$('.rv'));
+
+// ── Intro bordada ─────────────────────────────
+const intro = $('#intro');
+if (document.documentElement.classList.contains('has-intro')) {
+  const t0 = performance.now();
+  document.body.style.overflow = 'hidden';
+  const end = () => { if (intro.classList.contains('done')) return; intro.classList.add('done'); document.body.style.overflow = ''; try { sessionStorage.setItem('ua_intro', '1'); } catch (e) {} };
+  intro.addEventListener('animationend', e => { if (e.target === intro) end(); });
+  setTimeout(end, 2400);
+  // Al saltearla, el hero arranca apenas se corre la tela.
+  intro.addEventListener('click', () => { document.documentElement.style.setProperty('--intro-d', Math.round(performance.now() - t0 + 380) + 'ms'); intro.classList.add('skip'); }, { once: true });
+}
+
+// ── Inicio ─────────────────────────────
+renderFilters(); renderGrid(); renderCart();
+})();
+</script>
+</body>
+</html>
