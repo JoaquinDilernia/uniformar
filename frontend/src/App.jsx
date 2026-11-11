@@ -10,7 +10,6 @@ import { ToastViewport } from './state/Toasts.jsx';
 import { Login } from './pages/Login.jsx';
 import { ChangePassword } from './pages/ChangePassword.jsx';
 import { MorePage } from './pages/More.jsx';
-import { ComingSoon } from './pages/ComingSoon.jsx';
 import { IdeasPage } from './pages/ideas/IdeasPage.jsx';
 import { CalendarPage } from './pages/calendar/CalendarPage.jsx';
 import { ProjectsPage } from './pages/projects/ProjectsPage.jsx';
@@ -20,6 +19,7 @@ import { UsersPage } from './pages/users/UsersPage.jsx';
 import { SettingsPage } from './pages/Settings.jsx';
 import { AccountPage } from './pages/Account.jsx';
 import { AdsPage } from './pages/ads/AdsPage.jsx';
+import { WebPage } from './pages/web/WebPage.jsx';
 import s from './pages/pages.module.css';
 
 function Home() {
@@ -55,7 +55,7 @@ export default function App() {
         <Route path="/proyectos" element={<Guard section="projects"><ProjectsPage /></Guard>} />
         <Route path="/proyectos/:id" element={<Guard section="projects"><ProjectDetail /></Guard>} />
         <Route path="/pauta" element={<Guard section="ads"><AdsPage /></Guard>} />
-        <Route path="/web" element={<Guard section="web"><ComingSoon kind="web" /></Guard>} />
+        <Route path="/web" element={<Guard section="web"><WebPage /></Guard>} />
         <Route path="/usuarios" element={<Guard flag="manage_users"><UsersPage /></Guard>} />
         <Route path="/ajustes" element={<Guard section="calendar" level="edit"><SettingsPage /></Guard>} />
         <Route path="/cuenta" element={<AccountPage />} />

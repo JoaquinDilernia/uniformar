@@ -1,0 +1,30 @@
+.page { padding: 0 var(--sp-4) var(--sp-6); display: flex; flex-direction: column; gap: var(--sp-4); }
+@media (min-width: 900px) { .page { padding: 0 var(--sp-6) var(--sp-7); max-width: 960px; } }
+
+.card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-l); padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+
+.item { border: 1px solid var(--c-border); border-radius: var(--radius-m, 10px); padding: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.head { display: flex; gap: var(--sp-2); align-items: flex-start; justify-content: space-between; }
+.grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.grow h3 { font-size: var(--fs-m); margin: 0; }
+.grow small { color: var(--c-text-3); font-size: var(--fs-xs); }
+.muted { color: var(--c-text-2); font-weight: 400; }
+
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 2px var(--sp-3); margin: 0; font-size: var(--fs-s); }
+.facts dt { color: var(--c-text-3); }
+.facts dd { margin: 0; }
+.msg { margin: 0; font-size: var(--fs-s); white-space: pre-wrap; overflow-wrap: anywhere; }
+.note { margin: 0; font-size: var(--fs-s); color: var(--c-text-2); border-left: 3px solid var(--c-border); padding-left: var(--sp-2); }
+
+.edit { display: grid; gap: var(--sp-2); }
+@media (min-width: 700px) { .edit { grid-template-columns: 200px 1fr; align-items: start; } .edit .actions { grid-column: 1 / -1; } }
+.actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; }
+.link { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-s); font-weight: 600; color: var(--c-accent-text); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+
+.badge { font-size: var(--fs-xs); font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; background: var(--c-surface-2, var(--c-border)); color: var(--c-text-2); }
+.new { background: var(--c-accent-soft); color: var(--c-accent-text); }
+.won { background: color-mix(in srgb, #2f8a4e 16%, transparent); color: #2f8a4e; }
+
+.stars { color: #c9932f; letter-spacing: 1px; white-space: nowrap; }
+.off { color: var(--c-border); }

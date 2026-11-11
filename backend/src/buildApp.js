@@ -23,9 +23,11 @@ import { adsConfigFromEnv, createAgentRunner, createExecutor } from './ads/agent
 import { createAdsChat } from './ads/chat.js';
 import { createReportAnalyst } from './ads/reportAnalysis.js';
 import { createIgPublisher } from './services/igPublisher.js';
+import { createWebRepo } from './repo/web.js';
+import { createPublicWebRouter, createWebRouter } from './routes/web.js';
 
 // ads (opcional): { meta, anthropic, config, model } — sin meta/anthropic la sección Pauta avisa qué falta
-export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, publicBaseUrl, loginLimit = 10, ads = {} }) {
+export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, publicBaseUrl, loginLimit = 10, webLimit = 8, ads = {} }) {
   if (!jwtSecret) throw new Error('Falta jwtSecret');
   if (!storage) throw new Error('Falta storage');
 
@@ -38,6 +40,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
   const files = createFilesService({ db, storage, uploadSecret: jwtSecret });
   const authenticate = createAuthenticate({ usersRepo, secret: jwtSecret });
   const adsRepo = createAdsRepo(db);
+  const webRepo = createWebRepo(db);
   const adsConfig = ads.config ?? adsConfigFromEnv();
   const execute = ads.meta ? createExecutor({ meta: ads.meta, repo: adsRepo, files, config: adsConfig }) : null;
   const startRun = ads.meta && ads.anthropic
@@ -50,6 +53,8 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
   const api = Router();
   api.use('/auth', createAuthRouter({ usersRepo, secret: jwtSecret, authenticate, loginLimit }));
   api.use(createPublicFilesRouter({ files }));
+  // Formulario de cotización y reseñas de la web pública (sin sesión)
+  api.use(createPublicWebRouter({ webRepo, limit: webLimit }));
   // Todo lo que sigue requiere sesión y contraseña ya cambiada
   api.use(authenticate, requirePasswordChanged);
   api.use('/users', createUsersRouter({ usersRepo }));
@@ -59,6 +64,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
   api.use(createCalendarRouter({ db, calendarRepo, files, igPublisher }));
   api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
   api.use(createHomeRouter({ homeRepo: createHomeRepo(db), storage }));
+  api.use(createWebRouter({ webRepo }));
   api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig, files, analyzeReport, chatReply }));
 
   const app = createApp({
