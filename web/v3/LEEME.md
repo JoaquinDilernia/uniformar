@@ -69,7 +69,7 @@ Todo el contenido variable está arriba del `<script>` final:
 
 ## Estilo
 - **Colores**: fondo gris neutro `#F3F2F0` (nada de crema), negro `#141113`, bordó `#765E6E` y lila `#E9DDE3`. Los fondos pastel del catálogo están en `TINTS`.
-- **Tipografía**: Inter Tight. Títulos en 800/900 con tracking -0,04em.
+- **Tipografía**: Archivo para los títulos (800/900, tracking -0,04em) y DM Sans para los textos.
 - **Bordes**: radios de 28 px. Botones tipo pill del ancho del texto.
 
 ## Qué se saca respecto de la versión actual

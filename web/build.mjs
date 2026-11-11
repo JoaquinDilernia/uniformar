@@ -44,7 +44,7 @@ const jsonld = [
     url: `${site}/`,
     logo: `${site}/assets/apple-touch-icon.png`,
     image: `${site}/assets/og.jpg`,
-    telephone: '+54 9 11 7354-2234',
+    telephone: '+54 9 11 7353-8181',
     email: 'uniformarindumentaria@gmail.com',
     address: { '@type': 'PostalAddress', addressLocality: 'Buenos Aires', addressCountry: 'AR' },
     areaServed: { '@type': 'Country', name: 'Argentina' },
