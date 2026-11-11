@@ -12,7 +12,7 @@
 <link rel="icon" href="../assets/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
 <link rel="preload" as="image" href="assets/video/hero.jpg" fetchpriority="high">
-<script>/* La intro bordada va solo en la primera visita de la sesión y nunca con movimiento reducido. */try{if(!sessionStorage.getItem('ua_intro')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('has-intro')}catch(e){}</script>
+<script>/* La intro bordada va solo en la primera visita de la sesión y nunca con movimiento reducido. */try{if(location.hash!=='#dejar-resena'&&!sessionStorage.getItem('ua_intro')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('has-intro')}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 <style>
@@ -237,6 +237,7 @@ form .btn{justify-content:center;margin-top:4px}
 .rev small{display:block;color:var(--muted);font-size:14px;font-weight:400}
 .rev-empty{color:var(--muted);margin-top:24px}
 .rev-cta{margin-top:36px}
+#resenas{scroll-margin-top:64px}
 .rform{background:var(--card);color:var(--ink);margin-top:22px;max-width:640px}
 .rform label{color:var(--ink)}
 .rform input,.rform textarea{color:var(--ink);background:var(--bg);border-color:var(--line)}
@@ -630,6 +631,9 @@ fetch(`${API}/reviews`).then(r=>r.ok?r.json():{reviews:[]}).catch(()=>({reviews:
 
 const rform = document.getElementById('rform'), revOpen = document.getElementById('revOpen'), rmsg = document.getElementById('rmsg');
 revOpen.addEventListener('click',()=>{ rform.hidden = !rform.hidden; revOpen.setAttribute('aria-expanded', String(!rform.hidden)); if(!rform.hidden) rform.querySelector('input').focus(); });
+/* Link directo para pedir reseñas: uniformar.ar/#dejar-resena abre el formulario */
+const openReview = () => { if (location.hash !== '#dejar-resena') return; rform.hidden = false; revOpen.setAttribute('aria-expanded', 'true'); document.getElementById('resenas').scrollIntoView(); rform.querySelector('input').focus({ preventScroll: true }); };
+addEventListener('hashchange', openReview); openReview(); addEventListener('load', () => { if (location.hash === '#dejar-resena' && scrollY > 0) document.getElementById('resenas').scrollIntoView(); });
 const stars = document.getElementById('stars');
 for (let i=1;i<=5;i++) stars.insertAdjacentHTML('beforeend', `<input type="radio" name="rating" id="st${i}" value="${i}" ${i===5?'checked':''}><label for="st${i}" aria-label="${i} de 5">★</label>`);
 const paint = () => { const v = +(rform.rating.value||0); stars.querySelectorAll('label').forEach((l,i)=>l.classList.toggle('on', i < v)); };
