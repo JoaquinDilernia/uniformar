@@ -39,7 +39,7 @@ const bucketOf = (map, key) => {
 };
 const idOf = (rn) => (rn ? String(rn).split('/').pop() : null);
 
-// Foto de la cuenta: estructura en vivo + métricas (7 días, 7 anteriores, hoy, mes). 9 consultas.
+// Foto de la cuenta: estructura en vivo + métricas (7 días, 7 anteriores, hoy, mes). 10 consultas.
 export async function buildGoogleSnapshot(gads, { now = new Date() } = {}) {
   const today = artDate(now);
   const w7 = { from: addDays(today, -6), to: today };
@@ -48,7 +48,7 @@ export async function buildGoogleSnapshot(gads, { now = new Date() } = {}) {
   const monthFrom = `${today.slice(0, 7)}-01`;
   const wide = { from: monthFrom < d14.from ? monthFrom : d14.from, to: today };
 
-  const [campaignRows, campaignDaily, adGroupRows, adGroupMetrics, keywordRows, keywordMetrics, termRows, adRows, conversionRows] = await Promise.all([
+  const [campaignRows, campaignDaily, adGroupRows, adGroupMetrics, keywordRows, keywordMetrics, termRows, adRows, conversionRows, assetRows] = await Promise.all([
     gads.search(`SELECT campaign.id, campaign.name, campaign.status, campaign.primary_status, campaign.advertising_channel_type,
   campaign.bidding_strategy_type, campaign.campaign_budget, campaign_budget.amount_micros
 FROM campaign WHERE campaign.status != 'REMOVED'`),
@@ -73,6 +73,9 @@ FROM ad_group_ad WHERE ad_group_ad.status != 'REMOVED' AND campaign.status != 'R
     gads.search(`SELECT conversion_action.id, conversion_action.name, conversion_action.category, conversion_action.status,
   conversion_action.primary_for_goal
 FROM conversion_action WHERE conversion_action.status = 'ENABLED'`),
+    gads.search(`SELECT campaign.id, campaign_asset.field_type, campaign_asset.status, asset.id, asset.sitelink_asset.link_text,
+  asset.callout_asset.callout_text, asset.structured_snippet_asset.header, asset.name
+FROM campaign_asset WHERE campaign_asset.status != 'REMOVED' AND campaign.status != 'REMOVED'`).catch(() => []),
   ]);
 
   const inRange = (d, r) => d >= r.from && d <= r.to;
@@ -140,12 +143,18 @@ FROM conversion_action WHERE conversion_action.status = 'ENABLED'`),
     primary: r.conversionAction?.primaryForGoal ?? null,
   }));
 
+  // Recursos ya vinculados (vínculos, destacados, fragmentos, imágenes) para no repetirlos
+  const assets = assetRows.map((r) => ({
+    campaignId: String(r.campaign?.id), type: r.campaignAsset?.fieldType, status: r.campaignAsset?.status,
+    text: r.asset?.sitelinkAsset?.linkText ?? r.asset?.calloutAsset?.calloutText ?? r.asset?.structuredSnippetAsset?.header ?? r.asset?.name ?? null,
+  }));
+
   return {
     generatedAt: new Date(now).toISOString(),
     today,
     spendToday: pesos(todayRaw.costMicros),
     month: summarize(monthRaw),
     last7d: summarize(last7),
-    campaigns, adGroups, keywords, ads, searchTerms, conversionActions,
+    campaigns, adGroups, keywords, ads, searchTerms, conversionActions, assets,
   };
 }

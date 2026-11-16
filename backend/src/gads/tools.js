@@ -118,6 +118,30 @@ export const GOOGLE_TOOLS = [
     },
   },
   {
+    name: 'propose_assets',
+    description: 'Proponer recursos para una campaña de búsqueda: vínculos a secciones de la web, textos destacados y fragmento estructurado. No cuestan más (se paga el clic) y agrandan el anuncio. Se validan en Google antes de quedar pendientes. Las imágenes NO se pueden agregar por API: si conviene sumarlas, recomendá en el informe cuáles de la biblioteca (images) cargar a mano en Google Ads.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        campaign_id: s('Id de la campaña'), campaign_name: s('Nombre'),
+        sitelinks: {
+          type: 'array', maxItems: 8,
+          description: 'Vínculos a secciones (mínimo 2 para que se muestren, ideal 4). Texto hasta 25 caracteres; las dos descripciones hasta 35 cada una (las dos o ninguna). Secciones de la web: https://uniformar.ar/#rubros, #catalogo, #servicio, #franquicias, #resenas, #cotiza.',
+          items: { type: 'object', properties: { text: s('Texto del vínculo, hasta 25 caracteres'), description1: s('Hasta 35'), description2: s('Hasta 35'), url: s('URL de uniformar.ar') }, required: ['text', 'url'] },
+        },
+        callouts: strings('Textos destacados de hasta 25 caracteres (ej. "Envío gratis al país", "Desde 30 prendas", "Logo bordado o estampado")', { maxItems: 10 }),
+        structured_snippet: {
+          type: 'object',
+          description: 'Fragmento estructurado: un encabezado y 3 a 10 valores de hasta 25 caracteres (ej. Tipos: Camisas, Chombas, Camperas…).',
+          properties: { header: { type: 'string', enum: ['Tipos', 'Servicios', 'Estilos', 'Marcas'] }, values: strings('Valores', { minItems: 3, maxItems: 10 }) },
+          required: ['header', 'values'],
+        },
+        ...why,
+      },
+      required: ['campaign_id', ...whyReq],
+    },
+  },
+  {
     name: 'save_learning',
     description: 'Guardar o actualizar un aprendizaje con evidencia repetida (nunca de una sola muestra). Pasá learning_id para actualizar o marcarlo obsolete.',
     input_schema: { type: 'object', properties: { learning_id: s('ID existente (omitir para crear)'), text: s('El aprendizaje, corto y accionable'), evidence: s('Evidencia con fechas y números'), status: { type: 'string', enum: ['active', 'obsolete'] } }, required: ['text', 'evidence'] },
@@ -142,6 +166,6 @@ export const GOOGLE_TOOLS = [
 ];
 
 export const GOOGLE_READ_ONLY = new Set(['find_locations']);
-export const GOOGLE_ACTIONS = new Set(['propose_search_campaign', 'set_status', 'propose_budget_change', 'add_negative_keywords', 'add_keywords', 'propose_search_ad']);
+export const GOOGLE_ACTIONS = new Set(['propose_assets', 'propose_search_campaign', 'set_status', 'propose_budget_change', 'add_negative_keywords', 'add_keywords', 'propose_search_ad']);
 // Las que crean cosas en Google se validan (validateOnly) antes de quedar pendientes
-export const GOOGLE_VALIDATED = new Set(['propose_search_campaign', 'add_negative_keywords', 'add_keywords', 'propose_search_ad']);
+export const GOOGLE_VALIDATED = new Set(['propose_assets', 'propose_search_campaign', 'add_negative_keywords', 'add_keywords', 'propose_search_ad']);

@@ -19,6 +19,11 @@ Si no hay campañas, proponé UNA campaña de búsqueda con propose_search_campa
 - Negativas de campaña desde el día 1: empleo, trabajo como búsqueda de empleo ("busco trabajo", "trabajo de"), gratis, usado(s), mercado libre, disfraz, escolar, colegio, molde, curso, "cómo hacer", y lo que veas obvio.
 - Anuncios: títulos de hasta 30 caracteres (contalos), descripciones de hasta 90. Mencioná: tu logo bordado o estampado, mínimo 30 prendas, envío gratis a todo el país, cotizá por WhatsApp, el rubro del grupo. Usá variantes, no repitas el mismo título.
 
+# Recursos del anuncio (propose_assets)
+- Cuando una campaña está activa y no tiene recursos (campaignAssets), proponé: 4 vínculos a secciones (rubros, catálogo, franquicias, cotizá…), 4-6 textos destacados (envío gratis, desde 30 prendas, logo bordado o estampado, asesoramiento) y un fragmento estructurado (Tipos: las prendas).
+- Imágenes: la API no permite agregarlas. Si la campaña no tiene imágenes (campaignAssets sin AD_IMAGE), recomendá en el informe cuáles de la biblioteca (images) conviene cargar a mano en Google Ads (las que muestran la prenda con el logo y se entienden en chico). Si la biblioteca está vacía, pedí que carguen o traigan de Meta.
+- No repitas recursos que ya están en campaignAssets.
+
 # Criterio
 - Cuenta nueva: los primeros 7-10 días son de aprendizaje. Con menos de ~5 consultas o pocos días no saques conclusiones; decí qué esperás ver.
 - El reporte de términos de búsqueda (searchTerms) es la fuente principal: lo que gastó en búsquedas que no son de empresas → negativas (add_negative_keywords); lo que trajo consultas y no es palabra clave → add_keywords.

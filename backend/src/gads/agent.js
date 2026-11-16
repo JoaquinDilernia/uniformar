@@ -68,8 +68,8 @@ export function createGoogleDispatcher({ gads, repo, execute }) {
   };
 }
 
-export async function buildGoogleContext({ gads, repo }) {
-  const [snapshot, settings, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions] = await Promise.all([
+export async function buildGoogleContext({ gads, repo, images }) {
+  const [snapshot, settings, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions, library] = await Promise.all([
     buildGoogleSnapshot(gads),
     repo.getSettings(),
     repo.listLearnings({ activeOnly: true }),
@@ -78,6 +78,7 @@ export async function buildGoogleContext({ gads, repo }) {
     repo.executedWithoutOutcome(72),
     repo.listQuestions({ status: 'open', limit: 30 }),
     repo.answeredSinceLastRun(),
+    images ? images.list() : [],
   ]);
   const sections = {
     today: snapshot.today,
@@ -89,6 +90,8 @@ export async function buildGoogleContext({ gads, repo }) {
     adGroups: snapshot.adGroups,
     keywords: snapshot.keywords,
     ads: snapshot.ads,
+    campaignAssets: snapshot.assets,
+    images: library.map((i) => ({ id: i.id, name: i.name, from: i.source_name ? `pieza de Meta "${i.source_name}"` : 'cargada para Google', size: i.file ? `${i.file.width}x${i.file.height}` : null })),
     searchTerms: snapshot.searchTerms,
     activeLearnings: learnings.map((l) => ({ id: l.id, text: l.text, evidence: l.evidence })),
     pendingRecommendations: pending.map((d) => ({ id: d.id, tool: d.tool, title: d.title, created_at: d.created_at })),
@@ -100,12 +103,12 @@ export async function buildGoogleContext({ gads, repo }) {
   return { snapshot, settings, text: Object.entries(sections).map(([k, v]) => `## ${k}\n${JSON.stringify(v)}`).join('\n\n') };
 }
 
-export function createGoogleAgentRunner({ anthropic, gads, repo, execute, model = DEFAULT_MODEL }) {
+export function createGoogleAgentRunner({ anthropic, gads, repo, execute, images, model = DEFAULT_MODEL }) {
   const dispatch = createGoogleDispatcher({ gads, repo, execute });
 
   async function process(runRow) {
     try {
-      const { snapshot, settings, text } = await buildGoogleContext({ gads, repo });
+      const { snapshot, settings, text } = await buildGoogleContext({ gads, repo, images });
       const messages = [{ role: 'user', content: `Análisis ${runRow.kind === 'daily' ? 'diario' : 'pedido desde el panel'} de la cuenta de Google Ads. Datos actuales:\n\n${text}` }];
       let report = '';
       for (let turn = 0; turn < MAX_TURNS; turn++) {

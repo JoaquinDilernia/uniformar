@@ -18,6 +18,8 @@ export const OWNER_TYPES = {
   // Piezas de pauta: van tal cual a Meta, que no acepta WebP — solo JPG/PNG y sin comprimir
   ad_feed: { table: 'ad_creatives', section: 'ads', kind: 'image', max: 1, accept: ['image/jpeg', 'image/png'], maxBytes: 8 * 1024 * 1024, video: VIDEO_DEF },
   ad_story: { table: 'ad_creatives', section: 'ads', kind: 'image', max: 1, accept: ['image/jpeg', 'image/png'], maxBytes: 8 * 1024 * 1024, video: VIDEO_DEF },
+  // Imágenes para los anuncios de Google: el servidor arma los recortes cuadrado y horizontal al proponerlas
+  gads_image: { table: 'gads_images', section: 'ads', kind: 'image', max: 1, accept: ['image/jpeg', 'image/png'], maxBytes: 8 * 1024 * 1024 },
 };
 export const LIMITS = { image: 2 * 1024 * 1024, pdf: 10 * 1024 * 1024 };
 const ACCEPTED = { image: ['image/webp', 'image/jpeg', 'image/png'], pdf: ['application/pdf'] };

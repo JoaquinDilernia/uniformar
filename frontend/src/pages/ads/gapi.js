@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../api/client.js';
+import { api, API_BASE, getToken } from '../../api/client.js';
+import { uploadFile } from '../../lib/upload.js';
 
 // Agente de Google Ads: mismas piezas que Meta, bajo /gads
 const keys = { overview: ['gads', 'overview'], decisions: ['gads', 'decisions'], learnings: ['gads', 'learnings'] };
@@ -45,4 +46,43 @@ export function useDeleteGoogleLearning() {
 export function useSaveGoogleSettings() {
   const refresh = useRefresh();
   return useMutation({ mutationFn: (patch) => api.put('/gads/settings', patch).then((r) => r.settings), meta: { success: 'Ajustes guardados ✓' }, onSettled: refresh });
+}
+
+// Biblioteca de imágenes para Google (se cargan acá o se traen de las piezas de Meta)
+export const useGoogleImages = () => useQuery({ queryKey: ['gads', 'images'], queryFn: () => api.get('/gads/images').then((r) => r.images) });
+export function useUploadGoogleImage() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: async ({ name, file }) => {
+      const image = (await api.post('/gads/images', { name })).image;
+      try {
+        await uploadFile({ ownerType: 'gads_image', ownerId: image.id, file, kind: 'raw' });
+      } catch (err) {
+        await api.post(`/gads/images/${image.id}/archive`).catch(() => {});
+        throw err;
+      }
+      return image;
+    },
+    meta: { success: 'Imagen cargada ✓' },
+    onSettled: refresh,
+  });
+}
+export function useImportFromMeta() {
+  const refresh = useRefresh();
+  return useMutation({ mutationFn: (creativeId) => api.post(`/gads/images/from-creative/${creativeId}`), meta: { success: 'Imagen traída de Meta ✓' }, onSettled: refresh });
+}
+export function useArchiveGoogleImage() {
+  const refresh = useRefresh();
+  return useMutation({ mutationFn: (id) => api.post(`/gads/images/${id}/archive`), meta: { success: false }, onSettled: refresh });
+}
+// Descarga el recorte (cuadrado u horizontal) listo para cargar a mano en Google Ads
+export async function downloadCrop(image, shape) {
+  const res = await fetch(`${API_BASE}/api/gads/images/${image.id}/${shape}.jpg`, { headers: { Authorization: `Bearer ${getToken()}` } });
+  if (!res.ok) throw new Error('No se pudo bajar la imagen.');
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${image.name} ${shape}.jpg`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

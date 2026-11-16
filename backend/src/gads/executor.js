@@ -113,6 +113,44 @@ export function createGoogleExecutor({ gads, landingHost = 'uniformar.ar' }) {
     return ops;
   }
 
+  // Recursos de campaña: cada recurso se crea y se vincula a la campaña en el mismo pedido (ids temporales)
+  function assetOps(input) {
+    const campaign = `${C}/campaigns/${numericId(input.campaign_id, 'campaña')}`;
+    const ops = [];
+    let tmp = -100;
+    const link = (asset, fieldType) => {
+      const resourceName = `${C}/assets/${tmp--}`;
+      ops.push({ assetOperation: { create: { resourceName, ...asset } } });
+      ops.push({ campaignAssetOperation: { create: { campaign, asset: resourceName, fieldType } } });
+    };
+    const len = (v, max, label) => {
+      const s = String(v ?? '').trim();
+      if (!s) throw badRequest(`Falta el texto de ${label}.`);
+      if ([...s].length > max) throw badRequest(`"${s}" tiene ${[...s].length} caracteres: el máximo para ${label} es ${max}.`);
+      return s;
+    };
+    for (const sl of input.sitelinks ?? []) {
+      const d1 = String(sl.description1 ?? '').trim();
+      const d2 = String(sl.description2 ?? '').trim();
+      if (Boolean(d1) !== Boolean(d2)) throw badRequest(`El vínculo "${sl.text}" necesita las dos descripciones o ninguna.`);
+      link({
+        finalUrls: [landingUrl(sl.url, landingHost)],
+        sitelinkAsset: { linkText: len(sl.text, 25, 'un vínculo'), ...(d1 ? { description1: len(d1, 35, 'una descripción de vínculo'), description2: len(d2, 35, 'una descripción de vínculo') } : {}) },
+      }, 'SITELINK');
+    }
+    for (const c of [...new Set((input.callouts ?? []).map((x) => String(x).trim()).filter(Boolean))]) {
+      link({ calloutAsset: { calloutText: len(c, 25, 'un texto destacado') } }, 'CALLOUT');
+    }
+    if (input.structured_snippet) {
+      const values = texts(input.structured_snippet.values, { min: 3, max: 10, maxLen: 25, label: 'valores del fragmento' });
+      link({ structuredSnippetAsset: { header: String(input.structured_snippet.header), values } }, 'STRUCTURED_SNIPPET');
+    }
+    // Imágenes: la API de Google no deja vincular AD_IMAGE (UNSUPPORTED_FIELD_TYPE en campaña, grupo y cuenta);
+    // se cargan a mano en Google Ads desde la biblioteca del panel.
+    if (!ops.length) throw badRequest('No hay recursos para agregar.');
+    return ops;
+  }
+
   function opsFor(tool, input) {
     switch (tool) {
       case 'propose_search_campaign':
@@ -164,7 +202,7 @@ export function createGoogleExecutor({ gads, landingHost = 'uniformar.ar' }) {
 
   async function run(tool, input = {}, { validateOnly = false } = {}) {
     if (tool === 'propose_budget_change') return setBudget(input, { validateOnly });
-    const ops = opsFor(tool, input);
+    const ops = tool === 'propose_assets' ? await assetOps(input) : opsFor(tool, input);
     if (!ops) throw new Error(`Acción desconocida: ${tool}`);
     const res = await gads.mutateAll(ops, { validateOnly });
     if (validateOnly) return { valid: true };
@@ -173,6 +211,7 @@ export function createGoogleExecutor({ gads, landingHost = 'uniformar.ar' }) {
       const campaign = created.find((rn) => rn.includes('/campaigns/'));
       return { campaign_id: campaign?.split('/').pop() ?? null, status: 'ENABLED', created: created.length };
     }
+    if (tool === 'propose_assets') return { created: created.filter((rn) => rn.includes('/assets/')).length };
     return { created: created.length, resources: created.slice(0, 30) };
   }
 

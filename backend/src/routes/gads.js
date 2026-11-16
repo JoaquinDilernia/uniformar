@@ -19,7 +19,7 @@ const SNAPSHOT_TTL_MS = 10 * 60_000;
 const LEVEL_LABEL = { campaign: 'la campaña', ad_group: 'el grupo' };
 
 // Agente de Google Ads (mismo permiso que la sección Pauta)
-export function createGoogleAdsRouter({ repo, gads, startRun, execute }) {
+export function createGoogleAdsRouter({ repo, gads, startRun, execute, images }) {
   const r = Router();
   const view = requirePermission('ads', 'view');
   const edit = requirePermission('ads', 'edit');
@@ -137,6 +137,21 @@ export function createGoogleAdsRouter({ repo, gads, startRun, execute }) {
     res.json({ question, run, note });
   });
   r.post('/gads/questions/:id/dismiss', edit, async (req, res) => res.json({ question: await repo.dismissQuestion(parse(uuid, req.params.id)) }));
+
+  // Biblioteca de imágenes para los anuncios: se crea la fila y el navegador sube el archivo a /files (owner gads_image)
+  r.get('/gads/images', view, async (_req, res) => res.json({ images: await images.list() }));
+  r.post('/gads/images', edit, async (req, res) => {
+    const { name } = parse(z.object({ name: z.string().trim().min(1, 'Poné un nombre').max(120) }), req.body);
+    res.status(201).json({ image: await images.create(name, req.user.id) });
+  });
+  r.post('/gads/images/from-creative/:id', edit, async (req, res) => {
+    res.status(201).json({ image: await images.importFromCreative(parse(uuid, req.params.id), req.user.id) });
+  });
+  r.get('/gads/images/:id/:shape.jpg', view, async (req, res) => {
+    const { buffer, filename } = await images.crop(parse(uuid, req.params.id), req.params.shape);
+    res.set({ 'Content-Type': 'image/jpeg', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(filename)}` }).send(buffer);
+  });
+  r.post('/gads/images/:id/archive', edit, async (req, res) => res.json({ image: await images.archive(parse(uuid, req.params.id)) }));
 
   r.get('/gads/settings', view, async (_req, res) => res.json({ settings: await repo.getSettings() }));
   r.put('/gads/settings', edit, async (req, res) => res.json({ settings: await repo.updateSettings(parse(settingsSchema, req.body)) }));

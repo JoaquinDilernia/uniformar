@@ -14,12 +14,13 @@ import {
 import { ars, when } from './format.js';
 import { AgentQuestions } from './Questions.jsx';
 import { ReportText } from './ReportText.jsx';
+import { GoogleImages } from './GoogleImages.jsx';
 import s from './ads.module.css';
 
 const STATUS_LABEL = { ENABLED: 'Activa', PAUSED: 'Pausada' };
 const TOOL_LABEL = {
   propose_search_campaign: 'Campaña nueva', set_status: 'Activar / pausar', propose_budget_change: 'Presupuesto',
-  add_negative_keywords: 'Palabras negativas', add_keywords: 'Palabras clave', propose_search_ad: 'Anuncio nuevo',
+  add_negative_keywords: 'Palabras negativas', add_keywords: 'Palabras clave', propose_search_ad: 'Anuncio nuevo', propose_assets: 'Recursos del anuncio',
 };
 const DECISION_LABEL = { pending: 'Pendiente', executed: 'Hecho', rejected: 'Rechazado', failed: 'Falló' };
 const MATCH_LABEL = { EXACT: 'exacta', PHRASE: 'frase', BROAD: 'amplia' };
@@ -37,6 +38,7 @@ export function GoogleAds({ data, canEdit, running }) {
       <Segmented label="Sección" value={tab} onChange={setTab} options={[
         { value: 'summary', label: `Resumen${data.openQuestions ? ` (${data.openQuestions})` : ''}` },
         { value: 'reco', label: `Recomendaciones${data.pendingCount ? ` (${data.pendingCount})` : ''}` },
+        { value: 'images', label: 'Imágenes' },
         { value: 'settings', label: 'Ajustes' },
       ]} />
       {!data.configured.google && (
@@ -48,6 +50,7 @@ export function GoogleAds({ data, canEdit, running }) {
       {data.googleError && <div className={s.alert}><AlertTriangle size={18} aria-hidden /> Google no respondió: {data.googleError}</div>}
       {tab === 'summary' && <Summary data={data} canEdit={canEdit} running={running} onRefresh={() => refresh.mutate()} refreshing={refresh.isPending} />}
       {tab === 'reco' && <Recommendations canEdit={canEdit} />}
+      {tab === 'images' && <GoogleImages canEdit={canEdit} />}
       {tab === 'settings' && <Settings settings={data.settings} canEdit={canEdit} />}
     </>
   );
@@ -198,6 +201,15 @@ function Detail({ d }) {
           </Collapsible>
         ))}
         {i.negative_keywords?.length > 0 && <small>Negativas: {i.negative_keywords.join(', ')}</small>}
+      </div>
+    );
+  }
+  if (d.tool === 'propose_assets') {
+    return (
+      <div className={s.placement}>
+        {i.sitelinks?.length > 0 && <small><strong>Vínculos:</strong> {i.sitelinks.map((l) => l.text).join(' · ')}</small>}
+        {i.callouts?.length > 0 && <small><strong>Destacados:</strong> {i.callouts.join(' · ')}</small>}
+        {i.structured_snippet && <small><strong>{i.structured_snippet.header}:</strong> {i.structured_snippet.values.join(', ')}</small>}
       </div>
     );
   }
