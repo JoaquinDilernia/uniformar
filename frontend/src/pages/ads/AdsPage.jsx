@@ -11,11 +11,11 @@ import { Spinner } from '../../components/ui/Spinner.jsx';
 import { Progress } from '../../components/ui/Progress.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { Sheet } from '../../components/ui/Sheet.jsx';
-import { Field, Input, Select, Textarea } from '../../components/ui/Field.jsx';
+import { Field, Input, Textarea } from '../../components/ui/Field.jsx';
 import { useConfirm } from '../../components/ui/ConfirmDialog.jsx';
 import {
   useAdsOverview, useArchiveCreative, useCloseRequest, useCreateCreative, useCreatives, useDecide, useDecisions,
-  useDeleteLearning, useIgPosts, useLearnings, usePublishCreative, useRefreshMeta, useRequests, useSaveAdSettings, useSetStatus, useStartRun,
+  useDeleteLearning, useIgPosts, useLearnings, useRefreshMeta, useRequests, useSaveAdSettings, useSetStatus, useStartRun,
 } from './api.js';
 import { ars, when } from './format.js';
 import { ALLOW_MIXED_MEDIA, MEDIA_ACCEPT, mediaKind } from './media.js';
@@ -33,7 +33,7 @@ const STATUS_LABEL = {
 };
 const TONE = { ACTIVE: s.ok, PAUSED: s.muted, CAMPAIGN_PAUSED: s.muted, ADSET_PAUSED: s.muted, DISAPPROVED: s.bad, WITH_ISSUES: s.bad };
 const TOOL_LABEL = {
-  pause_ad: 'Pausar anuncio', set_status: 'Activar / pausar', propose_budget_change: 'Presupuesto', propose_adset: 'Conjunto nuevo', create_ad: 'Publicar pieza', promote_ig_post: 'Promocionar post',
+  pause_ad: 'Pausar anuncio', set_status: 'Activar / pausar', propose_budget_change: 'Presupuesto', propose_adset: 'Conjunto nuevo', propose_campaign: 'Campaña nueva', create_ad: 'Publicar pieza', promote_ig_post: 'Promocionar post',
 };
 const DECISION_LABEL = { pending: 'Pendiente', executed: 'Hecho', rejected: 'Rechazado', failed: 'Falló' };
 
@@ -83,7 +83,10 @@ export function AdsPage() {
           : <p className="muted">Las consultas necesitan a Meta y a Claude conectados en el servidor.</p>)}
         {data && tab === 'reports' && data.configured.meta && <Reports canEdit={canEdit} />}
         {data && tab === 'reco' &&<Recommendations canEdit={canEdit} />}
-        {data && tab === 'creatives' && <Creatives snapshot={data.snapshot} canEdit={canEdit} />}
+        {data && tab === 'creatives' && (
+          <Creatives snapshot={data.snapshot} canEdit={canEdit} agentReady={data.configured.agent && data.configured.meta}
+            running={running} onGoToRecommendations={() => setTab('reco')} />
+        )}
         {data && tab === 'settings' && <Settings settings={data.settings} canEdit={canEdit} />}
       </div>
     </>
@@ -214,8 +217,26 @@ function Campaign({ c, canEdit }) {
   );
 }
 
+// Qué pieza va y dónde, para decidir sin abrir Meta
+function Placement({ d, creatives }) {
+  const i = d.input ?? {};
+  const pieceName = (id) => creatives?.find((c) => c.id === id)?.name ?? 'pieza';
+  if (d.tool === 'propose_campaign') {
+    return (
+      <div className={s.placement}>
+        <small>{ars(i.daily_budget_ars)} por día · {i.name}</small>
+        <ul>{(i.adsets ?? []).map((a) => <li key={a.name}>{a.name}: {(a.creative_ids ?? []).map(pieceName).join(', ')}</li>)}</ul>
+      </div>
+    );
+  }
+  if (d.tool === 'propose_adset' && i.creative_id) return <div className={s.placement}><small>{i.name} · con “{pieceName(i.creative_id)}”</small></div>;
+  if (d.tool === 'create_ad') return <div className={s.placement}><small>“{pieceName(i.creative_id)}” → {i.adset_name || i.adset_id}</small></div>;
+  return null;
+}
+
 function Recommendations({ canEdit }) {
   const decisions = useDecisions();
+  const creatives = useCreatives();
   const igPosts = useIgPosts();
   const requests = useRequests();
   const learnings = useLearnings();
@@ -228,7 +249,9 @@ function Recommendations({ canEdit }) {
   const history = list.filter((d) => d.status !== 'pending').slice(0, 30);
 
   async function approve(d) {
-    if (await confirm({ title: `¿Aprobar “${d.title || TOOL_LABEL[d.tool]}”?`, message: 'Se aplica en Meta ahora.', confirmLabel: 'Aprobar' })) {
+    const launches = d.tool === 'propose_campaign' || (d.tool === 'propose_adset' && d.input?.creative_id);
+    const message = launches ? 'Se crea en Meta y arranca ACTIVA: empieza a gastar hoy.' : 'Se aplica en Meta ahora.';
+    if (await confirm({ title: `¿Aprobar “${d.title || TOOL_LABEL[d.tool]}”?`, message, confirmLabel: 'Aprobar' })) {
       decide.mutate({ id: d.id, approve: true });
     }
   }
@@ -247,6 +270,7 @@ function Recommendations({ canEdit }) {
               const post = igPosts.data?.find((p) => p.id === d.input.ig_media_id);
               return post?.thumbnail ? <img src={post.thumbnail} alt="" className={s.recoThumb} /> : null;
             })()}
+            <Placement d={d} creatives={creatives.data} />
             {d.reason && <p>{d.reason}</p>}
             {d.expected_impact && <p className="muted">Qué esperamos: {d.expected_impact}</p>}
             {canEdit && (
@@ -303,19 +327,32 @@ function Recommendations({ canEdit }) {
   );
 }
 
-function Creatives({ snapshot, canEdit }) {
+// Las piezas no se publican a mano: el agente decide en qué conjunto o campaña va cada una
+function Creatives({ snapshot, canEdit, agentReady, running, onGoToRecommendations }) {
   const creatives = useCreatives();
   const archive = useArchiveCreative();
+  const startRun = useStartRun();
   const [creating, setCreating] = useState(false);
-  const [publishing, setPublishing] = useState(null);
   const list = (creatives.data ?? []).filter((c) => c.status !== 'archived');
+  const unused = list.filter((c) => c.status === 'unused' && c.feed).length;
+  const placeNow = () => { if (agentReady && !running && !startRun.isPending) startRun.mutate(); };
 
   return (
     <div className={s.stack}>
       {canEdit && <div><Button icon={ImagePlus} onClick={() => setCreating(true)}>Nueva pieza</Button></div>}
+      {canEdit && unused > 0 && (
+        <div className={s.inline}>
+          {running
+            ? <><Spinner size={16} /> El agente está decidiendo dónde va cada pieza. Lo que proponga aparece en <button type="button" className={s.link} onClick={onGoToRecommendations}>Recomendaciones</button>.</>
+            : <>
+              <span>El agente decide en qué conjunto o campaña va cada pieza y te lo deja para aprobar.</span>
+              {agentReady && <Button size="sm" variant="secondary" icon={Sparkles} loading={startRun.isPending} onClick={placeNow}>Ubicar ahora</Button>}
+            </>}
+        </div>
+      )}
       {creatives.isLoading && <Spinner size={20} />}
       {!creatives.isLoading && list.length === 0 && (
-        <EmptyState icon={Megaphone} title="Todavía no hay piezas">Subí la imagen o el video (feed 4:5 y, si hay, historia 9:16) con el texto del anuncio. Después la publicás en un conjunto o se la dejás al agente.</EmptyState>
+        <EmptyState icon={Megaphone} title="Todavía no hay piezas">Subí la imagen o el video (feed 4:5 y, si hay, historia 9:16) con el texto del anuncio. El agente decide dónde publicarla y te lo deja para aprobar.</EmptyState>
       )}
       <div className={s.grid}>
         {list.map((c) => (
@@ -327,7 +364,6 @@ function Creatives({ snapshot, canEdit }) {
               {c.story && <small>Con versión historia 9:16 ({c.story.kind === 'video' ? 'video' : 'imagen'})</small>}
               {canEdit && c.status === 'unused' && (
                 <div className={s.actions}>
-                  <Button size="sm" disabled={!snapshot || !c.feed} onClick={() => setPublishing(c)}>Publicar</Button>
                   <Button size="sm" variant="ghost" onClick={() => archive.mutate(c.id)}>Archivar</Button>
                 </div>
               )}
@@ -335,8 +371,8 @@ function Creatives({ snapshot, canEdit }) {
           </article>
         ))}
       </div>
-      {creating && <NewCreative onClose={() => setCreating(false)} />}
-      {publishing && <Publish creative={publishing} snapshot={snapshot} onClose={() => setPublishing(null)} />}
+      {/* Pieza nueva guardada: el agente arranca a ubicarla */}
+      {creating && <NewCreative onClose={() => setCreating(false)} onSaved={placeNow} />}
       <IgPosts snapshot={snapshot} canEdit={canEdit} />
     </div>
   );
@@ -370,7 +406,7 @@ function PieceMedia({ media }) {
   return <img src={fileUrl(media.url)} alt="" />;
 }
 
-function NewCreative({ onClose }) {
+function NewCreative({ onClose, onSaved }) {
   const create = useCreateCreative();
   const [form, setForm] = useState({ name: '', copy: '', headline: '', notes: '' });
   const [feed, setFeed] = useState(null);
@@ -383,7 +419,7 @@ function NewCreative({ onClose }) {
   const hasVideo = [feed, story].some((f) => f && mediaKind(f) === 'video');
   const submit = () => create.mutate(
     { ...form, feed, story, onProgress: (slot, p) => setProgress({ slot, p }) },
-    { onSuccess: onClose, onSettled: () => setProgress(null) },
+    { onSuccess: () => { onClose(); onSaved?.(); }, onSettled: () => setProgress(null) },
   );
 
   return (
@@ -411,25 +447,6 @@ function NewCreative({ onClose }) {
         </Field>
         <Field label="Título" hint="Opcional, una línea corta"><Input value={form.headline} onChange={set('headline')} maxLength={80} /></Field>
         <Field label="Notas para el agente" hint="Opcional: a qué público apunta, qué ángulo prueba"><Textarea value={form.notes} onChange={set('notes')} minRows={2} maxLength={2000} /></Field>
-      </div>
-    </Sheet>
-  );
-}
-
-function Publish({ creative, snapshot, onClose }) {
-  const publish = usePublishCreative();
-  const adsets = snapshot?.adsets ?? [];
-  const [adsetId, setAdsetId] = useState(adsets[0]?.id ?? '');
-  const adset = adsets.find((a) => a.id === adsetId);
-  const submit = () => publish.mutate({ id: creative.id, adset_id: adsetId, adset_name: adset?.name ?? '' }, { onSuccess: onClose });
-  return (
-    <Sheet open onClose={onClose} title={`Publicar “${creative.name}”`} footer={<Button full loading={publish.isPending} disabled={!adsetId} onClick={submit}>Publicar en Meta</Button>}>
-      <div className={s.form}>
-        <Field label="Conjunto" hint="El anuncio queda activo dentro del conjunto: si el conjunto o la campaña están pausados, no gasta hasta que los actives.">
-          <Select value={adsetId} onChange={(e) => setAdsetId(e.target.value)}>
-            {adsets.map((a) => <option key={a.id} value={a.id}>{a.name} — {STATUS_LABEL[a.effectiveStatus] ?? a.effectiveStatus}</option>)}
-          </Select>
-        </Field>
       </div>
     </Sheet>
   );

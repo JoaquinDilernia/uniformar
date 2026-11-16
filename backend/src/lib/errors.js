@@ -33,6 +33,10 @@ export function errorHandler(err, _req, res, _next) {
   if (err?.code === 'LIMIT_FILE_SIZE') return send(res, 413, 'FILE_TOO_LARGE', 'El archivo es demasiado pesado.');
   if (err?.type === 'entity.parse.failed') return send(res, 400, 'VALIDATION', 'El formato de los datos no es válido.');
   if (err?.type === 'entity.too.large') return send(res, 413, 'TOO_LARGE', 'Los datos enviados son demasiado grandes.');
+  if (err?.code === 'ENOSPC') {
+    console.error('[error] sin espacio en el disco del servidor', err.message);
+    return send(res, 507, 'NO_SPACE', 'El servidor se quedó sin espacio para archivos. Avisale a Joaco.');
+  }
   if (err?.code === '22P02') return send(res, 404, 'NOT_FOUND', 'No se encontró lo que buscabas.'); // uuid mal formado
   console.error('[error]', err);
   return send(res, 500, 'INTERNAL', 'Error interno. Probá de nuevo en un momento.');

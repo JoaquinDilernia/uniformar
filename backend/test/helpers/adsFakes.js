@@ -15,6 +15,7 @@ export function fakeMeta() {
       : [{ adset_id: '901', date_start: '2026-10-09', spend: '9000', actions: [{ action_type: CONVERSATION, value: '3' }] }]),
     setStatus: async (...a) => { log('setStatus')(...a); return { success: true }; },
     updateDailyBudget: async (...a) => { log('updateDailyBudget')(...a); return { success: true }; },
+    createCampaign: async (p) => { log('createCampaign')(p); return { id: '910' }; },
     createAdset: async (p) => { log('createAdset')(p); return { id: '903' }; },
     uploadImage: async () => { log('uploadImage')(); return `hash${calls.filter((c) => c[0] === 'uploadImage').length}`; },
     createCreative: async (spec) => { log('createCreative')(spec); return { id: '904' }; },

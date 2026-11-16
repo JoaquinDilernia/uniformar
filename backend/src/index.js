@@ -99,3 +99,10 @@ if (app.locals.igPublisher) {
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`uniformar escuchando en :${port} (storage: ${storage.driver})`));
+
+// Migración del disco al bucket: con COPY_UPLOADS_TO_S3=1 copia en segundo plano (idempotente)
+if (process.env.COPY_UPLOADS_TO_S3 === '1' && process.env.UPLOADS_DIR) {
+  const { spawn } = await import('node:child_process');
+  spawn(process.execPath, [path.resolve(here, '../scripts/copyUploadsToS3.js')], { stdio: 'inherit' })
+    .on('exit', (code) => console.log(`[storage] copia al bucket terminó (código ${code})`));
+}

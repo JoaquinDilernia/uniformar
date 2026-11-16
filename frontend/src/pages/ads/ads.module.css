@@ -16,7 +16,7 @@
 .card h2 { font-size: var(--fs-l); margin: 0; }
 .cardHead { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
 .cardHead small { color: var(--c-text-3); font-size: var(--fs-xs); }
-.inline { display: flex; align-items: center; gap: var(--sp-2); color: var(--c-text-2); }
+.inline { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); color: var(--c-text-2); }
 
 .report { display: flex; flex-direction: column; gap: 6px; line-height: 1.5; overflow-wrap: anywhere; }
 .report p { margin: 0; min-height: 0.5em; }
@@ -120,3 +120,5 @@ p.bad { background: none; margin: 0; }
 .mine { align-self: flex-end; background: var(--c-accent-soft); }
 .chatActions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .chatActions .kind { display: inline-flex; align-items: center; gap: 4px; }
+.placement { display: grid; gap: var(--sp-1); color: var(--c-text-2); }
+.placement ul { margin: 0; padding-left: var(--sp-4); font-size: var(--fs-s); }

@@ -81,15 +81,6 @@ export function useArchiveCreative() {
   return useMutation({ mutationFn: (id) => api.patch(`/ads/creatives/${id}`, { status: 'archived' }), meta: { success: 'Pieza archivada' }, onSettled: refresh });
 }
 
-export function usePublishCreative() {
-  const refresh = useRefreshAds();
-  return useMutation({
-    mutationFn: ({ id, adset_id, adset_name }) => api.post(`/ads/creatives/${id}/publish`, { adset_id, adset_name }),
-    meta: { success: 'Anuncio publicado en Meta ✓' },
-    onSettled: refresh,
-  });
-}
-
 export function useCloseRequest() {
   const refresh = useRefreshAds();
   return useMutation({ mutationFn: (id) => api.post(`/ads/requests/${id}/done`), meta: { success: 'Pedido cerrado' }, onSettled: refresh });

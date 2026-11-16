@@ -67,6 +67,7 @@ export function createMetaClient({ accessToken, accountId, fetchFn = fetch, retr
     },
     setStatus: (objectId, status) => req(objectId, { method: 'POST', body: { status } }),
     updateDailyBudget: (objectId, dailyBudgetCents) => req(objectId, { method: 'POST', body: { daily_budget: dailyBudgetCents } }),
+    createCampaign: (payload) => req(`${accountId}/campaigns`, { method: 'POST', body: payload }),
     createAdset: (payload) => req(`${accountId}/adsets`, { method: 'POST', body: payload }),
     async uploadImage(buffer) {
       const json = await req(`${accountId}/adimages`, { method: 'POST', body: { bytes: buffer.toString('base64') } });

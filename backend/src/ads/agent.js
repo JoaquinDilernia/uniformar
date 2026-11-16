@@ -100,6 +100,52 @@ export function createExecutor({ meta, repo, files, config }) {
     return { ad_id: ad.id, name };
   }
 
+  // Conjunto de WhatsApp: nace pausado y se activa recién cuando ya tiene sus anuncios
+  async function createWhatsappAdset({ campaignId, name, targeting: raw, dailyBudgetArs }) {
+    const targeting = { ...raw };
+    if (!targeting.targeting_automation) targeting.targeting_automation = { advantage_audience: 0 };
+    return meta.createAdset({
+      campaign_id: campaignId, name, status: 'PAUSED', targeting,
+      billing_event: 'IMPRESSIONS', optimization_goal: 'CONVERSATIONS', destination_type: 'WHATSAPP',
+      promoted_object: { page_id: config.pageId, whatsapp_phone_number: config.whatsappNumber },
+      ...(dailyBudgetArs ? { daily_budget: Math.round(dailyBudgetArs * 100) } : {}),
+    });
+  }
+
+  async function assertUnused(ids) {
+    const unused = new Set((await repo.listCreatives({ status: 'unused' })).map((c) => c.id));
+    const missing = ids.filter((id) => !unused.has(id));
+    if (missing.length) throw conflict('Alguna de las piezas ya se publicó o se archivó. Pedile al agente que lo vuelva a armar.');
+  }
+
+  // Campaña nueva completa. Se arma pausada y se prende al final: si algo falla en el medio, no gasta.
+  async function createCampaign(input) {
+    const adsets = input.adsets ?? [];
+    if (!adsets.length || adsets.some((a) => !a.creative_ids?.length)) throw new Error('Cada conjunto de la campaña necesita al menos una pieza.');
+    const allIds = adsets.flatMap((a) => a.creative_ids);
+    if (new Set(allIds).size !== allIds.length) throw new Error('La misma pieza no puede ir en dos conjuntos a la vez.');
+    await assertUnused(allIds);
+
+    const campaign = await meta.createCampaign({
+      name: input.name, objective: 'OUTCOME_ENGAGEMENT', status: 'PAUSED', special_ad_categories: [],
+      daily_budget: Math.round(input.daily_budget_ars * 100), bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
+    });
+    const created = [];
+    try {
+      for (const a of adsets) {
+        const adset = await createWhatsappAdset({ campaignId: campaign.id, name: a.name, targeting: a.targeting });
+        const ads = [];
+        for (const creativeId of a.creative_ids) ads.push(await publishCreative({ creative_id: creativeId, adset_id: adset.id, adset_name: a.name }));
+        await meta.setStatus(adset.id, 'ACTIVE');
+        created.push({ adset_id: adset.id, name: a.name, ads });
+      }
+    } catch (err) {
+      throw new Error(`La campaña quedó creada pero PAUSADA en Meta (${campaign.id}): ${err.message || err}`);
+    }
+    await meta.setStatus(campaign.id, 'ACTIVE');
+    return { campaign_id: campaign.id, status: 'ACTIVE', adsets: created };
+  }
+
   return async function execute(tool, input, ctx = {}) {
     switch (tool) {
       case 'pause_ad':
@@ -112,18 +158,16 @@ export function createExecutor({ meta, repo, files, config }) {
         await meta.updateDailyBudget(input.object_id, Math.round(input.proposed_budget_ars * 100));
         return { [input.object_id]: input.proposed_budget_ars };
       case 'propose_adset': {
-        const targeting = { ...input.targeting };
-        if (!targeting.targeting_automation) targeting.targeting_automation = { advantage_audience: 0 };
-        const adset = await meta.createAdset({
-          campaign_id: input.campaign_id, name: input.name, status: 'PAUSED', targeting,
-          billing_event: 'IMPRESSIONS', optimization_goal: 'CONVERSATIONS', destination_type: 'WHATSAPP',
-          promoted_object: { page_id: config.pageId, whatsapp_phone_number: config.whatsappNumber },
-          ...(input.daily_budget_ars ? { daily_budget: Math.round(input.daily_budget_ars * 100) } : {}),
-        });
-        if (!input.creative_id) return { adset_id: adset.id };
+        if (input.creative_id) await assertUnused([input.creative_id]);
+        const adset = await createWhatsappAdset({ campaignId: input.campaign_id, name: input.name, targeting: input.targeting, dailyBudgetArs: input.daily_budget_ars });
+        if (!input.creative_id) return { adset_id: adset.id, status: 'PAUSED' };
         const ad = await publishCreative({ creative_id: input.creative_id, adset_id: adset.id, adset_name: input.name });
-        return { adset_id: adset.id, ...ad };
+        // Con anuncio adentro, aprobar = lanzar
+        await meta.setStatus(adset.id, 'ACTIVE');
+        return { adset_id: adset.id, status: 'ACTIVE', ...ad };
       }
+      case 'propose_campaign':
+        return createCampaign(input);
       case 'create_ad':
         return publishCreative(input);
       case 'promote_ig_post':
@@ -188,6 +232,13 @@ async function igPostsForContext({ meta, repo, config }) {
   }
 }
 
+// Piezas que una recomendación pendiente ya ubica (para no proponerlas dos veces)
+const creativeIdsOf = (d) => {
+  const i = d.input ?? {};
+  const ids = [i.creative_id, ...(i.adsets ?? []).flatMap((a) => a.creative_ids ?? [])].filter(Boolean);
+  return ids.length ? ids : undefined;
+};
+
 export async function buildContext({ meta, repo, config }) {
   const [snapshot, settings, unusedCreatives, openRequests, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions, teamChat, igPosts] = await Promise.all([
     buildSnapshot(meta),
@@ -215,7 +266,7 @@ export async function buildContext({ meta, repo, config }) {
     igPosts,
     openCreativeRequests: openRequests.map((r) => ({ concept: r.concept, created_at: r.created_at })),
     activeLearnings: learnings.map((l) => ({ id: l.id, text: l.text, evidence: l.evidence })),
-    pendingRecommendations: pending.map((d) => ({ id: d.id, tool: d.tool, title: d.title, created_at: d.created_at })),
+    pendingRecommendations: pending.map((d) => ({ id: d.id, tool: d.tool, title: d.title, created_at: d.created_at, creativeIds: creativeIdsOf(d) })),
     recentDecisions: recent.filter((d) => d.status !== 'pending').map((d) => ({ id: d.id, tool: d.tool, title: d.title, status: d.status, outcome: d.outcome, created_at: d.created_at })),
     decisionsToEvaluate: toEvaluate,
     openQuestions: openQuestions.map((q) => ({ id: q.id, question: q.question, created_at: q.created_at })),

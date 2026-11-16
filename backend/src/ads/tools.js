@@ -45,7 +45,7 @@ export const TOOL_DEFINITIONS = [
   },
   {
     name: 'propose_adset',
-    description: 'Proponer un conjunto nuevo dentro de una campaña existente (por ejemplo para probar otro público). Buscá antes los intereses reales con search_interest — nunca inventes IDs. El conjunto se crea PAUSADO, optimizando conversaciones de WhatsApp al número de la cuenta; sin presupuesto propio si la campaña es CBO.',
+    description: 'Proponer un conjunto nuevo dentro de una campaña existente (para probar otro público o ubicar una pieza que no encaja en los conjuntos actuales). Buscá antes los intereses reales con search_interest — nunca inventes IDs. Optimiza conversaciones de WhatsApp al número de la cuenta; sin presupuesto propio si la campaña es CBO. Con creative_id, al aprobarlo el conjunto arranca ACTIVO con ese anuncio (aprobar = lanzar); sin pieza se crea PAUSADO.',
     input_schema: {
       type: 'object',
       properties: {
@@ -60,8 +60,36 @@ export const TOOL_DEFINITIONS = [
     },
   },
   {
+    name: 'propose_campaign',
+    description: 'Proponer una campaña nueva de mensajes de WhatsApp (objetivo interacción, presupuesto de campaña CBO) con uno o más conjuntos y sus anuncios. Usala cuando la estructura actual no sirve para lo que hay que probar (otro rubro o zona con presupuesto propio, separar un test, la campaña actual está saturada). Al aprobarla se crea todo y ARRANCA ACTIVA: aprobar = lanzar. El presupuesto diario tiene que entrar en el tope mensual junto con lo que ya se gasta. Buscá los intereses con search_interest antes.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: s('Nombre de la campaña, en MAYÚSCULAS (ej. UNIFORMAR | WPP GASTRONOMIA)'),
+        daily_budget_ars: n('Presupuesto diario de la campaña en pesos'),
+        adsets: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 4,
+          description: 'Conjuntos de la campaña. Cada uno con al menos una pieza: una campaña sin anuncios no sirve.',
+          items: {
+            type: 'object',
+            properties: {
+              name: s('Nombre del conjunto, en MAYÚSCULAS con guiones bajos (ej. WPP_GASTRONOMIA_AMBA)'),
+              targeting: { type: 'object', description: 'Targeting de Graph API: geo_locations, age_min, age_max, flexible_spec con intereses, targeting_automation.advantage_audience (0 o 1)' },
+              creative_ids: { type: 'array', items: { type: 'string' }, minItems: 1, description: 'ids de piezas sin usar (unusedCreatives) para este conjunto' },
+            },
+            required: ['name', 'targeting', 'creative_ids'],
+          },
+        },
+        ...why,
+      },
+      required: ['name', 'daily_budget_ars', 'adsets', ...whyReq],
+    },
+  },
+  {
     name: 'create_ad',
-    description: 'Proponer publicar una pieza subida al panel (de la lista unusedCreatives) como anuncio en un conjunto. El anuncio nace ACTIVO dentro del conjunto (si el conjunto está pausado no gasta).',
+    description: 'Proponer publicar una pieza subida al panel (de la lista unusedCreatives) como anuncio en el conjunto existente que mejor le corresponda: lo elegís vos, el equipo no lo marca. El anuncio nace ACTIVO dentro del conjunto (si el conjunto está pausado no gasta).',
     input_schema: { type: 'object', properties: { creative_id: s('id de la pieza en el panel'), adset_id: s('ID del conjunto destino'), adset_name: s('Nombre del conjunto'), ...why }, required: ['creative_id', 'adset_id', ...whyReq] },
   },
   {
@@ -117,4 +145,4 @@ export const TOOL_DEFINITIONS = [
 ];
 
 export const READ_ONLY_TOOLS = new Set(['search_interest']);
-export const META_ACTIONS = new Set(['pause_ad', 'set_status', 'propose_budget_change', 'propose_adset', 'create_ad', 'promote_ig_post']);
+export const META_ACTIONS = new Set(['pause_ad', 'set_status', 'propose_budget_change', 'propose_adset', 'propose_campaign', 'create_ad', 'promote_ig_post']);
