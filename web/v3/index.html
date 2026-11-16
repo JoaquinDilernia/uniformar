@@ -294,6 +294,9 @@ html.has-intro{--intro-d:1.65s}
 .rv.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}.hero h1 .l span{transform:none}.hero-row{opacity:1}}
 </style>
+<!-- Google Ads: mide las consultas (clic a WhatsApp y Cotizá enviado) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18572131243"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','AW-18572131243');</script>
 </head>
 <body>
 
@@ -515,6 +518,9 @@ html.has-intro{--intro-d:1.65s}
 <script>
 /* ====== DATOS (editar acá) ====== */
 const WA = '5491173538181';
+/* Conversiones de Google Ads: cualquier clic a WhatsApp cuenta como consulta; el Cotizá cuenta aparte */
+const conv = label => { try { gtag('event','conversion',{send_to:'AW-18572131243/'+label}); } catch(_){} };
+document.addEventListener('click', e => { if (e.target.closest && e.target.closest('a[href*="wa.me/"]')) conv('8AA7CJj90LkdEKv38JdF'); });
 const TINTS = ['#E9DDE3','#E6E2DC','#DCE3E8','#E8E4D8','#DDE5DD','#EDE0D6'];
 
 // Prendas colgadas en el perchero: [archivo, nombre, ancho en px]
@@ -619,6 +625,7 @@ document.getElementById('qform').addEventListener('submit',e=>{
   const f = new FormData(e.target);
   send('quotes', { name:f.get('nombre'), company:f.get('empresa'), phone:f.get('telefono'), rubro:f.get('rubro'), quantity:f.get('cantidad'), message:f.get('msg'), source:location.hostname, website:f.get('website') }).catch(()=>{});
   const txt = `Hola! Quiero cotizar uniformes.\nNombre: ${f.get('nombre')}\nEmpresa: ${f.get('empresa')}\nRubro: ${f.get('rubro')}\nCantidad aprox.: ${f.get('cantidad')||'-'}\n${f.get('msg')||''}`;
+  conv('BacgCJv90LkdEKv38JdF');
   window.open(`https://wa.me/${WA}?text=${encodeURIComponent(txt)}`,'_blank');
 });
 
