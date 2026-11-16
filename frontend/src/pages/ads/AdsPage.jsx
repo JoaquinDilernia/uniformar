@@ -25,6 +25,8 @@ import { Chat } from './Chat.jsx';
 import { IgPosts } from './IgPosts.jsx';
 import { ReportText } from './ReportText.jsx';
 import { Reports } from './Reports.jsx';
+import { GoogleAds } from './GoogleAds.jsx';
+import { useGoogleOverview, useStartGoogleRun } from './gapi.js';
 import s from './ads.module.css';
 
 const STATUS_LABEL = {
@@ -44,23 +46,38 @@ function Badge({ status }) {
 export function AdsPage() {
   const { user } = useAuth();
   const canEdit = can(user, 'ads', 'edit');
+  const [platform, setPlatform] = usePersistentState('ads-platform', 'meta');
+  const isGoogle = platform === 'google';
   const [tab, setTab] = usePersistentState('ads-tab', 'summary');
-  const overview = useAdsOverview();
+  const overview = useAdsOverview({ enabled: !isGoogle });
+  const gOverview = useGoogleOverview({ enabled: isGoogle });
   const startRun = useStartRun();
+  const startGoogle = useStartGoogleRun();
   const refreshMeta = useRefreshMeta();
   const data = overview.data;
-  const running = data?.lastRun?.status === 'running';
+  const gData = gOverview.data;
+  const current = isGoogle ? gData : data;
+  const running = current?.lastRun?.status === 'running';
+  const ready = isGoogle ? current?.configured.agent && current?.configured.google : current?.configured.agent;
+  const launch = isGoogle ? startGoogle : startRun;
 
-  const actions = canEdit && data?.configured.agent && (
-    <Button icon={Sparkles} size="sm" loading={running || startRun.isPending} onClick={() => startRun.mutate()}>
+  const actions = canEdit && ready && (
+    <Button icon={Sparkles} size="sm" loading={running || launch.isPending} onClick={() => launch.mutate()}>
       {running ? 'Analizando…' : 'Analizar ahora'}
     </Button>
   );
 
   return (
     <>
-      <PageHeader title="Agente de pauta" subtitle="Meta Ads · mensajes a WhatsApp" actions={actions} />
+      <PageHeader title="Agente de pauta" subtitle={isGoogle ? 'Google Ads · búsquedas que traen consultas' : 'Meta Ads · mensajes a WhatsApp'} actions={actions} />
       <div className={s.page}>
+        <Segmented label="Plataforma" value={platform} onChange={setPlatform} options={[
+          { value: 'meta', label: 'Meta' },
+          { value: 'google', label: 'Google' },
+        ]} />
+        {isGoogle && gOverview.isLoading && <div className={s.center}><Spinner size={24} label="Cargando" /></div>}
+        {isGoogle && gData && <GoogleAds data={gData} canEdit={canEdit} running={running} />}
+        {!isGoogle && <>
         <Segmented label="Sección" value={tab} onChange={setTab} options={[
           { value: 'summary', label: `Resumen${data?.openQuestions ? ` (${data.openQuestions})` : ''}` },
           { value: 'chat', label: 'Consultas' },
@@ -88,6 +105,7 @@ export function AdsPage() {
             running={running} onGoToRecommendations={() => setTab('reco')} />
         )}
         {data && tab === 'settings' && <Settings settings={data.settings} canEdit={canEdit} />}
+        </>}
       </div>
     </>
   );

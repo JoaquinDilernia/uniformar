@@ -4,7 +4,11 @@ const DECISION_COLS = `d.id, d.run_id, d.chat_id, d.tool, d.input, d.title, d.re
   d.outcome, d.created_at, d.decided_at, u.name AS decided_by_name`;
 const QUESTION_SELECT = 'SELECT q.*, u.name AS answered_by_name FROM ad_questions q LEFT JOIN users u ON u.id = q.answered_by';
 
-export function createAdsRepo(db) {
+// platform: 'meta' (default) o 'google'. Corridas, decisiones, aprendizajes, preguntas, pedidos y ajustes
+// van separados por plataforma; piezas, posts de IG, chats y lecturas de reportes son solo de Meta.
+export function createAdsRepo(db, { platform = 'meta' } = {}) {
+  const P = platform;
+  const settingsId = platform === 'google' ? 2 : 1;
   const one = async (sql, params, msg) => {
     const { rows } = await db.query(sql, params);
     if (!rows[0] && msg) throw notFound(msg);
@@ -12,48 +16,48 @@ export function createAdsRepo(db) {
   };
 
   return {
-    getSettings: () => one('SELECT agent_enabled, autonomous, monthly_cap_ars, business_notes, updated_at FROM ad_settings WHERE id = 1'),
+    getSettings: () => one('SELECT agent_enabled, autonomous, monthly_cap_ars, business_notes, updated_at FROM ad_settings WHERE id = $1', [settingsId]),
     async updateSettings(patch) {
       const cols = Object.keys(patch);
       if (!cols.length) return this.getSettings();
       const set = cols.map((c, i) => `${c} = $${i + 1}`).join(', ');
-      await db.query(`UPDATE ad_settings SET ${set}, updated_at = now() WHERE id = 1`, Object.values(patch));
+      await db.query(`UPDATE ad_settings SET ${set}, updated_at = now() WHERE id = ${settingsId}`, Object.values(patch));
       return this.getSettings();
     },
 
-    startRun: (kind, userId) => one('INSERT INTO ad_runs (kind, started_by) VALUES ($1, $2) RETURNING *', [kind, userId ?? null]),
+    startRun: (kind, userId) => one('INSERT INTO ad_runs (kind, started_by, platform) VALUES ($1, $2, $3) RETURNING *', [kind, userId ?? null, P]),
     finishRun: (id, { status, report = '', error = null }) => one(
       'UPDATE ad_runs SET status = $2, report = $3, error = $4, finished_at = now() WHERE id = $1 RETURNING *',
       [id, status, report, error],
     ),
-    runningRun: () => one("SELECT * FROM ad_runs WHERE status = 'running' AND started_at > now() - interval '30 minutes' ORDER BY started_at DESC LIMIT 1"),
+    runningRun: () => one("SELECT * FROM ad_runs WHERE platform = $1 AND status = 'running' AND started_at > now() - interval '30 minutes' ORDER BY started_at DESC LIMIT 1", [P]),
     async listRuns(limit = 10) {
       const { rows } = await db.query(
-        'SELECT r.*, u.name AS started_by_name FROM ad_runs r LEFT JOIN users u ON u.id = r.started_by ORDER BY r.started_at DESC LIMIT $1',
-        [limit],
+        'SELECT r.*, u.name AS started_by_name FROM ad_runs r LEFT JOIN users u ON u.id = r.started_by WHERE r.platform = $2 ORDER BY r.started_at DESC LIMIT $1',
+        [limit, P],
       );
       return rows;
     },
 
     addDecision: (d) => one(
-      `INSERT INTO ad_decisions (run_id, chat_id, tool, input, title, reason, expected_impact, status, result, error)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-      [d.runId ?? null, d.chatId ?? null, d.tool, d.input ?? {}, d.title ?? '', d.reason ?? '', d.expectedImpact ?? '', d.status, d.result ?? null, d.error ?? null],
+      `INSERT INTO ad_decisions (run_id, chat_id, tool, input, title, reason, expected_impact, status, result, error, platform)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      [d.runId ?? null, d.chatId ?? null, d.tool, d.input ?? {}, d.title ?? '', d.reason ?? '', d.expectedImpact ?? '', d.status, d.result ?? null, d.error ?? null, P],
     ),
-    getDecision: (id) => one(`SELECT ${DECISION_COLS} FROM ad_decisions d LEFT JOIN users u ON u.id = d.decided_by WHERE d.id = $1`, [id], 'No existe esa recomendación.'),
+    getDecision: (id) => one(`SELECT ${DECISION_COLS} FROM ad_decisions d LEFT JOIN users u ON u.id = d.decided_by WHERE d.id = $1 AND d.platform = $2`, [id, P], 'No existe esa recomendación.'),
     async listDecisions({ status, limit = 50 } = {}) {
       const { rows } = await db.query(
         `SELECT ${DECISION_COLS} FROM ad_decisions d LEFT JOIN users u ON u.id = d.decided_by
-         WHERE ($1::text IS NULL OR d.status = $1) ORDER BY d.created_at DESC LIMIT $2`,
-        [status ?? null, limit],
+         WHERE d.platform = $3 AND ($1::text IS NULL OR d.status = $1) ORDER BY d.created_at DESC LIMIT $2`,
+        [status ?? null, limit, P],
       );
       return rows;
     },
     // Marca la decisión como tomada solo si seguía pendiente (evita doble aprobación)
     async claimPending(id, userId, status) {
       const { rows } = await db.query(
-        "UPDATE ad_decisions SET status = $3, decided_by = $2, decided_at = now() WHERE id = $1 AND status = 'pending' RETURNING *",
-        [id, userId, status],
+        "UPDATE ad_decisions SET status = $3, decided_by = $2, decided_at = now() WHERE id = $1 AND platform = $4 AND status = 'pending' RETURNING *",
+        [id, userId, status, P],
       );
       if (!rows[0]) {
         await this.getDecision(id);
@@ -64,13 +68,13 @@ export function createAdsRepo(db) {
     setDecisionResult: (id, { status, result = null, error = null }) => one(
       'UPDATE ad_decisions SET status = $2, result = $3, error = $4 WHERE id = $1 RETURNING *', [id, status, result, error],
     ),
-    recordOutcome: (id, outcome) => one('UPDATE ad_decisions SET outcome = $2 WHERE id = $1 RETURNING id', [id, outcome], 'No existe esa decisión.'),
+    recordOutcome: (id, outcome) => one('UPDATE ad_decisions SET outcome = $2 WHERE id = $1 AND platform = $3 RETURNING id', [id, outcome, P], 'No existe esa decisión.'),
     async executedWithoutOutcome(olderThanHours = 48) {
       const { rows } = await db.query(
         `SELECT id, tool, input, title, reason, created_at, decided_at FROM ad_decisions
-         WHERE status = 'executed' AND outcome IS NULL AND coalesce(decided_at, created_at) < now() - make_interval(hours => $1)
+         WHERE platform = $2 AND status = 'executed' AND outcome IS NULL AND coalesce(decided_at, created_at) < now() - make_interval(hours => $1)
          ORDER BY created_at LIMIT 20`,
-        [olderThanHours],
+        [olderThanHours, P],
       );
       return rows;
     },
@@ -112,50 +116,50 @@ export function createAdsRepo(db) {
       return rows;
     },
 
-    addRequest: (r) => one('INSERT INTO ad_creative_requests (concept, style_notes, reason) VALUES ($1, $2, $3) RETURNING *', [r.concept, r.styleNotes ?? '', r.reason ?? '']),
+    addRequest: (r) => one('INSERT INTO ad_creative_requests (concept, style_notes, reason, platform) VALUES ($1, $2, $3, $4) RETURNING *', [r.concept, r.styleNotes ?? '', r.reason ?? '', P]),
     async listRequests({ status = 'open' } = {}) {
-      const { rows } = await db.query('SELECT * FROM ad_creative_requests WHERE status = $1 ORDER BY created_at DESC LIMIT 50', [status]);
+      const { rows } = await db.query('SELECT * FROM ad_creative_requests WHERE status = $1 AND platform = $2 ORDER BY created_at DESC LIMIT 50', [status, P]);
       return rows;
     },
-    closeRequest: (id) => one("UPDATE ad_creative_requests SET status = 'done', closed_at = now() WHERE id = $1 RETURNING *", [id], 'No existe ese pedido.'),
+    closeRequest: (id) => one("UPDATE ad_creative_requests SET status = 'done', closed_at = now() WHERE id = $1 AND platform = $2 RETURNING *", [id, P], 'No existe ese pedido.'),
 
     async upsertLearning({ learning_id: id, text, evidence, status = 'active' }) {
       if (id) {
-        return one('UPDATE ad_learnings SET text = $2, evidence = $3, status = $4, updated_at = now() WHERE id = $1 RETURNING *',
-          [id, text, evidence ?? '', status], 'No existe ese aprendizaje.');
+        return one('UPDATE ad_learnings SET text = $2, evidence = $3, status = $4, updated_at = now() WHERE id = $1 AND platform = $5 RETURNING *',
+          [id, text, evidence ?? '', status, P], 'No existe ese aprendizaje.');
       }
-      return one('INSERT INTO ad_learnings (text, evidence, status) VALUES ($1, $2, $3) RETURNING *', [text, evidence ?? '', status]);
+      return one('INSERT INTO ad_learnings (text, evidence, status, platform) VALUES ($1, $2, $3, $4) RETURNING *', [text, evidence ?? '', status, P]);
     },
     async listLearnings({ activeOnly = false } = {}) {
       const { rows } = await db.query(
-        `SELECT * FROM ad_learnings WHERE ($1::boolean = false OR status = 'active') ORDER BY updated_at DESC LIMIT 100`, [activeOnly],
+        `SELECT * FROM ad_learnings WHERE platform = $2 AND ($1::boolean = false OR status = 'active') ORDER BY updated_at DESC LIMIT 100`, [activeOnly, P],
       );
       return rows;
     },
     async deleteLearning(id) {
-      const { rowCount } = await db.query('DELETE FROM ad_learnings WHERE id = $1', [id]);
+      const { rowCount } = await db.query('DELETE FROM ad_learnings WHERE id = $1 AND platform = $2', [id, P]);
       if (!rowCount) throw notFound('No existe ese aprendizaje.');
     },
 
     // quick_answers es jsonb: el array va serializado (pg mandaría un array de Postgres)
     addQuestion: (q) => one(
-      'INSERT INTO ad_questions (run_id, question, why, quick_answers) VALUES ($1, $2, $3, $4) RETURNING *',
-      [q.runId ?? null, q.question, q.why ?? '', JSON.stringify(q.quickAnswers ?? [])],
+      'INSERT INTO ad_questions (run_id, question, why, quick_answers, platform) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [q.runId ?? null, q.question, q.why ?? '', JSON.stringify(q.quickAnswers ?? []), P],
     ),
-    getQuestion: (id) => one(`${QUESTION_SELECT} WHERE q.id = $1`, [id], 'No existe esa pregunta.'),
+    getQuestion: (id) => one(`${QUESTION_SELECT} WHERE q.id = $1 AND q.platform = $2`, [id, P], 'No existe esa pregunta.'),
     async listQuestions({ status = 'open', limit = 30 } = {}) {
       const { rows } = await db.query(
-        `${QUESTION_SELECT} WHERE q.status = $1 ORDER BY coalesce(q.answered_at, q.created_at) DESC LIMIT $2`,
-        [status, limit],
+        `${QUESTION_SELECT} WHERE q.status = $1 AND q.platform = $3 ORDER BY coalesce(q.answered_at, q.created_at) DESC LIMIT $2`,
+        [status, limit, P],
       );
       return rows;
     },
-    countOpenQuestions: async () => (await one("SELECT count(*)::int AS n FROM ad_questions WHERE status = 'open'")).n,
+    countOpenQuestions: async () => (await one("SELECT count(*)::int AS n FROM ad_questions WHERE status = 'open' AND platform = $1", [P])).n,
     // Solo si sigue abierta: evita que dos personas respondan la misma
     async answerQuestion(id, answer, userId) {
       const { rows } = await db.query(
-        "UPDATE ad_questions SET status = 'answered', answer = $2, answered_by = $3, answered_at = now() WHERE id = $1 AND status = 'open' RETURNING id",
-        [id, answer, userId],
+        "UPDATE ad_questions SET status = 'answered', answer = $2, answered_by = $3, answered_at = now() WHERE id = $1 AND platform = $4 AND status = 'open' RETURNING id",
+        [id, answer, userId, P],
       );
       if (!rows[0]) {
         await this.getQuestion(id);
@@ -164,7 +168,7 @@ export function createAdsRepo(db) {
       return this.getQuestion(id);
     },
     async dismissQuestion(id) {
-      const { rows } = await db.query("UPDATE ad_questions SET status = 'dismissed' WHERE id = $1 AND status = 'open' RETURNING id", [id]);
+      const { rows } = await db.query("UPDATE ad_questions SET status = 'dismissed' WHERE id = $1 AND platform = $2 AND status = 'open' RETURNING id", [id, P]);
       if (!rows[0]) {
         await this.getQuestion(id);
         throw conflict('Esta pregunta ya fue respondida o descartada.');
@@ -176,9 +180,10 @@ export function createAdsRepo(db) {
       const { rows } = await db.query(
         `SELECT q.question, q.answer, q.answered_at, u.name AS answered_by_name
          FROM ad_questions q LEFT JOIN users u ON u.id = q.answered_by
-         WHERE q.status = 'answered'
-           AND q.answered_at > coalesce((SELECT max(started_at) FROM ad_runs WHERE status = 'done'), '-infinity'::timestamptz)
+         WHERE q.status = 'answered' AND q.platform = $1
+           AND q.answered_at > coalesce((SELECT max(started_at) FROM ad_runs WHERE status = 'done' AND platform = $1), '-infinity'::timestamptz)
          ORDER BY q.answered_at LIMIT 20`,
+        [P],
       );
       return rows;
     },
@@ -243,7 +248,7 @@ export function createAdsRepo(db) {
         `SELECT m.content, m.created_at, u.name AS author_name, c.title AS chat
          FROM ad_chat_messages m JOIN ad_chats c ON c.id = m.chat_id LEFT JOIN users u ON u.id = m.author_id
          WHERE m.role = 'user'
-           AND m.created_at > coalesce((SELECT max(started_at) FROM ad_runs WHERE status = 'done'), '-infinity'::timestamptz)
+           AND m.created_at > coalesce((SELECT max(started_at) FROM ad_runs WHERE status = 'done' AND platform = 'meta'), '-infinity'::timestamptz)
          ORDER BY m.created_at LIMIT 40`,
       );
       return rows;

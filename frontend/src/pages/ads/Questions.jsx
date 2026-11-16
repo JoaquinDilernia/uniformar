@@ -11,9 +11,9 @@ import { when } from './format.js';
 import s from './ads.module.css';
 
 // Preguntas que el agente deja con ask_team: se contestan acá y las lee en la próxima corrida
-export function AgentQuestions({ canEdit }) {
-  const open = useQuestions('open');
-  const answered = useQuestions('answered');
+export function AgentQuestions({ canEdit, base = '/ads' }) {
+  const open = useQuestions('open', base);
+  const answered = useQuestions('answered', base);
   const list = open.data ?? [];
   const done = answered.data ?? [];
   if (!open.isLoading && list.length === 0 && done.length === 0) return null;
@@ -26,7 +26,7 @@ export function AgentQuestions({ canEdit }) {
       </div>
       {open.isLoading && <Spinner size={20} />}
       {!open.isLoading && list.length === 0 && <p className="muted">No hay preguntas pendientes.</p>}
-      {list.map((q) => <QuestionCard key={q.id} q={q} canEdit={canEdit} />)}
+      {list.map((q) => <QuestionCard key={q.id} q={q} canEdit={canEdit} base={base} />)}
       {done.length > 0 && (
         <Collapsible title="Respondidas" count={done.length}>
           {done.map((q) => (
@@ -44,10 +44,10 @@ export function AgentQuestions({ canEdit }) {
   );
 }
 
-function QuestionCard({ q, canEdit }) {
+function QuestionCard({ q, canEdit, base }) {
   const [answer, setAnswer] = useState('');
-  const answerQ = useAnswerQuestion();
-  const dismiss = useDismissQuestion();
+  const answerQ = useAnswerQuestion(base);
+  const dismiss = useDismissQuestion(base);
   const confirm = useConfirm();
   const busy = answerQ.isPending || dismiss.isPending;
   const empty = !answer.trim();

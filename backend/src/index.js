@@ -11,6 +11,7 @@ import { createUsersRepo } from './repo/users.js';
 import { ensureSuperadmin } from './services/bootstrap.js';
 import { createLocalStorage, createS3Storage } from './services/storage.js';
 import { createMetaClient } from './services/meta.js';
+import { createGoogleAdsClient } from './services/googleAds.js';
 import { adsConfigFromEnv } from './ads/agent.js';
 
 const env = (k) => {
@@ -56,6 +57,11 @@ const meta = process.env.META_ACCESS_TOKEN
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 if (!meta) console.warn('[ads] META_ACCESS_TOKEN no está definida: Pauta sin conexión a Meta');
 if (!anthropic) console.warn('[ads] ANTHROPIC_API_KEY no está definida: el agente no corre');
+// Agente de Google Ads: opcional, con cuenta de servicio agregada como usuario de la cuenta
+const gads = process.env.GOOGLE_ADS_SERVICE_ACCOUNT && process.env.GOOGLE_ADS_CUSTOMER_ID
+  ? createGoogleAdsClient({ serviceAccountJson: process.env.GOOGLE_ADS_SERVICE_ACCOUNT, customerId: process.env.GOOGLE_ADS_CUSTOMER_ID })
+  : null;
+if (!gads) console.warn('[gads] Google Ads no está configurado: Pauta sin Google');
 
 const distDir = path.resolve(here, '../../frontend/dist');
 const app = buildApp({
@@ -66,7 +72,7 @@ const app = buildApp({
   // Para que Instagram descargue archivos del storage local (Railway expone RAILWAY_PUBLIC_DOMAIN)
   publicBaseUrl: process.env.PUBLIC_API_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : undefined),
   staticDir: fs.existsSync(path.join(distDir, 'index.html')) ? distDir : undefined,
-  ads: { meta, anthropic, config: adsConfig, model: process.env.ADS_AGENT_MODEL || undefined },
+  ads: { meta, anthropic, gads, config: adsConfig, model: process.env.ADS_AGENT_MODEL || undefined },
 });
 
 // Borrados de archivos que fallaron: al arrancar y cada hora
@@ -86,6 +92,18 @@ if (app.locals.startAdsRun) {
       console.log(`[ads] corrida diaria: ${run.status}`);
     } catch (err) {
       console.error('[ads] corrida diaria no arrancó:', err.message);
+    }
+  }, { timezone: 'America/Argentina/Buenos_Aires' });
+}
+
+// Informe diario del agente de Google: 9:15 hora argentina (no compite con el de Meta)
+if (app.locals.startGoogleRun) {
+  cron.schedule('15 9 * * *', async () => {
+    try {
+      const { done } = await app.locals.startGoogleRun('daily');
+      console.log(`[gads] corrida diaria: ${(await done).status}`);
+    } catch (err) {
+      console.error('[gads] corrida diaria no arrancó:', err.message);
     }
   }, { timezone: 'America/Argentina/Buenos_Aires' });
 }

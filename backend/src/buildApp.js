@@ -25,8 +25,11 @@ import { createReportAnalyst } from './ads/reportAnalysis.js';
 import { createIgPublisher } from './services/igPublisher.js';
 import { createWebRepo } from './repo/web.js';
 import { createPublicWebRouter, createWebRouter } from './routes/web.js';
+import { createGoogleAdsRouter } from './routes/gads.js';
+import { createGoogleExecutor } from './gads/executor.js';
+import { createGoogleAgentRunner } from './gads/agent.js';
 
-// ads (opcional): { meta, anthropic, config, model } — sin meta/anthropic la sección Pauta avisa qué falta
+// ads (opcional): { meta, anthropic, config, model, gads } — sin meta/anthropic/gads la sección Pauta avisa qué falta
 export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, publicBaseUrl, loginLimit = 10, webLimit = 8, ads = {} }) {
   if (!jwtSecret) throw new Error('Falta jwtSecret');
   if (!storage) throw new Error('Falta storage');
@@ -48,6 +51,11 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
     : null;
   const igPublisher = ads.meta && adsConfig.igUserId ? createIgPublisher({ db, meta: ads.meta, files, igUserId: adsConfig.igUserId, publicBaseUrl }) : null;
   const analyzeReport = ads.meta && ads.anthropic ? createReportAnalyst({ anthropic: ads.anthropic, model: ads.model }) : null;
+  const gadsRepo = createAdsRepo(db, { platform: 'google' });
+  const gadsExecute = ads.gads ? createGoogleExecutor({ gads: ads.gads }) : null;
+  const startGoogleRun = ads.gads && ads.anthropic
+    ? createGoogleAgentRunner({ anthropic: ads.anthropic, gads: ads.gads, repo: gadsRepo, execute: gadsExecute, model: ads.model })
+    : null;
   const chatReply = ads.meta && ads.anthropic ? createAdsChat({ anthropic: ads.anthropic, meta: ads.meta, repo: adsRepo, model: ads.model, config: adsConfig }) : null;
 
   const api = Router();
@@ -65,6 +73,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
   api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
   api.use(createHomeRouter({ homeRepo: createHomeRepo(db), storage }));
   api.use(createWebRouter({ webRepo }));
+  api.use(createGoogleAdsRouter({ repo: gadsRepo, gads: ads.gads, startRun: startGoogleRun, execute: gadsExecute }));
   api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig, files, analyzeReport, chatReply }));
 
   const app = createApp({
@@ -78,6 +87,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
   });
   app.locals.files = files;
   app.locals.startAdsRun = startRun;
+  app.locals.startGoogleRun = startGoogleRun;
   app.locals.igPublisher = igPublisher;
   return app;
 }

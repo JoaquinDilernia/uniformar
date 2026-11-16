@@ -8,14 +8,16 @@ export const adsKeys = {
   requests: ['ads', 'requests'], learnings: ['ads', 'learnings'], questions: ['ads', 'questions'], igPosts: ['ads', 'ig-posts'], chats: ['ads', 'chats'],
 };
 
-function useRefreshAds() {
+// base '/ads' (Meta) o '/gads' (Google): cada plataforma refresca solo lo suyo
+function useRefreshAds(base = '/ads') {
   const qc = useQueryClient();
-  return () => qc.invalidateQueries({ queryKey: ['ads'] });
+  return () => qc.invalidateQueries({ queryKey: [base.slice(1)] });
 }
 
 // Mientras el agente analiza, el resumen se vuelve a pedir solo cada 5 s
-export const useAdsOverview = () => useQuery({
+export const useAdsOverview = ({ enabled = true } = {}) => useQuery({
   queryKey: adsKeys.overview,
+  enabled,
   queryFn: () => api.get('/ads/overview'),
   refetchInterval: (q) => (q.state.data?.lastRun?.status === 'running' ? 5000 : false),
 });
@@ -96,15 +98,15 @@ export function useSaveAdSettings() {
   return useMutation({ mutationFn: (patch) => api.put('/ads/settings', patch).then((r) => r.settings), meta: { success: 'Ajustes guardados ✓' }, onSettled: refresh });
 }
 
-export const useQuestions = (status = 'open') => useQuery({
-  queryKey: [...adsKeys.questions, status],
-  queryFn: () => api.get(`/ads/questions?status=${status}`).then((r) => r.questions),
+export const useQuestions = (status = 'open', base = '/ads') => useQuery({
+  queryKey: [base.slice(1), 'questions', status],
+  queryFn: () => api.get(`${base}/questions?status=${status}`).then((r) => r.questions),
 });
 
-export function useAnswerQuestion() {
-  const refresh = useRefreshAds();
+export function useAnswerQuestion(base = '/ads') {
+  const refresh = useRefreshAds(base);
   return useMutation({
-    mutationFn: ({ id, answer, analyze }) => api.post(`/ads/questions/${id}/answer`, { answer, analyze }),
+    mutationFn: ({ id, answer, analyze }) => api.post(`${base}/questions/${id}/answer`, { answer, analyze }),
     meta: { success: false },
     onSuccess: (r, vars) => {
       if (r.note) toastBus.info(r.note);
@@ -114,9 +116,9 @@ export function useAnswerQuestion() {
   });
 }
 
-export function useDismissQuestion() {
-  const refresh = useRefreshAds();
-  return useMutation({ mutationFn: (id) => api.post(`/ads/questions/${id}/dismiss`), meta: { success: 'Pregunta descartada' }, onSettled: refresh });
+export function useDismissQuestion(base = '/ads') {
+  const refresh = useRefreshAds(base);
+  return useMutation({ mutationFn: (id) => api.post(`${base}/questions/${id}/dismiss`), meta: { success: 'Pregunta descartada' }, onSettled: refresh });
 }
 
 // Si Instagram falla (p. ej. sin acceso a la cuenta), el error se muestra en la sección, no como toast
