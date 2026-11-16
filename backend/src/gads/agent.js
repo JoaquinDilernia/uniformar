@@ -35,11 +35,27 @@ export function capCheck(tool, input, { snapshot, settings }) {
   return `Con esto el mes cerraría en ~$${projected.toLocaleString('es-AR')} y el tope es $${settings.monthly_cap_ars.toLocaleString('es-AR')} (gastado: $${snapshot.month.spend.toLocaleString('es-AR')}, quedan ${daysLeftInMonth(snapshot.today)} días). Bajá el presupuesto.`;
 }
 
-export function createGoogleDispatcher({ gads, repo, execute }) {
+export function createGoogleDispatcher({ gads, repo, execute, images }) {
   return async function dispatch(name, input, { runId, settings, snapshot }) {
     const base = { runId, tool: name, input, title: input.title ?? '', reason: input.reason ?? '', expectedImpact: input.expected_impact ?? '' };
     try {
       if (name === 'find_locations') return { results: await gads.suggestLocations((input.names ?? []).slice(0, 10).map(String)) };
+      if (name === 'import_meta_images') {
+        if (!images) return { error: 'La biblioteca de imágenes no está disponible.' };
+        const allowed = new Map((await images.metaCandidates()).map((c) => [c.id, c]));
+        const done = [];
+        const errors = [];
+        for (const id of [...new Set((input.creative_ids ?? []).map(String))].slice(0, 6)) {
+          if (!allowed.has(id)) { errors.push(`${id}: no es una pieza de Meta con foto`); continue; }
+          try {
+            const img = await images.importFromCreative(id, null);
+            done.push({ image_id: img.id, name: allowed.get(id).name });
+          } catch (err) {
+            errors.push(`${allowed.get(id).name}: ${err.message}`);
+          }
+        }
+        return { imported: done, ...(errors.length ? { errors } : {}), note: 'Quedaron en Pauta → Google → Imágenes. Recomendá en el informe cuáles cargar a mano en Google Ads.' };
+      }
       if (name === 'save_learning') return { ok: true, learning_id: (await repo.upsertLearning(input)).id };
       if (name === 'record_outcome') {
         await repo.recordOutcome(input.decision_id, input.outcome);
@@ -69,7 +85,7 @@ export function createGoogleDispatcher({ gads, repo, execute }) {
 }
 
 export async function buildGoogleContext({ gads, repo, images }) {
-  const [snapshot, settings, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions, library] = await Promise.all([
+  const [snapshot, settings, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions, library, metaPieces] = await Promise.all([
     buildGoogleSnapshot(gads),
     repo.getSettings(),
     repo.listLearnings({ activeOnly: true }),
@@ -79,6 +95,7 @@ export async function buildGoogleContext({ gads, repo, images }) {
     repo.listQuestions({ status: 'open', limit: 30 }),
     repo.answeredSinceLastRun(),
     images ? images.list() : [],
+    images ? images.metaCandidates() : [],
   ]);
   const sections = {
     today: snapshot.today,
@@ -91,6 +108,7 @@ export async function buildGoogleContext({ gads, repo, images }) {
     keywords: snapshot.keywords,
     ads: snapshot.ads,
     campaignAssets: snapshot.assets,
+    metaImagePieces: metaPieces.map((c) => ({ id: c.id, name: c.name, headline: c.headline || undefined, usedInMeta: c.status === 'used', inGoogle: c.in_google })),
     images: library.map((i) => ({ id: i.id, name: i.name, from: i.source_name ? `pieza de Meta "${i.source_name}"` : 'cargada para Google', size: i.file ? `${i.file.width}x${i.file.height}` : null })),
     searchTerms: snapshot.searchTerms,
     activeLearnings: learnings.map((l) => ({ id: l.id, text: l.text, evidence: l.evidence })),
@@ -104,7 +122,7 @@ export async function buildGoogleContext({ gads, repo, images }) {
 }
 
 export function createGoogleAgentRunner({ anthropic, gads, repo, execute, images, model = DEFAULT_MODEL }) {
-  const dispatch = createGoogleDispatcher({ gads, repo, execute });
+  const dispatch = createGoogleDispatcher({ gads, repo, execute, images });
 
   async function process(runRow) {
     try {

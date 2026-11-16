@@ -93,3 +93,26 @@ describe('imágenes de Google', () => {
     expect(res.status).toBe(409);
   });
 });
+
+describe('el agente trae fotos de Meta', () => {
+  it('importa solo piezas de Meta con foto, sin aprobación, y no duplica', async () => {
+    const { createGoogleDispatcher } = await import('../src/gads/agent.js');
+    const { createGoogleImages } = await import('../src/gads/images.js');
+    const { createFilesService } = await import('../src/services/files.js');
+    const images = createGoogleImages({ db: ctx.db, files: createFilesService({ db: ctx.db, storage: ctx.storage, uploadSecret: 'test-secret' }) });
+    const photo = await metaPiece('Chomba logística', await jpg(1080, 1080));
+    const reel = (await admin.post('/api/ads/creatives').send({ name: 'Reel sin foto', copy: 'x' })).body.creative.id;
+    const candidates = await images.metaCandidates();
+    expect(candidates.map((c) => c.id)).toContain(photo);
+    expect(candidates.map((c) => c.id)).not.toContain(reel);
+
+    const dispatch = createGoogleDispatcher({ gads, repo, execute: null, images });
+    const res = await dispatch('import_meta_images', { creative_ids: [photo, reel] }, { runId: null });
+    expect(res.imported).toEqual([expect.objectContaining({ name: 'Chomba logística' })]);
+    expect(res.errors[0]).toMatch(/no es una pieza de Meta con foto/);
+    const again = await dispatch('import_meta_images', { creative_ids: [photo] }, { runId: null });
+    expect(again.imported[0].image_id).toBe(res.imported[0].image_id);
+    expect((await images.metaCandidates()).find((c) => c.id === photo).in_google).toBe(true);
+    expect((await repo.listDecisions({ status: 'pending' })).filter((d) => d.tool === 'import_meta_images')).toHaveLength(0);
+  });
+});

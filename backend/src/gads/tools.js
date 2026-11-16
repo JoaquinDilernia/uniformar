@@ -142,6 +142,11 @@ export const GOOGLE_TOOLS = [
     },
   },
   {
+    name: 'import_meta_images',
+    description: 'Traer a la biblioteca de Google (images) fotos de piezas de Meta (metaImagePieces). Se hace en el momento, sin aprobación: no gasta ni toca Google Ads. Después recomendá en el informe cuáles cargar a mano en la campaña. No ves las fotos: elegí por nombre y título (prendas con logo, rubros que buscamos) y priorizá las que ya se usaron en Meta (usedInMeta); no traigas las que ya tienen inGoogle.',
+    input_schema: { type: 'object', properties: { creative_ids: strings('Ids de piezas de Meta (metaImagePieces[].id), hasta 6', { minItems: 1, maxItems: 6 }) }, required: ['creative_ids'] },
+  },
+  {
     name: 'save_learning',
     description: 'Guardar o actualizar un aprendizaje con evidencia repetida (nunca de una sola muestra). Pasá learning_id para actualizar o marcarlo obsolete.',
     input_schema: { type: 'object', properties: { learning_id: s('ID existente (omitir para crear)'), text: s('El aprendizaje, corto y accionable'), evidence: s('Evidencia con fechas y números'), status: { type: 'string', enum: ['active', 'obsolete'] } }, required: ['text', 'evidence'] },

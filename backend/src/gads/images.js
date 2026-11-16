@@ -32,6 +32,18 @@ export function createGoogleImages({ db, files }) {
       if (!rows[0]) throw notFound('No existe esa imagen.');
       return rows[0];
     },
+    // Piezas de Meta con foto (los videos no sirven para Búsqueda) y si ya están en la biblioteca de Google
+    async metaCandidates() {
+      const { rows } = await db.query(
+        `SELECT c.id, c.name, c.status, c.headline,
+                EXISTS (SELECT 1 FROM gads_images g WHERE g.source_creative_id = c.id AND g.status = 'active') AS in_google
+         FROM ad_creatives c
+         WHERE c.status <> 'archived'
+           AND EXISTS (SELECT 1 FROM files f WHERE f.owner_id = c.id AND f.owner_type IN ('ad_feed','ad_story') AND f.kind = 'image')
+         ORDER BY c.created_at DESC LIMIT 40`,
+      );
+      return rows;
+    },
     // Copia la imagen de una pieza de Meta a la biblioteca de Google (si ya estaba, devuelve la existente)
     async importFromCreative(creativeId, userId) {
       const { rows: [creative] } = await db.query('SELECT id, name FROM ad_creatives WHERE id = $1', [creativeId]);
