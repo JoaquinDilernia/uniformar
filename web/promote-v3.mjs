@@ -17,26 +17,47 @@ let html = v3
   .replace(/(^|[^./\w-])assets\//g, '$1v3/assets/')
   .replaceAll(SHARED, 'assets/');
 
+// Dominio único: uniformar.ar sin www (www redirige con 301 desde el .htaccess)
+const SITE = 'https://uniformar.ar';
+// Imagen al compartir el link (WhatsApp, Facebook, LinkedIn). Nombre nuevo para que no salga la vieja de caché.
+const OG_IMAGE = `${SITE}/assets/og-camisa.jpg`;
+const OG_ALT = 'Camisa de grafa verde con el logo de Uniform.AR bordado en el pecho';
+const DESCRIPTION = 'Ropa de trabajo y uniformes con el logo de tu empresa, bordado o estampado, para todos los rubros. Desde 30 prendas y con envío gratis a todo el país.';
+
 // SEO de la web anterior: todo lo que va entre los íconos y la tipografía
 const head = seoSource.slice(0, seoSource.indexOf('</head>'));
 const pick = (re) => (head.match(re) ?? []).join('\n');
+// Datos estructurados: solo la empresa y el sitio. Las prendas sin precio y las preguntas frecuentes de la web
+// anterior no están en la v3 (o les falta el precio) y Google las marca como error.
+const KEEP = new Set(['ClothingStore', 'WebSite']);
+const jsonld = (head.match(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g) ?? []).map((block) => {
+  const data = JSON.parse(block.replace(/^<script[^>]*>|<\/script>$/g, ''));
+  const kept = (Array.isArray(data) ? data : [data]).filter((d) => KEEP.has(d['@type']));
+  return kept.length ? `<script type="application/ld+json">${JSON.stringify(kept)}</script>` : '';
+}).filter(Boolean).join('\n');
 const seo = [
   pick(/<meta name="geo\.[^>]*>/g),
   pick(/<meta property="og:[^>]*>/g),
   pick(/<meta name="twitter:[^>]*>/g),
-  pick(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g),
+  jsonld,
 ].filter(Boolean).join('\n');
 
 html = html
   .replace(/<!-- v3 en revisión[^>]*-->\n?/, '')
   .replace('<meta name="robots" content="noindex, nofollow">', '<meta name="robots" content="index, follow, max-image-preview:large">')
-  .replace(/(<link rel="canonical"[^>]*>)/, `$1\n${seo}`);
+  .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${DESCRIPTION}">`)
+  .replace(/(<link rel="canonical"[^>]*>)/, `$1\n${seo}`)
+  .replaceAll('https://www.uniformar.ar', SITE)
+  .replaceAll(`${SITE}/assets/og.jpg`, OG_IMAGE)
+  .replace(/<meta property="og:image:alt" content="[^"]*">/, `<meta property="og:image:alt" content="${OG_ALT}">`)
+  .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${DESCRIPTION}">`)
+  .replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${DESCRIPTION}">`);
 
-for (const bad of ['noindex', '../assets/']) if (html.includes(bad)) throw new Error(`Quedó "${bad}" en la página principal`);
+for (const bad of ['noindex', '../assets/', 'www.uniformar.ar', '/assets/og.jpg']) if (html.includes(bad)) throw new Error(`Quedó "${bad}" en la página principal`);
 
 const redirect = `<!doctype html>
 <html lang="es-AR"><head><meta charset="utf-8"><meta name="robots" content="noindex">
-<link rel="canonical" href="https://www.uniformar.ar/"><meta http-equiv="refresh" content="0; url=/">
+<link rel="canonical" href="${SITE}/"><meta http-equiv="refresh" content="0; url=/">
 <title>Uniform.AR</title><script>location.replace('/' + location.hash)</script></head>
 <body><a href="/">Ir a Uniform.AR</a></body></html>
 `;

@@ -1,5 +1,5 @@
 // Arma la web pública de Uniform.AR a partir de web/pagina.html.
-//   node web/build.mjs --site https://www.uniformar.ar            → web/dist/ (index.html + assets + robots + sitemap), lista para subir
+//   node web/build.mjs --site https://uniformar.ar                → web/dist/ (index.html + assets + robots + sitemap), lista para subir
 //   node web/build.mjs --site https://x.techdi.com.ar --noindex   → igual, pero sin indexar (demo en un subdominio)
 //   node web/build.mjs --fragment out.html                        → un solo archivo con imágenes embebidas (para publicarlo como Artifact)
 import { readFileSync, writeFileSync, mkdirSync, cpSync, rmSync, readdirSync } from 'node:fs';
@@ -20,7 +20,7 @@ if (fragmentOut) {
   process.exit(0);
 }
 
-const site = (arg('--site') || 'https://www.uniformar.ar').replace(/\/$/, '');
+const site = (arg('--site') || 'https://uniformar.ar').replace(/\/$/, '');
 const noindex = process.argv.includes('--noindex');
 const today = new Date().toISOString().slice(0, 10);
 
@@ -94,7 +94,7 @@ const head = `<!doctype html>
 <title>${TITLE}</title>
 <meta name="description" content="${DESC}">
 <meta name="robots" content="${noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'}">
-<link rel="canonical" href="${noindex ? 'https://www.uniformar.ar' : site}/">
+<link rel="canonical" href="${noindex ? 'https://uniformar.ar' : site}/">
 <meta name="theme-color" content="#F7EFD9">
 <meta name="geo.region" content="AR-B">
 <meta name="geo.placename" content="Buenos Aires">
@@ -139,6 +139,12 @@ for (const v of readdirSync(here).filter(d => /^v\d+$/.test(d))) {
 writeFileSync(join(out, 'robots.txt'), noindex ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n\nSitemap: ${site}/sitemap.xml\n`);
 writeFileSync(join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${site}/</loc><lastmod>${today}</lastmod><changefreq>monthly</changefreq><priority>1.0</priority></url>\n</urlset>\n`);
 writeFileSync(join(out, '.htaccess'), `DirectoryIndex index.html
+# Un solo dominio para Google: www.uniformar.ar redirige a uniformar.ar
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^www\\.uniformar\\.ar$ [NC]
+  RewriteRule ^(.*)$ https://uniformar.ar/$1 [R=301,L]
+</IfModule>
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml application/json
 </IfModule>
