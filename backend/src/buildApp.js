@@ -54,7 +54,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
   const analyzeReport = ads.meta && ads.anthropic ? createReportAnalyst({ anthropic: ads.anthropic, model: ads.model }) : null;
   const gadsRepo = createAdsRepo(db, { platform: 'google' });
   const gadsImages = createGoogleImages({ db, files });
-  const gadsExecute = ads.gads ? createGoogleExecutor({ gads: ads.gads }) : null;
+  const gadsExecute = ads.gads ? createGoogleExecutor({ gads: ads.gads, images: gadsImages }) : null;
   const startGoogleRun = ads.gads && ads.anthropic
     ? createGoogleAgentRunner({ anthropic: ads.anthropic, gads: ads.gads, repo: gadsRepo, execute: gadsExecute, images: gadsImages, model: ads.model })
     : null;

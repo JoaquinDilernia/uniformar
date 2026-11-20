@@ -119,7 +119,7 @@ export const GOOGLE_TOOLS = [
   },
   {
     name: 'propose_assets',
-    description: 'Proponer recursos para una campaña de búsqueda: vínculos a secciones de la web, textos destacados y fragmento estructurado. No cuestan más (se paga el clic) y agrandan el anuncio. Se validan en Google antes de quedar pendientes. Las imágenes NO se pueden agregar por API: si conviene sumarlas, recomendá en el informe cuáles de la biblioteca (images) cargar a mano en Google Ads.',
+    description: 'Proponer recursos para una campaña de búsqueda: vínculos a secciones de la web, textos destacados y fragmento estructurado. No cuestan más (se paga el clic) y agrandan el anuncio. Se validan en Google antes de quedar pendientes. Las imágenes van aparte, con add_campaign_images.',
     input_schema: {
       type: 'object',
       properties: {
@@ -142,8 +142,21 @@ export const GOOGLE_TOOLS = [
     },
   },
   {
+    name: 'add_campaign_images',
+    description: 'Proponer imágenes de la biblioteca (images) para una campaña de búsqueda: se suben en versión cuadrada y horizontal como recursos de imagen de la campaña. No cuestan más (se paga el clic) y hacen más visible el anuncio. Se validan en Google antes de quedar pendientes. No repitas imágenes que la campaña ya tiene (campaignAssets AD_IMAGE).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        campaign_id: s('Id de la campaña'), campaign_name: s('Nombre'),
+        image_ids: strings('Ids de la biblioteca (images[].id), de 1 a 6: las que muestran la prenda con el logo y se entienden en chico', { minItems: 1, maxItems: 6 }),
+        ...why,
+      },
+      required: ['campaign_id', 'image_ids', ...whyReq],
+    },
+  },
+  {
     name: 'import_meta_images',
-    description: 'Traer a la biblioteca de Google (images) fotos de piezas de Meta (metaImagePieces). Se hace en el momento, sin aprobación: no gasta ni toca Google Ads. Después recomendá en el informe cuáles cargar a mano en la campaña. No ves las fotos: elegí por nombre y título (prendas con logo, rubros que buscamos) y priorizá las que ya se usaron en Meta (usedInMeta); no traigas las que ya tienen inGoogle.',
+    description: 'Traer a la biblioteca de Google (images) fotos de piezas de Meta (metaImagePieces). Se hace en el momento, sin aprobación: no gasta ni toca Google Ads. Después proponé las mejores para la campaña con add_campaign_images (usá los image_id que devuelve). No ves las fotos: elegí por nombre y título (prendas con logo, rubros que buscamos) y priorizá las que ya se usaron en Meta (usedInMeta); no traigas las que ya tienen inGoogle.',
     input_schema: { type: 'object', properties: { creative_ids: strings('Ids de piezas de Meta (metaImagePieces[].id), hasta 6', { minItems: 1, maxItems: 6 }) }, required: ['creative_ids'] },
   },
   {
@@ -171,6 +184,6 @@ export const GOOGLE_TOOLS = [
 ];
 
 export const GOOGLE_READ_ONLY = new Set(['find_locations']);
-export const GOOGLE_ACTIONS = new Set(['propose_assets', 'propose_search_campaign', 'set_status', 'propose_budget_change', 'add_negative_keywords', 'add_keywords', 'propose_search_ad']);
+export const GOOGLE_ACTIONS = new Set(['propose_assets', 'add_campaign_images', 'propose_search_campaign', 'set_status', 'propose_budget_change', 'add_negative_keywords', 'add_keywords', 'propose_search_ad']);
 // Las que crean cosas en Google se validan (validateOnly) antes de quedar pendientes
-export const GOOGLE_VALIDATED = new Set(['propose_assets', 'propose_search_campaign', 'add_negative_keywords', 'add_keywords', 'propose_search_ad']);
+export const GOOGLE_VALIDATED = new Set(['propose_assets', 'add_campaign_images', 'propose_search_campaign', 'add_negative_keywords', 'add_keywords', 'propose_search_ad']);

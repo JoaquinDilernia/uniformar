@@ -1,23 +1,39 @@
 import { useState } from 'react';
-import { Download, ImagePlus, Images } from 'lucide-react';
+import { Download, ImagePlus, Images, Upload } from 'lucide-react';
 import { fileUrl } from '../../api/client.js';
 import { Button } from '../../components/ui/Button.jsx';
 import { Spinner } from '../../components/ui/Spinner.jsx';
 import { EmptyState } from '../../components/ui/EmptyState.jsx';
 import { Sheet } from '../../components/ui/Sheet.jsx';
-import { Field, Input } from '../../components/ui/Field.jsx';
+import { Field, Input, Select } from '../../components/ui/Field.jsx';
+import { useConfirm } from '../../components/ui/ConfirmDialog.jsx';
 import { toastBus } from '../../state/toastBus.js';
 import { useCreatives } from './api.js';
-import { downloadCrop, useArchiveGoogleImage, useGoogleImages, useImportFromMeta, useUploadGoogleImage } from './gapi.js';
+import { downloadCrop, useArchiveGoogleImage, useGoogleImages, useGoogleOverview, useImageToCampaign, useImportFromMeta, useUploadGoogleImage } from './gapi.js';
 import s from './ads.module.css';
 
-// Imágenes para los anuncios de Google. La API de Google no deja agregarlas a la campaña de búsqueda:
-// se bajan recortadas (cuadrada y horizontal) y se cargan en Google Ads → Recursos → Imágenes.
+// Imágenes para los anuncios de Google: se suben a la campaña de búsqueda (cuadrada y horizontal) con un botón,
+// o el agente las propone. También se pueden bajar los recortes para cargarlos a mano.
 export function GoogleImages({ canEdit }) {
   const images = useGoogleImages();
   const archive = useArchiveGoogleImage();
+  const toCampaign = useImageToCampaign();
+  const overview = useGoogleOverview();
+  const confirm = useConfirm();
   const [sheet, setSheet] = useState(null);
+  const [campaignId, setCampaignId] = useState('');
   const list = images.data ?? [];
+  const campaigns = (overview.data?.snapshot?.campaigns ?? []).filter((c) => c.channel === 'SEARCH' && ['ENABLED', 'PAUSED'].includes(c.status));
+  const campaign = campaigns.find((c) => c.id === campaignId) ?? campaigns.find((c) => c.status === 'ENABLED') ?? campaigns[0];
+
+  async function upload(img) {
+    const ok = await confirm({
+      title: `¿Subir “${img.name}” a ${campaign.name}?`,
+      message: 'Se suben la versión cuadrada y la horizontal como imágenes del anuncio. No cambia el presupuesto.',
+      confirmLabel: 'Subir',
+    });
+    if (ok) toCampaign.mutate({ id: img.id, campaign });
+  }
 
   async function download(img, shape) {
     try { await downloadCrop(img, shape); } catch (err) { toastBus.error(err.message); }
@@ -26,9 +42,16 @@ export function GoogleImages({ canEdit }) {
   return (
     <div className={s.stack}>
       <p className="muted">
-        Fotos para sumar al anuncio de búsqueda. Google no deja cargarlas automáticamente: bajá la versión cuadrada y la horizontal
-        y subilas en Google Ads → Recursos → Imágenes. El agente te dice cuáles conviene usar.
+        Fotos para sumar al anuncio de búsqueda. Con “Subir a la campaña” se cargan la versión cuadrada y la horizontal en Google Ads;
+        el agente también propone cuáles conviene usar.
       </p>
+      {canEdit && campaigns.length > 1 && (
+        <Field label="Campaña">
+          <Select value={campaign?.id ?? ''} onChange={(e) => setCampaignId(e.target.value)}>
+            {campaigns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </Select>
+        </Field>
+      )}
       {canEdit && (
         <div className={s.actions}>
           <Button icon={ImagePlus} onClick={() => setSheet('upload')}>Subir imagen</Button>
@@ -50,6 +73,9 @@ export function GoogleImages({ canEdit }) {
                 <div className={s.actions}>
                   <Button size="sm" variant="secondary" icon={Download} onClick={() => download(img, 'cuadrada')}>Cuadrada</Button>
                   <Button size="sm" variant="secondary" icon={Download} onClick={() => download(img, 'horizontal')}>Horizontal</Button>
+                  {canEdit && campaign && (
+                    <Button size="sm" icon={Upload} loading={toCampaign.isPending && toCampaign.variables?.id === img.id} onClick={() => upload(img)}>Subir a la campaña</Button>
+                  )}
                   {canEdit && <Button size="sm" variant="ghost" onClick={() => archive.mutate(img.id)}>Archivar</Button>}
                 </div>
               )}

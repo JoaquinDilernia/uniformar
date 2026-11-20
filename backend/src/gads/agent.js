@@ -54,7 +54,7 @@ export function createGoogleDispatcher({ gads, repo, execute, images }) {
             errors.push(`${allowed.get(id).name}: ${err.message}`);
           }
         }
-        return { imported: done, ...(errors.length ? { errors } : {}), note: 'Quedaron en Pauta → Google → Imágenes. Recomendá en el informe cuáles cargar a mano en Google Ads.' };
+        return { imported: done, ...(errors.length ? { errors } : {}), note: 'Quedaron en Pauta → Google → Imágenes. Proponé las mejores para la campaña con add_campaign_images.' };
       }
       if (name === 'save_learning') return { ok: true, learning_id: (await repo.upsertLearning(input)).id };
       if (name === 'record_outcome') {

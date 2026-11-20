@@ -48,7 +48,7 @@ export function landingUrl(url, allowedHost) {
 }
 
 // Ejecuta (o valida, con validateOnly) una acción sobre Google Ads
-export function createGoogleExecutor({ gads, landingHost = 'uniformar.ar' }) {
+export function createGoogleExecutor({ gads, images = null, landingHost = 'uniformar.ar', now = () => Date.now() }) {
   const C = `customers/${gads.customerId}`;
   const rsa = (adGroup, { headlines, descriptions, final_url: url }) => ({
     adGroupAdOperation: {
@@ -145,9 +145,29 @@ export function createGoogleExecutor({ gads, landingHost = 'uniformar.ar' }) {
       const values = texts(input.structured_snippet.values, { min: 3, max: 10, maxLen: 25, label: 'valores del fragmento' });
       link({ structuredSnippetAsset: { header: String(input.structured_snippet.header), values } }, 'STRUCTURED_SNIPPET');
     }
-    // Imágenes: la API de Google no deja vincular AD_IMAGE (UNSUPPORTED_FIELD_TYPE en campaña, grupo y cuenta);
-    // se cargan a mano en Google Ads desde la biblioteca del panel.
     if (!ops.length) throw badRequest('No hay recursos para agregar.');
+    return ops;
+  }
+
+  // Imágenes de la biblioteca → recursos AD_IMAGE de la campaña, en versión cuadrada (1200×1200) y horizontal (1200×628).
+  // Google acepta el vínculo a nivel campaña (a nivel cuenta no: "not supported to be added directly through asset links").
+  async function imageOps(input) {
+    if (!images) throw new AppError(503, 'IMAGES_NOT_CONFIGURED', 'La biblioteca de imágenes no está disponible.');
+    const campaign = `${C}/campaigns/${numericId(input.campaign_id, 'campaña')}`;
+    const ids = [...new Set((Array.isArray(input.image_ids) ? input.image_ids : []).map((x) => String(x ?? '').trim()).filter(Boolean))];
+    if (!ids.length || ids.length > 6) throw badRequest('Elegí entre 1 y 6 imágenes de la biblioteca.');
+    const stamp = new Date(now()).toISOString().slice(0, 16).replace('T', ' ');
+    const ops = [];
+    let tmp = 0;
+    for (const id of ids) {
+      for (const shape of ['cuadrada', 'horizontal']) {
+        const { buffer, filename } = await images.crop(id, shape);
+        const resourceName = `${C}/assets/${--tmp}`;
+        const name = `${filename.replace(/\.jpg$/i, '')} ${stamp}`.slice(0, 120);
+        ops.push({ assetOperation: { create: { resourceName, name, type: 'IMAGE', imageAsset: { data: buffer.toString('base64') } } } });
+        ops.push({ campaignAssetOperation: { create: { campaign, asset: resourceName, fieldType: 'AD_IMAGE' } } });
+      }
+    }
     return ops;
   }
 
@@ -202,7 +222,9 @@ export function createGoogleExecutor({ gads, landingHost = 'uniformar.ar' }) {
 
   async function run(tool, input = {}, { validateOnly = false } = {}) {
     if (tool === 'propose_budget_change') return setBudget(input, { validateOnly });
-    const ops = tool === 'propose_assets' ? await assetOps(input) : opsFor(tool, input);
+    const ops = tool === 'propose_assets' ? await assetOps(input)
+      : tool === 'add_campaign_images' ? await imageOps(input)
+        : opsFor(tool, input);
     if (!ops) throw new Error(`Acción desconocida: ${tool}`);
     const res = await gads.mutateAll(ops, { validateOnly });
     if (validateOnly) return { valid: true };
@@ -211,7 +233,7 @@ export function createGoogleExecutor({ gads, landingHost = 'uniformar.ar' }) {
       const campaign = created.find((rn) => rn.includes('/campaigns/'));
       return { campaign_id: campaign?.split('/').pop() ?? null, status: 'ENABLED', created: created.length };
     }
-    if (tool === 'propose_assets') return { created: created.filter((rn) => rn.includes('/assets/')).length };
+    if (tool === 'propose_assets' || tool === 'add_campaign_images') return { created: created.filter((rn) => rn.includes('/assets/')).length };
     return { created: created.length, resources: created.slice(0, 30) };
   }
 

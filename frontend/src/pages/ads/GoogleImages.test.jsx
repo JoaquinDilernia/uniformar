@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from '../../api/queryClient.js';
+import { ConfirmProvider } from '../../components/ui/ConfirmDialog.jsx';
 import { GoogleImages } from './GoogleImages.jsx';
 
 const json = (body) => Promise.resolve(new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } }));
@@ -34,5 +35,20 @@ describe('Pauta · Google · Imágenes', () => {
     expect(screen.getByRole('button', { name: 'Ya está en Google' })).toBeDisabled();
     await userEvent.click(screen.getByRole('button', { name: 'Usar en Google' }));
     await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/gads/images/from-creative/c2', expect.objectContaining({ method: 'POST' })));
+  });
+
+  it('sube una imagen a la campaña de búsqueda activa', async () => {
+    const campaigns = [
+      { id: '111', name: 'Vieja', status: 'REMOVED', channel: 'SEARCH' },
+      { id: '24471685193', name: 'UNIFORMAR | SEARCH', status: 'ENABLED', channel: 'SEARCH' },
+    ];
+    const base = global.fetch;
+    global.fetch = vi.fn((url, opts) => (url === '/api/gads/overview' ? json({ snapshot: { campaigns } }) : base(url, opts)));
+    render(<QueryClientProvider client={createQueryClient()}><ConfirmProvider><GoogleImages canEdit /></ConfirmProvider></QueryClientProvider>);
+    await userEvent.click(await screen.findByRole('button', { name: 'Subir a la campaña' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Subir' }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/gads/images/g1/to-campaign', expect.objectContaining({ method: 'POST' })));
+    const call = global.fetch.mock.calls.find(([u]) => u === '/api/gads/images/g1/to-campaign');
+    expect(JSON.parse(call[1].body)).toEqual({ campaign_id: '24471685193', campaign_name: 'UNIFORMAR | SEARCH' });
   });
 });

@@ -152,6 +152,22 @@ export function createGoogleAdsRouter({ repo, gads, startRun, execute, images })
     res.set({ 'Content-Type': 'image/jpeg', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(filename)}` }).send(buffer);
   });
   r.post('/gads/images/:id/archive', edit, async (req, res) => res.json({ image: await images.archive(parse(uuid, req.params.id)) }));
+  // Sube la imagen (cuadrada y horizontal) a una campaña de búsqueda, en el momento: no gasta más, se paga el clic
+  r.post('/gads/images/:id/to-campaign', edit, needGoogle, async (req, res) => {
+    const id = parse(uuid, req.params.id);
+    const body = parse(z.object({ campaign_id: z.string().regex(/^\d{1,20}$/, 'Id de campaña inválido'), campaign_name: z.string().max(200).default('') }), req.body);
+    const img = (await images.list()).find((i) => i.id === id);
+    if (!img) throw new AppError(404, 'NOT_FOUND', 'No existe esa imagen.');
+    const input = { campaign_id: body.campaign_id, campaign_name: body.campaign_name, image_ids: [id] };
+    const result = await execute('add_campaign_images', input);
+    await repo.addDecision({
+      tool: 'add_campaign_images', input, status: 'executed', result,
+      title: `Subir “${img.name}” a ${body.campaign_name || `la campaña ${body.campaign_id}`}`,
+      reason: 'Hecho a mano desde el panel.',
+    });
+    invalidate();
+    res.json({ ok: true, created: result.created });
+  });
 
   r.get('/gads/settings', view, async (_req, res) => res.json({ settings: await repo.getSettings() }));
   r.put('/gads/settings', edit, async (req, res) => res.json({ settings: await repo.updateSettings(parse(settingsSchema, req.body)) }));

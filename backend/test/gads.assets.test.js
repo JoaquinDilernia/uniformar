@@ -87,6 +87,37 @@ describe('imágenes de Google', () => {
     expect(gads.calls).toHaveLength(0);
   });
 
+  it('sube imágenes de la biblioteca a la campaña (cuadrada y horizontal) desde el panel', async () => {
+    const img = (await admin.post('/api/gads/images').send({ name: 'Camisa con logo' })).body.image;
+    await admin.post('/api/files').field('owner_type', 'gads_image').field('owner_id', img.id).attach('file', await jpg(1600, 1000), 'camisa.jpg');
+
+    const res = await admin.post(`/api/gads/images/${img.id}/to-campaign`).send({ campaign_id: '24471685193', campaign_name: 'Search' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ ok: true, created: 2 });
+    const { ops, validateOnly } = gads.calls[0];
+    expect(validateOnly).toBe(false);
+    const assets = ops.filter((o) => o.assetOperation).map((o) => o.assetOperation.create);
+    const links = ops.filter((o) => o.campaignAssetOperation).map((o) => o.campaignAssetOperation.create);
+    expect(assets).toHaveLength(2);
+    expect(assets.every((a) => a.type === 'IMAGE' && a.imageAsset.data.length > 100 && a.name.startsWith('Camisa con logo'))).toBe(true);
+    const sizes = await Promise.all(assets.map(async (a) => { const m = await sharp(Buffer.from(a.imageAsset.data, 'base64')).metadata(); return `${m.width}x${m.height}`; }));
+    expect(sizes).toEqual(['1200x1200', '1200x628']);
+    expect(links).toEqual(assets.map((a) => ({ campaign: 'customers/4593693295/campaigns/24471685193', asset: a.resourceName, fieldType: 'AD_IMAGE' })));
+    const done = (await repo.listDecisions({ status: 'executed' })).find((d) => d.tool === 'add_campaign_images');
+    expect(done).toMatchObject({ title: 'Subir “Camisa con logo” a Search' });
+  });
+
+  it('el agente propone imágenes para la campaña y al aprobarlas se suben', async () => {
+    const img = (await admin.post('/api/gads/images').send({ name: 'Chaqueta' })).body.image;
+    await admin.post('/api/files').field('owner_type', 'gads_image').field('owner_id', img.id).attach('file', await jpg(1200, 1200), 'chaqueta.jpg');
+    const d = await repo.addDecision({ tool: 'add_campaign_images', input: { campaign_id: '24471685193', image_ids: [img.id, img.id] }, status: 'pending', title: 'Imágenes' });
+    const res = await admin.post(`/api/gads/decisions/${d.id}/approve`);
+    expect(res.body.decision).toMatchObject({ status: 'executed', result: { created: 2 } });
+
+    const bad = await repo.addDecision({ tool: 'add_campaign_images', input: { campaign_id: '24471685193', image_ids: [] }, status: 'pending', title: 'x' });
+    expect((await admin.post(`/api/gads/decisions/${bad.id}/approve`)).body.decision).toMatchObject({ status: 'failed', error: expect.stringMatching(/entre 1 y 6 imágenes/) });
+  });
+
   it('una pieza de Meta en video no se puede traer', async () => {
     const id = (await admin.post('/api/ads/creatives').send({ name: 'Reel', copy: 'x' })).body.creative.id;
     const res = await admin.post(`/api/gads/images/from-creative/${id}`);

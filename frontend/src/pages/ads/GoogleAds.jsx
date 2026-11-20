@@ -21,6 +21,7 @@ const STATUS_LABEL = { ENABLED: 'Activa', PAUSED: 'Pausada' };
 const TOOL_LABEL = {
   propose_search_campaign: 'Campaña nueva', set_status: 'Activar / pausar', propose_budget_change: 'Presupuesto',
   add_negative_keywords: 'Palabras negativas', add_keywords: 'Palabras clave', propose_search_ad: 'Anuncio nuevo', propose_assets: 'Recursos del anuncio',
+  add_campaign_images: 'Imágenes del anuncio',
 };
 const DECISION_LABEL = { pending: 'Pendiente', executed: 'Hecho', rejected: 'Rechazado', failed: 'Falló' };
 const MATCH_LABEL = { EXACT: 'exacta', PHRASE: 'frase', BROAD: 'amplia' };
@@ -216,6 +217,10 @@ function Detail({ d }) {
   if (d.tool === 'add_keywords') return <small>{(i.keywords ?? []).map((k) => `${k.text} (${MATCH_LABEL[k.match_type] ?? k.match_type})`).join(', ')}{i.ad_group_name ? ` → ${i.ad_group_name}` : ''}</small>;
   if (d.tool === 'add_negative_keywords') return <small>{(i.keywords ?? []).join(', ')}{i.target_name ? ` → ${i.target_name}` : ''}</small>;
   if (d.tool === 'propose_search_ad') return <small>{(i.headlines ?? []).join(' · ')}</small>;
+  if (d.tool === 'add_campaign_images') {
+    const n = (i.image_ids ?? []).length;
+    return <small>{n} {n === 1 ? 'foto' : 'fotos'} de la biblioteca (cuadrada y horizontal){i.campaign_name ? ` → ${i.campaign_name}` : ''}</small>;
+  }
   if (d.tool === 'propose_budget_change') return <small>{i.campaign_name ?? ''}: {ars(i.current_budget_ars)} → {ars(i.proposed_budget_ars)} por día</small>;
   return null;
 }

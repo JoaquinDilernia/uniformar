@@ -71,6 +71,14 @@ export function useImportFromMeta() {
   const refresh = useRefresh();
   return useMutation({ mutationFn: (creativeId) => api.post(`/gads/images/from-creative/${creativeId}`), meta: { success: 'Imagen traída de Meta ✓' }, onSettled: refresh });
 }
+export function useImageToCampaign() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: ({ id, campaign }) => api.post(`/gads/images/${id}/to-campaign`, { campaign_id: campaign.id, campaign_name: campaign.name }),
+    meta: { success: 'Imagen subida a la campaña ✓' },
+    onSettled: refresh,
+  });
+}
 export function useArchiveGoogleImage() {
   const refresh = useRefresh();
   return useMutation({ mutationFn: (id) => api.post(`/gads/images/${id}/archive`), meta: { success: false }, onSettled: refresh });
