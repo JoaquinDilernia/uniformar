@@ -317,6 +317,7 @@ html.has-intro{--intro-d:1.65s}
       <li><a href="#rubros">Rubros</a></li>
       <li><a href="#catalogo">Catálogo</a></li>
       <li><a href="#franquicias">Franquicias</a></li>
+      <li><a href="#dejar-resena">Dejá tu reseña</a></li>
     </ul>
     <a href="#cotiza" class="btn">Cotizá</a>
   </div>
@@ -519,8 +520,10 @@ html.has-intro{--intro-d:1.65s}
 <script>
 /* ====== DATOS (editar acá) ====== */
 const WA = '5491173538181';
-/* Conversiones de Google Ads: cualquier clic a WhatsApp cuenta como consulta; el Cotizá cuenta aparte */
-const conv = label => { try { gtag('event','conversion',{send_to:'AW-18572131243/'+label}); } catch(_){} };
+/* Conversiones de Google Ads: cualquier clic a WhatsApp cuenta como consulta; el Cotizá cuenta aparte.
+   WhatsApp se abre en otra pestaña y el aviso va por beacon: si la página se descargaba antes de mandarlo, la conversión se perdía. */
+const conv = label => { try { gtag('event','conversion',{send_to:'AW-18572131243/'+label, transport_type:'beacon'}); } catch(_){} };
+document.querySelectorAll('a[href*="wa.me/"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
 document.addEventListener('click', e => { if (e.target.closest && e.target.closest('a[href*="wa.me/"]')) conv('8AA7CJj90LkdEKv38JdF'); });
 const TINTS = ['#E9DDE3','#E6E2DC','#DCE3E8','#E8E4D8','#DDE5DD','#EDE0D6'];
 
@@ -641,7 +644,9 @@ const rform = document.getElementById('rform'), revOpen = document.getElementByI
 revOpen.addEventListener('click',()=>{ rform.hidden = !rform.hidden; revOpen.setAttribute('aria-expanded', String(!rform.hidden)); if(!rform.hidden) rform.querySelector('input').focus(); });
 /* Link directo para pedir reseñas: uniformar.ar/#dejar-resena abre el formulario */
 const openReview = () => { if (location.hash !== '#dejar-resena') return; rform.hidden = false; revOpen.setAttribute('aria-expanded', 'true'); document.getElementById('resenas').scrollIntoView(); rform.querySelector('input').focus({ preventScroll: true }); };
-addEventListener('hashchange', openReview); openReview(); addEventListener('load', () => { if (location.hash === '#dejar-resena' && scrollY > 0) document.getElementById('resenas').scrollIntoView(); });
+addEventListener('hashchange', openReview); openReview();
+/* Si el hash ya es #dejar-resena (segundo clic en el menú) no hay hashchange: se abre igual */
+document.addEventListener('click', e => { if (e.target.closest('a[href="#dejar-resena"]') && location.hash === '#dejar-resena') { e.preventDefault(); openReview(); } }); addEventListener('load', () => { if (location.hash === '#dejar-resena' && scrollY > 0) document.getElementById('resenas').scrollIntoView(); });
 const stars = document.getElementById('stars');
 for (let i=1;i<=5;i++) stars.insertAdjacentHTML('beforeend', `<input type="radio" name="rating" id="st${i}" value="${i}" ${i===5?'checked':''}><label for="st${i}" aria-label="${i} de 5">★</label>`);
 const paint = () => { const v = +(rform.rating.value||0); stars.querySelectorAll('label').forEach((l,i)=>l.classList.toggle('on', i < v)); };
