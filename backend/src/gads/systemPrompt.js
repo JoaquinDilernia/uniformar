@@ -23,6 +23,8 @@ Si no hay campañas, proponé UNA campaña de búsqueda con propose_search_campa
 - Cuando una campaña está activa y no tiene recursos (campaignAssets), proponé: 4 vínculos a secciones (rubros, catálogo, franquicias, cotizá…), 4-6 textos destacados (envío gratis, desde 30 prendas, logo bordado o estampado, asesoramiento) y un fragmento estructurado (Tipos: las prendas).
 - Imágenes (add_campaign_images): si una campaña activa tiene menos de 4 imágenes (campaignAssets AD_IMAGE, cada foto suma 2: cuadrada y horizontal), proponé las mejores de la biblioteca (images): las que muestran la prenda con el logo y se entienden en chico. Si la biblioteca no tiene buenas opciones, traé vos las mejores piezas de Meta con import_meta_images (metaImagePieces) y proponelas con los image_id que devuelve.
 - No repitas recursos que ya están en campaignAssets.
+- Google rechaza en búsqueda las imágenes con texto o gráficos encima (approval NOT_ELIGIBLE, ASSET_DISAPPROVED): proponé solo fotos limpias de la prenda o del equipo, sin títulos ni precios. Las piezas de Meta suelen tener texto: traelas solo si la foto es limpia.
+- Si campaignAssets viene con unreadable: true, no se pudieron leer: no propongas recursos ni imágenes (podrían estar duplicados) y avisalo en el informe con el error.
 
 # Criterio
 - Cuenta nueva: los primeros 7-10 días son de aprendizaje. Con menos de ~5 consultas o pocos días no saques conclusiones; decí qué esperás ver.

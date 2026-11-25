@@ -73,9 +73,12 @@ FROM ad_group_ad WHERE ad_group_ad.status != 'REMOVED' AND campaign.status != 'R
     gads.search(`SELECT conversion_action.id, conversion_action.name, conversion_action.category, conversion_action.status,
   conversion_action.primary_for_goal
 FROM conversion_action WHERE conversion_action.status = 'ENABLED'`),
-    gads.search(`SELECT campaign.id, campaign_asset.field_type, campaign_asset.status, asset.id, asset.sitelink_asset.link_text,
+    // campaign.status va en el SELECT porque se filtra por él: sin eso Google responde 400
+    gads.search(`SELECT campaign.id, campaign.status, campaign_asset.field_type, campaign_asset.status,
+  campaign_asset.primary_status, campaign_asset.primary_status_reasons, asset.id, asset.sitelink_asset.link_text,
   asset.callout_asset.callout_text, asset.structured_snippet_asset.header, asset.name
-FROM campaign_asset WHERE campaign_asset.status != 'REMOVED' AND campaign.status != 'REMOVED'`).catch(() => []),
+FROM campaign_asset WHERE campaign_asset.status != 'REMOVED' AND campaign.status != 'REMOVED'`)
+      .catch((err) => ({ error: err.message || String(err) })),
   ]);
 
   const inRange = (d, r) => d >= r.from && d <= r.to;
@@ -143,9 +146,14 @@ FROM campaign_asset WHERE campaign_asset.status != 'REMOVED' AND campaign.status
     primary: r.conversionAction?.primaryForGoal ?? null,
   }));
 
-  // Recursos ya vinculados (vínculos, destacados, fragmentos, imágenes) para no repetirlos
-  const assets = assetRows.map((r) => ({
+  // Recursos ya vinculados (vínculos, destacados, fragmentos, imágenes) para no repetirlos.
+  // Si la consulta falla, assets queda en null (no se sabe), nunca en [] (que se leería como "no tiene").
+  const assetsError = Array.isArray(assetRows) ? null : assetRows.error;
+  if (assetsError) console.warn('[gads] no se pudieron leer los recursos de campaña:', assetsError);
+  const assets = assetsError ? null : assetRows.map((r) => ({
     campaignId: String(r.campaign?.id), type: r.campaignAsset?.fieldType, status: r.campaignAsset?.status,
+    // ELIGIBLE / NOT_ELIGIBLE (ej. ASSET_DISAPPROVED: imagen con texto encima) / PENDING
+    approval: r.campaignAsset?.primaryStatus ?? null, approvalReasons: r.campaignAsset?.primaryStatusReasons ?? [],
     text: r.asset?.sitelinkAsset?.linkText ?? r.asset?.calloutAsset?.calloutText ?? r.asset?.structuredSnippetAsset?.header ?? r.asset?.name ?? null,
   }));
 
@@ -155,6 +163,6 @@ FROM campaign_asset WHERE campaign_asset.status != 'REMOVED' AND campaign.status
     spendToday: pesos(todayRaw.costMicros),
     month: summarize(monthRaw),
     last7d: summarize(last7),
-    campaigns, adGroups, keywords, ads, searchTerms, conversionActions, assets,
+    campaigns, adGroups, keywords, ads, searchTerms, conversionActions, assets, assetsError,
   };
 }

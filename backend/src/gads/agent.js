@@ -107,7 +107,7 @@ export async function buildGoogleContext({ gads, repo, images }) {
     adGroups: snapshot.adGroups,
     keywords: snapshot.keywords,
     ads: snapshot.ads,
-    campaignAssets: snapshot.assets,
+    campaignAssets: snapshot.assets ?? { unreadable: true, error: snapshot.assetsError },
     metaImagePieces: metaPieces.map((c) => ({ id: c.id, name: c.name, headline: c.headline || undefined, usedInMeta: c.status === 'used', inGoogle: c.in_google })),
     images: library.map((i) => ({ id: i.id, name: i.name, from: i.source_name ? `pieza de Meta "${i.source_name}"` : 'cargada para Google', size: i.file ? `${i.file.width}x${i.file.height}` : null })),
     searchTerms: snapshot.searchTerms,
