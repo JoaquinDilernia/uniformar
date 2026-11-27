@@ -29,6 +29,7 @@ import { createGoogleAdsRouter } from './routes/gads.js';
 import { createGoogleExecutor } from './gads/executor.js';
 import { createGoogleAgentRunner } from './gads/agent.js';
 import { createGoogleImages } from './gads/images.js';
+import { createGoogleChat } from './gads/chat.js';
 
 // ads (opcional): { meta, anthropic, config, model, gads } — sin meta/anthropic/gads la sección Pauta avisa qué falta
 export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, publicBaseUrl, loginLimit = 10, webLimit = 8, ads = {} }) {
@@ -59,6 +60,9 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
     ? createGoogleAgentRunner({ anthropic: ads.anthropic, gads: ads.gads, repo: gadsRepo, execute: gadsExecute, images: gadsImages, model: ads.model })
     : null;
   const chatReply = ads.meta && ads.anthropic ? createAdsChat({ anthropic: ads.anthropic, meta: ads.meta, repo: adsRepo, model: ads.model, config: adsConfig }) : null;
+  const googleChatReply = ads.gads && ads.anthropic
+    ? createGoogleChat({ anthropic: ads.anthropic, gads: ads.gads, repo: gadsRepo, execute: gadsExecute, images: gadsImages, model: ads.model })
+    : null;
 
   const api = Router();
   api.use('/auth', createAuthRouter({ usersRepo, secret: jwtSecret, authenticate, loginLimit }));
@@ -75,7 +79,7 @@ export function buildApp({ db, jwtSecret, storage, corsOrigin, staticDir, public
   api.use(createProjectsRouter({ db, projectsRepo, activityRepo, files }));
   api.use(createHomeRouter({ homeRepo: createHomeRepo(db), storage }));
   api.use(createWebRouter({ webRepo }));
-  api.use(createGoogleAdsRouter({ repo: gadsRepo, gads: ads.gads, startRun: startGoogleRun, execute: gadsExecute, images: gadsImages }));
+  api.use(createGoogleAdsRouter({ repo: gadsRepo, gads: ads.gads, startRun: startGoogleRun, execute: gadsExecute, images: gadsImages, chatReply: googleChatReply }));
   api.use(createAdsRouter({ repo: adsRepo, meta: ads.meta, startRun, execute, config: adsConfig, files, analyzeReport, chatReply }));
 
   const app = createApp({

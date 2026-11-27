@@ -165,28 +165,29 @@ export function useAnalyzeReport() {
   });
 }
 
-// Consultas al agente: el chat contesta en el mismo pedido (tarda unos segundos)
-export const useChats = () => useQuery({ queryKey: [...adsKeys.chats], queryFn: () => api.get('/ads/chats').then((r) => r.chats) });
-export const useChat = (id) => useQuery({ queryKey: [...adsKeys.chats, id], queryFn: () => api.get(`/ads/chats/${id}`), enabled: !!id });
+// Consultas al agente (base '/ads' Meta o '/gads' Google): el chat contesta en el mismo pedido (tarda unos segundos)
+const chatKey = (base) => [base.slice(1), 'chats'];
+export const useChats = (base = '/ads') => useQuery({ queryKey: chatKey(base), queryFn: () => api.get(`${base}/chats`).then((r) => r.chats) });
+export const useChat = (id, base = '/ads') => useQuery({ queryKey: [...chatKey(base), id], queryFn: () => api.get(`${base}/chats/${id}`), enabled: !!id });
 
-function useChatMutation(mutationFn) {
+function useChatMutation(base, mutationFn) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn,
     meta: { success: false },
-    onSuccess: (data) => qc.setQueryData([...adsKeys.chats, data.chat.id], data),
+    onSuccess: (data) => qc.setQueryData([...chatKey(base), data.chat.id], data),
     // Lo que propuso el agente aparece en Recomendaciones; si falló, la consulta quedó guardada igual
-    onSettled: () => qc.invalidateQueries({ queryKey: ['ads'], predicate: (q) => q.queryKey[1] !== 'report' }),
+    onSettled: () => qc.invalidateQueries({ queryKey: [base.slice(1)], predicate: (q) => q.queryKey[1] !== 'report' }),
   });
 }
-export const useStartChat = () => useChatMutation(({ message }) => api.post('/ads/chats', { message }));
-export const useSendChat = () => useChatMutation(({ id, message }) => api.post(`/ads/chats/${id}/messages`, { message }));
-export const useRetryChat = () => useChatMutation(({ id }) => api.post(`/ads/chats/${id}/reply`));
-export function useDeleteChat() {
+export const useStartChat = (base = '/ads') => useChatMutation(base, ({ message }) => api.post(`${base}/chats`, { message }));
+export const useSendChat = (base = '/ads') => useChatMutation(base, ({ id, message }) => api.post(`${base}/chats/${id}/messages`, { message }));
+export const useRetryChat = (base = '/ads') => useChatMutation(base, ({ id }) => api.post(`${base}/chats/${id}/reply`));
+export function useDeleteChat(base = '/ads') {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id) => api.del(`/ads/chats/${id}`),
+    mutationFn: (id) => api.del(`${base}/chats/${id}`),
     meta: { success: 'Conversación borrada' },
-    onSettled: () => qc.invalidateQueries({ queryKey: adsKeys.chats }),
+    onSettled: () => qc.invalidateQueries({ queryKey: chatKey(base) }),
   });
 }

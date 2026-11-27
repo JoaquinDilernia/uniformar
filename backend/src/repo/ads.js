@@ -5,7 +5,7 @@ const DECISION_COLS = `d.id, d.run_id, d.chat_id, d.tool, d.input, d.title, d.re
 const QUESTION_SELECT = 'SELECT q.*, u.name AS answered_by_name FROM ad_questions q LEFT JOIN users u ON u.id = q.answered_by';
 
 // platform: 'meta' (default) o 'google'. Corridas, decisiones, aprendizajes, preguntas, pedidos y ajustes
-// van separados por plataforma; piezas, posts de IG, chats y lecturas de reportes son solo de Meta.
+// y consultas (chats) van separados por plataforma; piezas, posts de IG y lecturas de reportes son solo de Meta.
 export function createAdsRepo(db, { platform = 'meta' } = {}) {
   const P = platform;
   const settingsId = platform === 'google' ? 2 : 1;
@@ -211,20 +211,20 @@ export function createAdsRepo(db, { platform = 'meta' } = {}) {
     completeIgPromotion: (id, adId) => one('UPDATE ad_ig_promotions SET meta_ad_id = $2 WHERE id = $1 RETURNING *', [id, adId]),
     releaseIgPromotion: (id) => db.query('DELETE FROM ad_ig_promotions WHERE id = $1 AND meta_ad_id IS NULL', [id]),
     // Consultas del equipo al agente
-    createChat: (title, userId) => one('INSERT INTO ad_chats (title, created_by) VALUES ($1, $2) RETURNING *', [title, userId ?? null]),
+    createChat: (title, userId) => one('INSERT INTO ad_chats (title, created_by, platform) VALUES ($1, $2, $3) RETURNING *', [title, userId ?? null, P]),
     getChat: (id) => one(
-      'SELECT c.*, u.name AS created_by_name FROM ad_chats c LEFT JOIN users u ON u.id = c.created_by WHERE c.id = $1',
-      [id], 'No existe esa conversación.',
+      'SELECT c.*, u.name AS created_by_name FROM ad_chats c LEFT JOIN users u ON u.id = c.created_by WHERE c.id = $1 AND c.platform = $2',
+      [id, P], 'No existe esa conversación.',
     ),
     async listChats(limit = 30) {
       const { rows } = await db.query(
         `SELECT c.*, u.name AS created_by_name, (SELECT count(*)::int FROM ad_chat_messages m WHERE m.chat_id = c.id) AS message_count
-         FROM ad_chats c LEFT JOIN users u ON u.id = c.created_by ORDER BY c.updated_at DESC LIMIT $1`,
-        [limit],
+         FROM ad_chats c LEFT JOIN users u ON u.id = c.created_by WHERE c.platform = $2 ORDER BY c.updated_at DESC LIMIT $1`,
+        [limit, P],
       );
       return rows;
     },
-    deleteChat: (id) => one('DELETE FROM ad_chats WHERE id = $1 RETURNING id', [id], 'No existe esa conversación.'),
+    deleteChat: (id) => one('DELETE FROM ad_chats WHERE id = $1 AND platform = $2 RETURNING id', [id, P], 'No existe esa conversación.'),
     // actions es jsonb: el array va serializado
     async addChatMessage({ chatId, role, content, actions = [], authorId = null }) {
       const msg = await one(
@@ -247,9 +247,10 @@ export function createAdsRepo(db, { platform = 'meta' } = {}) {
       const { rows } = await db.query(
         `SELECT m.content, m.created_at, u.name AS author_name, c.title AS chat
          FROM ad_chat_messages m JOIN ad_chats c ON c.id = m.chat_id LEFT JOIN users u ON u.id = m.author_id
-         WHERE m.role = 'user'
-           AND m.created_at > coalesce((SELECT max(started_at) FROM ad_runs WHERE status = 'done' AND platform = 'meta'), '-infinity'::timestamptz)
+         WHERE m.role = 'user' AND c.platform = $1
+           AND m.created_at > coalesce((SELECT max(started_at) FROM ad_runs WHERE status = 'done' AND platform = $1), '-infinity'::timestamptz)
          ORDER BY m.created_at LIMIT 40`,
+        [P],
       );
       return rows;
     },

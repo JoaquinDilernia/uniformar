@@ -7,6 +7,7 @@ import { buildSnapshot } from '../ads/snapshot.js';
 import { buildReport } from '../ads/report.js';
 import { artDate, daysBetween } from '../ads/metrics.js';
 import { loadIgPosts } from '../ads/igPosts.js';
+import { mountChatRoutes } from './chats.js';
 
 const metaId = z.string().regex(/^\d{1,30}$/, 'Id de Meta inválido');
 const creativeSchema = z.object({
@@ -30,8 +31,6 @@ const answerSchema = z.object({
   answer: z.string().trim().min(1, 'Escribí la respuesta').max(2000),
   analyze: z.boolean().default(false),
 });
-
-const chatMessageSchema = z.object({ message: z.string().trim().min(1, 'Escribí la consulta').max(4000) });
 
 const rangeSchema = z.object({ since: dateStr, until: dateStr });
 const MAX_REPORT_DAYS = 93;
@@ -292,49 +291,7 @@ export function createAdsRouter({ repo, meta, startRun, execute, config, files, 
     res.json({ question: await repo.dismissQuestion(parse(uuid, req.params.id)) });
   });
 
-  // Consultas al agente: cualquiera que ve la pauta puede preguntar; lo que proponga queda pendiente de aprobación
-  const needChat = (_req, _res, next) => {
-    if (!chatReply) throw new AppError(503, 'AGENT_NOT_CONFIGURED', 'Falta conectar Meta y la clave de Claude en el servidor.');
-    next();
-  };
-  // Si el agente falla, la consulta queda guardada y se puede reintentar con /reply
-  async function answer(chatId) {
-    try {
-      return await chatReply(chatId);
-    } catch (err) {
-      if (err.status) throw err;
-      throw new AppError(502, 'AGENT_ERROR', `El agente no pudo contestar: ${err.message}`);
-    }
-  }
-  const withMessages = async (id) => ({ chat: await repo.getChat(id), messages: await repo.listChatMessages(id) });
-
-  r.get('/ads/chats', view, async (_req, res) => res.json({ chats: await repo.listChats() }));
-  r.get('/ads/chats/:id', view, async (req, res) => res.json(await withMessages(parse(uuid, req.params.id))));
-  r.post('/ads/chats', view, needChat, async (req, res) => {
-    const { message } = parse(chatMessageSchema, req.body);
-    const chat = await repo.createChat(message.replace(/\s+/g, ' ').slice(0, 80), req.user.id);
-    await repo.addChatMessage({ chatId: chat.id, role: 'user', content: message, authorId: req.user.id });
-    await answer(chat.id);
-    res.status(201).json(await withMessages(chat.id));
-  });
-  r.post('/ads/chats/:id/messages', view, needChat, async (req, res) => {
-    const id = parse(uuid, req.params.id);
-    const { message } = parse(chatMessageSchema, req.body);
-    await repo.getChat(id);
-    await repo.addChatMessage({ chatId: id, role: 'user', content: message, authorId: req.user.id });
-    await answer(id);
-    res.json(await withMessages(id));
-  });
-  r.post('/ads/chats/:id/reply', view, needChat, async (req, res) => {
-    const id = parse(uuid, req.params.id);
-    await repo.getChat(id);
-    await answer(id);
-    res.json(await withMessages(id));
-  });
-  r.delete('/ads/chats/:id', edit, async (req, res) => {
-    await repo.deleteChat(parse(uuid, req.params.id));
-    res.json({ ok: true });
-  });
+  mountChatRoutes(r, { base: '/ads', repo, chatReply, view, edit, missing: 'Falta conectar Meta y la clave de Claude en el servidor.' });
 
   r.get('/ads/settings', view, async (_req, res) => res.json({ settings: await repo.getSettings() }));
   r.put('/ads/settings', edit, async (req, res) => res.json({ settings: await repo.updateSettings(parse(settingsSchema, req.body)) }));

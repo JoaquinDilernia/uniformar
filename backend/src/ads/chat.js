@@ -6,9 +6,11 @@ import { conflict } from '../lib/errors.js';
 const MAX_TURNS = 8;
 const HISTORY = 20;
 const CONTEXT_TTL_MS = 10 * 60_000;
-
 // En el chat no se le pregunta al equipo (ya está hablando con él) ni se evalúan decisiones: eso es de la corrida diaria
-const CHAT_TOOLS = TOOL_DEFINITIONS.filter((t) => !['ask_team', 'record_outcome'].includes(t.name));
+const NOT_IN_CHAT = new Set(['ask_team', 'record_outcome']);
+export const chatTools = (tools) => tools.filter((t) => !NOT_IN_CHAT.has(t.name));
+
+const CHAT_TOOLS = chatTools(TOOL_DEFINITIONS);
 
 export const CHAT_SYSTEM = `Sos el agente de pauta de Uniform.ar y su asesor de Meta Ads. Acá el equipo de marketing te hace consultas desde el panel, en un chat.
 
@@ -22,18 +24,19 @@ ${AGENT_KNOWLEDGE}
 - Si falta una pieza para probar algo, pedila con request_creative.
 - Lo lee gente de marketing: nada de jerga innecesaria. Usá listas cortas cuando compares cosas.`;
 
-export function createAdsChat({ anthropic, meta, repo, model = DEFAULT_MODEL, config }) {
-  const dispatch = createDispatcher({ meta, repo, execute: null });
+// Chat con un agente de pauta (Meta o Google): contesta la última consulta del equipo con los datos de la cuenta.
+// loadContext() → { text, ...lo que necesite dispatch }; dispatch(name, input, { chatId, context }) → resultado de la herramienta
+export function createChatReplier({ anthropic, repo, model = DEFAULT_MODEL, system, tools, loadContext, dispatch }) {
   const contexts = new Map();
   const busy = new Set();
 
   // Los datos de la cuenta se arman una vez cada 10 minutos por conversación: las repreguntas usan la caché de prompts
   async function contextFor(chatId) {
     const hit = contexts.get(chatId);
-    if (hit && Date.now() - hit.at < CONTEXT_TTL_MS) return hit.text;
-    const text = await buildContext({ meta, repo, config });
-    contexts.set(chatId, { text, at: Date.now() });
-    return text;
+    if (hit && Date.now() - hit.at < CONTEXT_TTL_MS) return hit.context;
+    const context = await loadContext();
+    contexts.set(chatId, { context, at: Date.now() });
+    return context;
   }
 
   // Contesta el último mensaje del equipo y guarda la respuesta con lo que hizo el agente
@@ -57,10 +60,10 @@ export function createAdsChat({ anthropic, meta, repo, model = DEFAULT_MODEL, co
           betas: ['server-side-fallback-2026-07-01'],
           fallbacks: 'default',
           system: [
-            { type: 'text', text: CHAT_SYSTEM },
-            { type: 'text', text: `Datos actuales de la cuenta:\n\n${context}`, cache_control: { type: 'ephemeral' } },
+            { type: 'text', text: system },
+            { type: 'text', text: `Datos actuales de la cuenta:\n\n${context.text}`, cache_control: { type: 'ephemeral' } },
           ],
-          tools: CHAT_TOOLS,
+          tools,
           messages,
         }).finalMessage();
         if (resp.stop_reason === 'refusal') throw new Error('El agente no pudo contestar esta consulta.');
@@ -71,8 +74,9 @@ export function createAdsChat({ anthropic, meta, repo, model = DEFAULT_MODEL, co
         const results = [];
         for (const block of resp.content.filter((b) => b.type === 'tool_use')) {
           const input = block.input ?? {};
-          // autonomous: false siempre: desde el chat nada se ejecuta solo
-          const result = await dispatch(block.name, input, { runId: null, chatId, settings: { autonomous: false } });
+          const result = NOT_IN_CHAT.has(block.name)
+            ? { error: 'En el chat no se usa esta herramienta.' }
+            : await dispatch(block.name, input, { chatId, context });
           if (result.queued) actions.push({ type: 'recommendation', id: result.decision_id, title: input.title || block.name });
           if (block.name === 'save_learning' && result.ok) actions.push({ type: 'learning', id: result.learning_id, title: input.text });
           if (block.name === 'request_creative' && result.ok) actions.push({ type: 'request', title: input.concept });
@@ -86,4 +90,14 @@ export function createAdsChat({ anthropic, meta, repo, model = DEFAULT_MODEL, co
       busy.delete(chatId);
     }
   };
+}
+
+export function createAdsChat({ anthropic, meta, repo, model = DEFAULT_MODEL, config }) {
+  const dispatch = createDispatcher({ meta, repo, execute: null });
+  return createChatReplier({
+    anthropic, repo, model, system: CHAT_SYSTEM, tools: CHAT_TOOLS,
+    loadContext: async () => ({ text: await buildContext({ meta, repo, config }) }),
+    // autonomous: false siempre: desde el chat nada se ejecuta solo
+    dispatch: (name, input, { chatId }) => dispatch(name, input, { runId: null, chatId, settings: { autonomous: false } }),
+  });
 }

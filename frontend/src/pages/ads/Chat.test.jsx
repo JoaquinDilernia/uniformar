@@ -57,3 +57,25 @@ describe('Consultas al agente', () => {
     expect(await screen.findByText(/Recomendación pendiente/)).toBeInTheDocument();
   });
 });
+
+describe('Consultas al agente de Google', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    global.fetch = vi.fn((url, opts = {}) => {
+      if (url === '/api/gads/chats' && opts.method === 'POST') return json({ chat, messages }, 201);
+      if (url === '/api/gads/chats') return json({ chats: [] });
+      if (url === '/api/gads/chats/c1') return json({ chat, messages });
+      return json({});
+    });
+  });
+
+  it('pregunta al agente de Google por /gads, con ejemplos de búsqueda', async () => {
+    renderIt({ base: '/gads' });
+    expect(await screen.findByText(/no cambia nada en Google/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '¿Qué búsquedas están trayendo consultas?' }));
+    const post = fetch.mock.calls.find(([u, o]) => u === '/api/gads/chats' && o?.method === 'POST');
+    expect(JSON.parse(post[1].body)).toEqual({ message: '¿Qué búsquedas están trayendo consultas?' });
+    expect(await screen.findByText('gastó sin traer consultas')).toBeInTheDocument();
+    expect(fetch.mock.calls.some(([u]) => u.startsWith('/api/ads/'))).toBe(false);
+  });
+});

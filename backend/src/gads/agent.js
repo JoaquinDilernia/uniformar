@@ -36,8 +36,8 @@ export function capCheck(tool, input, { snapshot, settings }) {
 }
 
 export function createGoogleDispatcher({ gads, repo, execute, images }) {
-  return async function dispatch(name, input, { runId, settings, snapshot }) {
-    const base = { runId, tool: name, input, title: input.title ?? '', reason: input.reason ?? '', expectedImpact: input.expected_impact ?? '' };
+  return async function dispatch(name, input, { runId, chatId = null, settings, snapshot }) {
+    const base = { runId, chatId, tool: name, input, title: input.title ?? '', reason: input.reason ?? '', expectedImpact: input.expected_impact ?? '' };
     try {
       if (name === 'find_locations') return { results: await gads.suggestLocations((input.names ?? []).slice(0, 10).map(String)) };
       if (name === 'import_meta_images') {
@@ -85,7 +85,7 @@ export function createGoogleDispatcher({ gads, repo, execute, images }) {
 }
 
 export async function buildGoogleContext({ gads, repo, images }) {
-  const [snapshot, settings, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions, library, metaPieces] = await Promise.all([
+  const [snapshot, settings, learnings, pending, recent, toEvaluate, openQuestions, answeredQuestions, teamChat, library, metaPieces] = await Promise.all([
     buildGoogleSnapshot(gads),
     repo.getSettings(),
     repo.listLearnings({ activeOnly: true }),
@@ -94,6 +94,7 @@ export async function buildGoogleContext({ gads, repo, images }) {
     repo.executedWithoutOutcome(72),
     repo.listQuestions({ status: 'open', limit: 30 }),
     repo.answeredSinceLastRun(),
+    repo.chatSinceLastRun(),
     images ? images.list() : [],
     images ? images.metaCandidates() : [],
   ]);
@@ -117,6 +118,7 @@ export async function buildGoogleContext({ gads, repo, images }) {
     decisionsToEvaluate: toEvaluate,
     openQuestions: openQuestions.map((q) => ({ id: q.id, question: q.question, created_at: q.created_at })),
     answeredQuestions: answeredQuestions.map((q) => ({ question: q.question, answer: q.answer, answered_by: q.answered_by_name, answered_at: q.answered_at })),
+    teamChat: teamChat.map((m) => ({ said: m.content.slice(0, 600), by: m.author_name, at: m.created_at, chat: m.chat })),
   };
   return { snapshot, settings, text: Object.entries(sections).map(([k, v]) => `## ${k}\n${JSON.stringify(v)}`).join('\n\n') };
 }

@@ -15,6 +15,7 @@ import { ars, when } from './format.js';
 import { AgentQuestions } from './Questions.jsx';
 import { ReportText } from './ReportText.jsx';
 import { GoogleImages } from './GoogleImages.jsx';
+import { Chat } from './Chat.jsx';
 import s from './ads.module.css';
 
 const STATUS_LABEL = { ENABLED: 'Activa', PAUSED: 'Pausada' };
@@ -39,6 +40,7 @@ export function GoogleAds({ data, canEdit, running }) {
       <Segmented label="Sección" value={tab} onChange={setTab} options={[
         { value: 'summary', label: `Resumen${data.openQuestions ? ` (${data.openQuestions})` : ''}` },
         { value: 'reco', label: `Recomendaciones${data.pendingCount ? ` (${data.pendingCount})` : ''}` },
+        { value: 'chat', label: 'Consultas' },
         { value: 'images', label: 'Imágenes' },
         { value: 'settings', label: 'Ajustes' },
       ]} />
@@ -51,6 +53,9 @@ export function GoogleAds({ data, canEdit, running }) {
       {data.googleError && <div className={s.alert}><AlertTriangle size={18} aria-hidden /> Google no respondió: {data.googleError}</div>}
       {tab === 'summary' && <Summary data={data} canEdit={canEdit} running={running} onRefresh={() => refresh.mutate()} refreshing={refresh.isPending} />}
       {tab === 'reco' && <Recommendations canEdit={canEdit} />}
+      {tab === 'chat' && (data.configured.google && data.configured.agent
+        ? <Chat base="/gads" canEdit={canEdit} onGoToRecommendations={() => setTab('reco')} />
+        : <p className="muted">Las consultas necesitan Google Ads y la clave de Claude conectados en el servidor.</p>)}
       {tab === 'images' && <GoogleImages canEdit={canEdit} />}
       {tab === 'settings' && <Settings settings={data.settings} canEdit={canEdit} />}
     </>
@@ -250,7 +255,7 @@ function Recommendations({ canEdit }) {
         {!decisions.isLoading && pending.length === 0 && <p className="muted">No hay recomendaciones pendientes.</p>}
         {pending.map((d) => (
           <article key={d.id} className={s.reco}>
-            <div className={s.recoHead}><span className={s.kind}>{TOOL_LABEL[d.tool] ?? d.tool}</span><small>{when(d.created_at)}</small></div>
+            <div className={s.recoHead}><span className={s.kind}>{TOOL_LABEL[d.tool] ?? d.tool}</span><small>{d.chat_id ? 'Desde Consultas · ' : ''}{when(d.created_at)}</small></div>
             <h3>{d.title || TOOL_LABEL[d.tool]}</h3>
             <Detail d={d} />
             {d.reason && <p>{d.reason}</p>}

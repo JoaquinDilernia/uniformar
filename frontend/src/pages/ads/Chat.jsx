@@ -11,12 +11,29 @@ import { when } from './format.js';
 import { ReportText } from './ReportText.jsx';
 import s from './ads.module.css';
 
-const EXAMPLES = [
-  '¿Qué anuncio trae las conversaciones más baratas esta semana?',
-  '¿Por qué subió el costo por conversación?',
-  '¿Conviene pasar presupuesto de un conjunto a otro?',
-  '¿Qué post de Instagram promocionarías?',
-];
+// Cada plataforma tiene su agente, sus conversaciones y su lista de recomendaciones
+const PLATFORM = {
+  '/ads': {
+    name: 'Meta',
+    storageKey: 'ads-chat-open',
+    examples: [
+      '¿Qué anuncio trae las conversaciones más baratas esta semana?',
+      '¿Por qué subió el costo por conversación?',
+      '¿Conviene pasar presupuesto de un conjunto a otro?',
+      '¿Qué post de Instagram promocionarías?',
+    ],
+  },
+  '/gads': {
+    name: 'Google',
+    storageKey: 'gads-chat-open',
+    examples: [
+      '¿Qué búsquedas están trayendo consultas?',
+      '¿En qué búsquedas estamos gastando de más?',
+      '¿Cómo venimos con el tope del mes?',
+      '¿Qué palabras clave agregarías?',
+    ],
+  },
+};
 const ACTION = {
   recommendation: { icon: Lightbulb, label: 'Recomendación pendiente' },
   learning: { icon: BookmarkPlus, label: 'Aprendizaje anotado' },
@@ -24,11 +41,12 @@ const ACTION = {
 };
 
 // Consultas al agente de pauta. Solo contesta y propone: lo que sugiere queda en Recomendaciones
-export function Chat({ canEdit, onGoToRecommendations }) {
-  const [openId, setOpenId] = usePersistentState('ads-chat-open', null);
+export function Chat({ canEdit, onGoToRecommendations, base = '/ads' }) {
+  const platform = PLATFORM[base];
+  const [openId, setOpenId] = usePersistentState(platform.storageKey, null);
   return openId
-    ? <Thread id={openId} canEdit={canEdit} onBack={() => setOpenId(null)} onGoToRecommendations={onGoToRecommendations} />
-    : <ChatList onOpen={setOpenId} />;
+    ? <Thread id={openId} base={base} canEdit={canEdit} onBack={() => setOpenId(null)} onGoToRecommendations={onGoToRecommendations} />
+    : <ChatList base={base} platform={platform} onOpen={setOpenId} />;
 }
 
 function Composer({ onSend, busy, placeholder }) {
@@ -48,9 +66,9 @@ function Composer({ onSend, busy, placeholder }) {
   );
 }
 
-function ChatList({ onOpen }) {
-  const chats = useChats();
-  const start = useStartChat();
+function ChatList({ base, platform, onOpen }) {
+  const chats = useChats(base);
+  const start = useStartChat(base);
   const [pending, setPending] = useState(null);
   const ask = (message, clear) => {
     setPending(message);
@@ -65,13 +83,13 @@ function ChatList({ onOpen }) {
     <div className={s.stack}>
       <section className={s.card}>
         <div className={s.cardHead}><h2>Preguntale al agente</h2></div>
-        <p className="muted">Consultá sobre la pauta con los datos de hoy. El agente no cambia nada en Meta: si recomienda algo, lo deja en Recomendaciones para aprobar.</p>
+        <p className="muted">Consultá sobre la pauta de {platform.name} con los datos de hoy. El agente no cambia nada en {platform.name}: si recomienda algo, lo deja en Recomendaciones para aprobar.</p>
         {pending
           ? <Pending question={pending} />
           : (
             <>
               <ChipGroup label="Ejemplos">
-                {EXAMPLES.map((q) => <Chip key={q} onClick={() => ask(q, () => {})}>{q}</Chip>)}
+                {platform.examples.map((q) => <Chip key={q} onClick={() => ask(q, () => {})}>{q}</Chip>)}
               </ChipGroup>
               <Composer onSend={ask} busy={start.isPending} placeholder="Escribí tu consulta…" />
             </>
@@ -102,11 +120,11 @@ function Pending({ question }) {
   );
 }
 
-function Thread({ id, canEdit, onBack, onGoToRecommendations }) {
-  const chat = useChat(id);
-  const send = useSendChat();
-  const retry = useRetryChat();
-  const del = useDeleteChat();
+function Thread({ id, base, canEdit, onBack, onGoToRecommendations }) {
+  const chat = useChat(id, base);
+  const send = useSendChat(base);
+  const retry = useRetryChat(base);
+  const del = useDeleteChat(base);
   const confirm = useConfirm();
   const [pending, setPending] = useState(null);
   const end = useRef(null);

@@ -5,6 +5,7 @@ import { AppError } from '../lib/errors.js';
 import { requirePermission } from '../services/permissions.js';
 import { buildGoogleSnapshot } from '../gads/snapshot.js';
 import { projectMonth } from '../gads/agent.js';
+import { mountChatRoutes } from './chats.js';
 
 const settingsSchema = z.object({
   agent_enabled: z.boolean(),
@@ -19,7 +20,7 @@ const SNAPSHOT_TTL_MS = 10 * 60_000;
 const LEVEL_LABEL = { campaign: 'la campaña', ad_group: 'el grupo' };
 
 // Agente de Google Ads (mismo permiso que la sección Pauta)
-export function createGoogleAdsRouter({ repo, gads, startRun, execute, images }) {
+export function createGoogleAdsRouter({ repo, gads, startRun, execute, images, chatReply }) {
   const r = Router();
   const view = requirePermission('ads', 'view');
   const edit = requirePermission('ads', 'edit');
@@ -168,6 +169,8 @@ export function createGoogleAdsRouter({ repo, gads, startRun, execute, images })
     invalidate();
     res.json({ ok: true, created: result.created });
   });
+
+  mountChatRoutes(r, { base: '/gads', repo, chatReply, view, edit, missing: 'Falta conectar Google Ads y la clave de Claude en el servidor.' });
 
   r.get('/gads/settings', view, async (_req, res) => res.json({ settings: await repo.getSettings() }));
   r.put('/gads/settings', edit, async (req, res) => res.json({ settings: await repo.updateSettings(parse(settingsSchema, req.body)) }));
